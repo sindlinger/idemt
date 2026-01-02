@@ -43,7 +43,8 @@ export class CodexService {
       settings
     });
     const gitStatus = await getGitStatus(this.workspace.getRoot() ?? process.cwd());
-    const prompt = `${promptBase}\n\n# Git Status\n${gitStatus || "(git status unavailable)"}`;
+    const contextBundle = request.contextBundle ? `\n\n# Context Bundle\n${request.contextBundle}` : "";
+    const prompt = `${promptBase}\n\n# Git Status\n${gitStatus || "(git status unavailable)"}${contextBundle}`;
 
     const snapshots = await snapshotWorkspace(this.workspace);
 
