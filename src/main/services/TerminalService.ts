@@ -54,7 +54,7 @@ export class TerminalService {
 
   private defaultShell() {
     if (os.platform() === "win32") {
-      return process.env.COMSPEC || "powershell.exe";
+      return "powershell.exe";
     }
     return process.env.SHELL || "bash";
   }
