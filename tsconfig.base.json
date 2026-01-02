@@ -6,6 +6,12 @@
     "module": "ESNext",
     "moduleResolution": "Bundler",
     "jsx": "react-jsx",
+    "baseUrl": ".",
+    "paths": {
+      "@shared/*": ["src/shared/*"],
+      "@state/*": ["src/renderer/state/*"],
+      "@components/*": ["src/renderer/components/*"]
+    },
     "strict": true,
     "resolveJsonModule": true,
     "esModuleInterop": true,
