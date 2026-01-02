@@ -58,14 +58,44 @@ export class SettingsService {
         checks[key] = false;
         continue;
       }
-      try {
-        await fs.access(value);
-        checks[key] = true;
-      } catch {
-        checks[key] = false;
-      }
+      const ok = await resolvePathOrCommand(value);
+      checks[key] = ok;
     }
 
     return checks;
   }
 }
+
+const resolvePathOrCommand = async (value: string): Promise<boolean> => {
+  const hasSeparator = value.includes(path.sep) || value.includes("/") || value.includes("\\");
+  if (hasSeparator) {
+    try {
+      await fs.access(value);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  const envPath = process.env.PATH ?? "";
+  if (!envPath) return false;
+  const segments = envPath.split(path.delimiter).filter(Boolean);
+  const extList =
+    process.platform === "win32"
+      ? (process.env.PATHEXT ?? ".EXE;.CMD;.BAT").split(";")
+      : [""];
+
+  for (const segment of segments) {
+    for (const ext of extList) {
+      const suffix = ext && value.toLowerCase().endsWith(ext.toLowerCase()) ? "" : ext;
+      const candidate = path.join(segment, `${value}${suffix}`);
+      try {
+        await fs.access(candidate);
+        return true;
+      } catch {
+        continue;
+      }
+    }
+  }
+  return false;
+};
