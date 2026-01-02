@@ -33,6 +33,7 @@ export class TestService {
     await fs.mkdir(runDir, { recursive: true });
 
     const reportPath = request.reportPath || path.join(runDir, "report.html");
+    await fs.mkdir(path.dirname(reportPath), { recursive: true });
     const iniPath = path.join(runDir, "tester.ini");
     const expertPath = await resolveExpertBinary(request.expertPath);
     const testerConfig = buildTesterConfig({ ...request, expertPath }, settings, reportPath);
