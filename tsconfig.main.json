@@ -1,0 +1,12 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "module": "CommonJS",
+    "moduleResolution": "Node",
+    "lib": ["ES2020"],
+    "types": ["node", "electron"],
+    "outDir": "dist/main",
+    "noEmit": false
+  },
+  "include": ["src/main/**/*.ts", "src/shared/**/*.ts"]
+}

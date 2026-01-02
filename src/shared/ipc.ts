@@ -1,0 +1,114 @@
+export type WorkspaceNode = {
+  type: "file" | "dir";
+  path: string;
+  name: string;
+  children?: WorkspaceNode[];
+};
+
+export type OpenFile = {
+  path: string;
+  content: string;
+  version: number;
+  language: "mql" | "plaintext";
+};
+
+export type Diagnostic = {
+  filePath: string;
+  line: number;
+  column: number;
+  severity: "error" | "warning" | "info";
+  message: string;
+  source?: string;
+};
+
+export type CodexRunRequest = {
+  userMessage: string;
+  activeFilePath?: string;
+  selection?: string;
+  contextBundle?: string;
+};
+
+export type CodexEvent = {
+  type: "stdout" | "stderr" | "json" | "status" | "timeline" | "log";
+  data: string;
+  timestamp: number;
+};
+
+export type CodexRunStatus = {
+  running: boolean;
+  startedAt: number;
+  endedAt?: number;
+  exitCode?: number;
+};
+
+export type BuildRequest = {
+  filePath: string;
+};
+
+export type BuildResult = {
+  success: boolean;
+  diagnostics: Diagnostic[];
+  rawLogPath?: string;
+  rawOutput?: string;
+};
+
+export type TestRequest = {
+  expertPath: string;
+  symbol: string;
+  timeframe: string;
+  fromDate: string;
+  toDate: string;
+  deposit?: number;
+  reportPath?: string;
+};
+
+export type TestStatus = {
+  running: boolean;
+  phase: string;
+  lastLogLines: string[];
+  reportReady?: boolean;
+  reportPath?: string;
+};
+
+export type Settings = {
+  workspaceRoot?: string;
+  metaeditorPath?: string;
+  terminalPath?: string;
+  codexPath?: string;
+  mtDataDir?: string;
+  reportsDir?: string;
+};
+
+export const IPC_CHANNELS = {
+  workspaceSelected: "workspace:selected",
+  workspaceTree: "workspace:tree",
+  fileOpen: "file:open",
+  fileSave: "file:save",
+  fileChanged: "file:changed",
+  codexRunStart: "codex:run:start",
+  codexRunEvent: "codex:run:event",
+  codexRunDone: "codex:run:done",
+  codexRunCancel: "codex:run:cancel",
+  buildStart: "build:start",
+  buildResult: "build:result",
+  testStart: "test:start",
+  testStatus: "test:status",
+  testDone: "test:done",
+  logsAppend: "logs:append",
+  settingsGet: "settings:get",
+  settingsSet: "settings:set"
+} as const;
+
+export type FileChangePayload = {
+  path: string;
+  content: string;
+  previousContent?: string;
+  source?: "watcher" | "codex" | "unknown";
+  changeId?: string;
+};
+
+export type LogsAppendPayload = {
+  source: "build" | "test" | "codex" | "terminal" | "system";
+  line: string;
+  timestamp: number;
+};
