@@ -30,6 +30,8 @@ const TerminalPanel = ({ cwd }: { cwd?: string }) => {
     window.api.terminalSpawn({ cwd }).then(({ id }) => {
       setSessionId(id);
       sessionRef.current = id;
+      fitAddon.fit();
+      window.api.terminalResize(id, terminal.cols, terminal.rows);
       unsubscribe = window.api.onTerminalData(({ id: incoming, data }) => {
         if (incoming === id) {
           terminal.write(data);
