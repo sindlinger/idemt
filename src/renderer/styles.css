@@ -16,6 +16,18 @@
   --toolbar-border: #1f2833;
   --scroll-thumb: rgba(148, 163, 184, 0.45);
   --scroll-thumb-hover: rgba(148, 163, 184, 0.75);
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-pill: 999px;
+  --sidebar-bg: #11161d;
+  --sidebar-bg-right: linear-gradient(180deg, #131926, #0f1420 60%);
+  --tabs-bg: #141a20;
+  --tab-bg: transparent;
+  --tab-active-bg: rgba(49, 208, 154, 0.1);
+  --editor-bg: var(--bg-soft);
+  --splitter-bg: rgba(31, 40, 51, 0.85);
+  --splitter-hover: rgba(49, 208, 154, 0.18);
 }
 
 * {
@@ -68,9 +80,64 @@ button {
   height: 100vh;
   min-height: 0;
   min-width: 0;
-  border: 1px solid #151b24;
-  box-shadow: 0 18px 40px rgba(6, 10, 18, 0.55);
+  border: 1px solid var(--topbar-border);
+  box-shadow: var(--shadow);
 }
+
+.app[data-theme="windows11"] {
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --sidebar-bg: linear-gradient(180deg, rgba(24, 30, 44, 0.92), rgba(17, 23, 35, 0.98));
+  --sidebar-bg-right: linear-gradient(180deg, rgba(20, 26, 40, 0.95), rgba(15, 19, 30, 0.98));
+  --tabs-bg: rgba(20, 26, 40, 0.9);
+  --tab-bg: rgba(24, 32, 48, 0.9);
+  --tab-active-bg: rgba(49, 208, 154, 0.16);
+  --editor-bg: #0f141f;
+  --splitter-bg: rgba(31, 40, 51, 0.85);
+  --splitter-hover: rgba(49, 208, 154, 0.22);
+}
+
+.app[data-theme="windowsClassic"] {
+  --bg: #d9d9d9;
+  --bg-soft: #e2e2e2;
+  --panel: #d6d6d6;
+  --panel-2: #cdcdcd;
+  --text: #1a1a1a;
+  --muted: #4f4f4f;
+  --border: #8f8f8f;
+  --accent: #2f6fed;
+  --accent-2: #5bbd8a;
+  --topbar-bg: linear-gradient(180deg, #eeeeee 0%, #d7d7d7 100%);
+  --topbar-border: #9b9b9b;
+  --toolbar-bg: rgba(220, 220, 220, 0.9);
+  --toolbar-border: #9b9b9b;
+  --shadow: 0 10px 24px rgba(60, 60, 60, 0.25);
+  --radius-xs: 3px;
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --sidebar-bg: #dcdcdc;
+  --sidebar-bg-right: #d5d5d5;
+  --tabs-bg: #d0d0d0;
+  --tab-bg: #d7d7d7;
+  --tab-active-bg: #f0f0f0;
+  --editor-bg: #e6e6e6;
+  --splitter-bg: #bcbcbc;
+  --splitter-hover: #a9c6ff;
+}
+
+.app[data-theme="macos"] {
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --sidebar-bg: rgba(22, 24, 32, 0.9);
+  --sidebar-bg-right: rgba(18, 22, 30, 0.95);
+  --tabs-bg: rgba(18, 22, 32, 0.9);
+  --tab-bg: rgba(27, 31, 42, 0.8);
+  --tab-active-bg: rgba(49, 208, 154, 0.18);
+  --editor-bg: #11151f;
+  --splitter-bg: rgba(255, 255, 255, 0.08);
+  --splitter-hover: rgba(255, 255, 255, 0.18);
+}
+
 
 .topbar {
   display: flex;
@@ -108,7 +175,7 @@ button {
 .workspace-chip {
   font-size: 11px;
   padding: 2px 8px;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   border: 1px solid var(--border);
   color: var(--accent);
   background: rgba(49, 208, 154, 0.1);
@@ -169,7 +236,7 @@ button {
 .window-btn {
   width: 30px;
   height: 24px;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   border: 1px solid transparent;
   background: transparent;
   color: var(--muted);
@@ -243,8 +310,8 @@ button {
   background: #c7c7c7;
   color: #111;
   border: 1px solid #2d2d2d;
-  border-radius: 2px;
-  box-shadow: inset 1px 1px 0 #f3f3f3, inset -1px -1px 0 #8a8a8a;
+  border-radius: var(--radius-xs);
+  box-shadow: inset 1px 1px 0 #f3f3f3, inset -1px -1px 0 #9a9a9a;
   font-family: "MS Sans Serif", "Segoe UI", sans-serif;
 }
 
@@ -260,7 +327,7 @@ button {
 .settings-field select {
   background: var(--panel-2);
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   padding: 8px;
   color: var(--text);
 }
@@ -273,7 +340,7 @@ button {
   -webkit-app-region: no-drag;
   background: var(--toolbar-bg);
   border: 1px solid var(--toolbar-border);
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   padding: 4px 6px;
 }
 
@@ -294,7 +361,7 @@ button {
   width: 32px;
   height: 32px;
   padding: 0;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   border: 1px solid var(--border);
   background: var(--panel-2);
   color: var(--text);
@@ -366,30 +433,38 @@ button {
 .new-file-select {
   background: var(--panel-2);
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   color: var(--text);
   padding: 6px 8px;
   font-size: 12px;
 }
 
 .app[data-mode="light"] {
-  --bg: #f4f6f9;
-  --bg-soft: #eef1f6;
+  --bg: #f1f4f8;
+  --bg-soft: #f4f6f9;
   --panel: #ffffff;
   --panel-2: #f3f5f9;
   --text: #1e2431;
-  --muted: #5a6375;
-  --accent: #1f86ff;
-  --accent-2: #c58f1d;
-  --danger: #d9534f;
+  --muted: #677083;
+  --accent: #2f8f73;
+  --accent-2: #3ea1cc;
+  --danger: #e46f63;
   --border: #d6dbe6;
-  --shadow: 0 18px 40px rgba(27, 33, 45, 0.2);
-  --topbar-bg: linear-gradient(135deg, #ffffff, #edf1f7);
-  --topbar-border: #cfd5e0;
-  --toolbar-bg: rgba(255, 255, 255, 0.7);
+  --shadow: 0 18px 40px rgba(27, 33, 45, 0.18);
+  --topbar-bg: linear-gradient(180deg, #ffffff 0%, #eef1f6 100%);
+  --topbar-border: #d6dbe6;
+  --toolbar-bg: rgba(255, 255, 255, 0.9);
   --toolbar-border: #d6dbe6;
   --scroll-thumb: rgba(100, 116, 139, 0.5);
   --scroll-thumb-hover: rgba(100, 116, 139, 0.8);
+  --sidebar-bg: #f6f7fb;
+  --sidebar-bg-right: #f1f3f8;
+  --tabs-bg: #ffffff;
+  --tab-bg: #f3f5f9;
+  --tab-active-bg: rgba(47, 143, 115, 0.18);
+  --editor-bg: #f4f6f9;
+  --splitter-bg: #e1e6ee;
+  --splitter-hover: rgba(47, 143, 115, 0.25);
 }
 
 .app[data-theme="windows11"] .toolbar .toolbar-btn {
@@ -402,26 +477,26 @@ button {
 }
 
 .app[data-theme="windowsClassic"] .topbar {
-  background: linear-gradient(180deg, #d0d0d0, #bdbdbd);
-  border-bottom: 2px solid #6f6f6f;
+  background: var(--topbar-bg);
+  border-bottom: 1px solid var(--topbar-border);
 }
 
 .app[data-theme="windowsClassic"] .toolbar {
-  background: #d4d4d4;
-  border-color: #8b8b8b;
-  border-radius: 2px;
+  background: var(--toolbar-bg);
+  border-color: var(--toolbar-border);
+  border-radius: var(--radius-xs);
 }
 
 .app[data-theme="windowsClassic"] .toolbar .toolbar-btn {
-  background: #c0c0c0;
+  background: #d7d7d7;
   color: #111;
-  border: 1px solid #2d2d2d;
-  box-shadow: inset 1px 1px 0 #f3f3f3, inset -1px -1px 0 #8a8a8a;
+  border: 1px solid #7b7b7b;
+  box-shadow: inset 1px 1px 0 #f5f5f5, inset -1px -1px 0 #b3b3b3;
 }
 
 .app[data-theme="windowsClassic"] .toolbar .toolbar-btn:hover {
-  border-color: #1c1c1c;
-  background: #d7d7d7;
+  border-color: #5f5f5f;
+  background: #e1e1e1;
 }
 
 .app[data-theme="macos"] .topbar {
@@ -430,12 +505,12 @@ button {
 }
 
 .app[data-theme="macos"] .toolbar {
-  background: rgba(255, 255, 255, 0.04);
-  border-color: rgba(255, 255, 255, 0.08);
+  background: var(--toolbar-bg);
+  border-color: var(--toolbar-border);
 }
 
 .app[data-theme="macos"] .toolbar .toolbar-btn {
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
 }
 
 .button {
@@ -443,7 +518,7 @@ button {
   border: 1px solid var(--border);
   color: var(--text);
   padding: 6px 10px;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
   font-size: 12px;
   display: inline-flex;
@@ -483,7 +558,7 @@ button {
 
 .splitter {
   position: relative;
-  background: rgba(31, 40, 51, 0.85);
+  background: var(--splitter-bg);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -501,13 +576,13 @@ button {
 }
 
 .splitter:hover {
-  background: rgba(49, 208, 154, 0.18);
+  background: var(--splitter-hover);
 }
 
 .split-pin {
   width: 18px;
   height: 18px;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   border: 1px solid var(--border);
   background: var(--panel-2);
   color: var(--muted);
@@ -530,7 +605,7 @@ button {
 }
 
 .sidebar {
-  background: #11161d;
+  background: var(--sidebar-bg);
   border-right: 1px solid var(--border);
   padding: 12px;
   display: flex;
@@ -546,7 +621,7 @@ button {
 .sidebar.right {
   border-left: 1px solid var(--border);
   border-right: none;
-  background: linear-gradient(180deg, #131926, #0f1420 60%);
+  background: var(--sidebar-bg-right);
 }
 
 .panel-title {
@@ -596,9 +671,9 @@ button {
 
 .filter-btn {
   padding: 4px 8px;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   border: 1px solid var(--border);
-  background: #161d26;
+  background: var(--panel-2);
   color: var(--muted);
   font-size: 11px;
   cursor: pointer;
@@ -616,7 +691,7 @@ button {
 
 .file-node {
   padding: 5px 8px;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
   color: var(--text);
   display: flex;
@@ -657,7 +732,7 @@ button {
 .file-icon {
   font-size: 10px;
   padding: 2px 6px;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   background: rgba(0, 0, 0, 0.2);
   color: var(--muted);
   border: 1px solid var(--border);
@@ -692,7 +767,7 @@ button {
   flex-direction: column;
   min-width: 0;
   min-height: 0;
-  background: var(--bg-soft);
+  background: var(--editor-bg);
 }
 
 .tabs {
@@ -700,13 +775,13 @@ button {
   gap: 4px;
   padding: 6px 8px;
   border-bottom: 1px solid var(--border);
-  background: #141a20;
+  background: var(--tabs-bg);
 }
 
 .tab {
   padding: 6px 10px;
-  border-radius: 6px;
-  background: transparent;
+  border-radius: var(--radius-sm);
+  background: var(--tab-bg);
   border: 1px solid transparent;
   cursor: pointer;
   display: flex;
@@ -719,25 +794,15 @@ button {
 .tab.active {
   color: var(--text);
   border-color: rgba(49, 208, 154, 0.35);
-  background: rgba(49, 208, 154, 0.1);
+  background: var(--tab-active-bg);
 }
 
 .app[data-theme="windows11"] .sidebar {
-  background: linear-gradient(180deg, rgba(24, 30, 44, 0.92), rgba(17, 23, 35, 0.98));
   backdrop-filter: blur(6px);
 }
 
-.app[data-theme="windows11"] .editor-area {
-  background: #0f141f;
-}
-
 .app[data-theme="windows11"] .tabs {
-  background: rgba(20, 26, 40, 0.9);
   border-bottom: 1px solid rgba(77, 212, 255, 0.2);
-}
-
-.app[data-theme="windows11"] .tab {
-  background: rgba(24, 32, 48, 0.9);
 }
 
 .app[data-theme="windows11"] .tab.active {
@@ -746,56 +811,46 @@ button {
 }
 
 .app[data-theme="windowsClassic"] .sidebar {
-  background: #d4d4d4;
-  border-right: 2px solid #6f6f6f;
+  border-right: 1px solid var(--border);
 }
 
 .app[data-theme="windowsClassic"] .sidebar.right {
-  border-left: 2px solid #6f6f6f;
+  border-left: 1px solid var(--border);
 }
 
 .app[data-theme="windowsClassic"] .file-node {
-  color: #111;
-  background: #d4d4d4;
+  color: var(--text);
 }
 
 .app[data-theme="windowsClassic"] .file-node:hover {
-  background: #c8c8c8;
+  background: rgba(0, 0, 0, 0.06);
 }
 
 .app[data-theme="windowsClassic"] .file-node.dir {
-  color: #1a3a75;
-}
-
-.app[data-theme="windowsClassic"] .editor-area {
-  background: #e1e1e1;
+  color: #1f4b8c;
 }
 
 .app[data-theme="windowsClassic"] .tabs {
-  background: #c0c0c0;
-  border-bottom: 2px solid #6f6f6f;
+  border-bottom: 1px solid var(--border);
 }
 
 .app[data-theme="windowsClassic"] .tab {
-  background: #c0c0c0;
-  border: 1px solid #2d2d2d;
-  box-shadow: inset 1px 1px 0 #f3f3f3, inset -1px -1px 0 #8a8a8a;
-  color: #111;
+  border: 1px solid var(--border);
+  box-shadow: inset 1px 1px 0 #f3f3f3, inset -1px -1px 0 #9a9a9a;
+  color: var(--text);
 }
 
 .app[data-theme="windowsClassic"] .tab.active {
-  background: #e1e1e1;
-  color: #111;
-  border-color: #1c1c1c;
+  background: var(--tab-active-bg);
+  color: var(--text);
+  border-color: #7b7b7b;
 }
 
 .app[data-theme="windowsClassic"] .bottom-panel {
-  background: #d4d4d4;
-  border-top: 2px solid #6f6f6f;
+  border-top: 1px solid var(--border);
 }
 
 .app[data-theme="macos"] .sidebar {
-  background: rgba(22, 24, 32, 0.9);
   border-right: 1px solid rgba(255, 255, 255, 0.08);
 }
 
@@ -803,36 +858,21 @@ button {
   border-left: 1px solid rgba(255, 255, 255, 0.08);
 }
 
-.app[data-theme="macos"] .editor-area {
-  background: #11151f;
-}
-
 .app[data-theme="macos"] .tabs {
-  background: rgba(18, 22, 32, 0.9);
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .app[data-theme="macos"] .tab {
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   padding: 6px 12px;
 }
 
-.app[data-mode="light"] .sidebar {
-  background: #f6f7fb;
-}
-
-.app[data-mode="light"] .editor-area {
-  background: #f4f6f9;
-}
-
 .app[data-mode="light"] .tabs {
-  background: #ffffff;
-  border-bottom: 1px solid #d6dbe6;
+  border-bottom: 1px solid var(--border);
 }
 
 .app[data-mode="light"] .tab {
-  background: #f3f5f9;
-  color: #1e2431;
+  color: var(--text);
 }
 
 .tab.active {
@@ -863,9 +903,9 @@ button {
 }
 
 .app[data-theme="windowsClassic"] .editor-statusbar {
-  background: #d4d4d4;
-  color: #111;
-  border-top: 2px solid #6f6f6f;
+  background: var(--panel);
+  color: var(--text);
+  border-top: 1px solid var(--border);
 }
 
 .app[data-theme="macos"] .editor-statusbar {
@@ -930,7 +970,7 @@ button {
 .codex-view-toggle {
   font-size: 11px;
   padding: 4px 8px;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   border: 1px solid var(--border);
   background: var(--panel-2);
   color: var(--muted);
@@ -950,7 +990,7 @@ button {
   min-height: 120px;
   background: var(--panel-2);
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-radius: var(--radius-md);
   padding: 10px;
   overflow: auto;
   display: flex;
@@ -961,7 +1001,7 @@ button {
 .codex-message {
   background: rgba(0, 0, 0, 0.15);
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   padding: 8px 10px;
   display: flex;
   flex-direction: column;
@@ -1028,7 +1068,7 @@ button {
   background: var(--panel-2);
   color: var(--text);
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   padding: 10px;
   min-height: 70px;
 }
@@ -1073,26 +1113,26 @@ button {
 .app[data-theme="windowsClassic"] .codex-chat,
 .app[data-theme="windowsClassic"] .codex-history,
 .app[data-theme="windowsClassic"] .codex-input textarea {
-  background: #e1e1e1;
-  color: #111;
-  border: 1px solid #2d2d2d;
+  background: var(--panel);
+  color: var(--text);
+  border: 1px solid var(--border);
 }
 
 .app[data-theme="windowsClassic"] .codex-message {
-  background: #d4d4d4;
-  border: 1px solid #2d2d2d;
-  box-shadow: inset 1px 1px 0 #f3f3f3, inset -1px -1px 0 #8a8a8a;
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  box-shadow: inset 1px 1px 0 #f3f3f3, inset -1px -1px 0 #9a9a9a;
 }
 
 .app[data-theme="windowsClassic"] .codex-meta {
-  color: #333;
+  color: var(--muted);
 }
 
 .app[data-theme="windowsClassic"] .codex-send {
-  background: #c0c0c0;
+  background: #d7d7d7;
   color: #111;
-  border: 1px solid #2d2d2d;
-  box-shadow: inset 1px 1px 0 #f3f3f3, inset -1px -1px 0 #8a8a8a;
+  border: 1px solid #7b7b7b;
+  box-shadow: inset 1px 1px 0 #f6f6f6, inset -1px -1px 0 #b2b2b2;
 }
 
 .app[data-theme="windowsClassic"] .codex-send:hover {
@@ -1105,11 +1145,11 @@ button {
 }
 
 .app[data-theme="macos"] .codex-message {
-  border-radius: 12px;
+  border-radius: var(--radius-md);
 }
 
 .app[data-theme="macos"] .codex-input textarea {
-  border-radius: 12px;
+  border-radius: var(--radius-md);
 }
 
 .app[data-mode="light"] .codex-chat,
@@ -1132,7 +1172,7 @@ button {
 .review-card {
   background: var(--panel-2);
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   padding: 10px;
 }
 
@@ -1165,7 +1205,7 @@ button {
 
 .bottom-tab {
   padding: 6px 10px;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
   background: var(--panel-2);
   border: 1px solid transparent;
@@ -1200,29 +1240,29 @@ button {
 }
 
 .app[data-theme="windowsClassic"] .bottom-tab {
-  background: #c0c0c0;
-  border: 1px solid #2d2d2d;
-  box-shadow: inset 1px 1px 0 #f3f3f3, inset -1px -1px 0 #8a8a8a;
+  background: #d7d7d7;
+  border: 1px solid #7b7b7b;
+  box-shadow: inset 1px 1px 0 #f5f5f5, inset -1px -1px 0 #b3b3b3;
   color: #111;
 }
 
 .app[data-theme="windowsClassic"] .bottom-tab.active {
-  border-color: #1c1c1c;
+  border-color: #5f5f5f;
   color: #111;
 }
 
 .app[data-theme="windowsClassic"] .panel-content {
-  background: #e1e1e1;
-  color: #111;
+  background: var(--panel);
+  color: var(--text);
 }
 
 .app[data-theme="macos"] .bottom-panel {
-  background: rgba(18, 22, 32, 0.95);
+  background: var(--panel);
   border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .app[data-theme="macos"] .bottom-tab {
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   padding: 6px 12px;
 }
 
