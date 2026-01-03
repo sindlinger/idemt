@@ -1,9 +1,13 @@
 import { useEffect, useState } from "react";
 import {
+  Activity,
+  Braces,
+  Code2,
   Copy,
   Crosshair,
   FolderOpen,
   Hammer,
+  Layers,
   Minus,
   Plus,
   Ruler,
@@ -30,10 +34,10 @@ const TopBar = ({
   onToggleCursorPos,
   showGuides,
   showCursorPos,
-  newFileExtension,
-  onNewFileExtensionChange,
   onNewFile,
-  uiTheme
+  uiTheme,
+  filters,
+  onFiltersChange
 }: {
   workspaces: string[];
   activeWorkspaceId?: string;
@@ -49,13 +53,22 @@ const TopBar = ({
   onToggleCursorPos: () => void;
   showGuides: boolean;
   showCursorPos: boolean;
-  newFileExtension: string;
-  onNewFileExtensionChange: (value: string) => void;
   onNewFile: () => void;
   uiTheme?: "windows11" | "windowsClassic" | "macos";
+  filters: { mql: boolean; python: boolean; cpp: boolean };
+  onFiltersChange: (filters: { mql: boolean; python: boolean; cpp: boolean }) => void;
 }) => {
   const [maximized, setMaximized] = useState(false);
   const isClassic = uiTheme === "windowsClassic";
+  const allSelected = filters.mql && filters.python && filters.cpp;
+
+  const toggleFilter = (key: "mql" | "python" | "cpp") => {
+    onFiltersChange({ ...filters, [key]: !filters[key] });
+  };
+
+  const selectAll = () => {
+    onFiltersChange({ mql: true, python: true, cpp: true });
+  };
 
   useEffect(() => {
     if (typeof window.api?.windowStateGet !== "function") return;
@@ -122,18 +135,6 @@ const TopBar = ({
             <button className="toolbar-btn" onClick={onNewFile} title="New File">
               <Plus size={14} />
             </button>
-            <select
-              className="new-file-select"
-              value={newFileExtension}
-              onChange={(event) => onNewFileExtensionChange(event.target.value)}
-            >
-              <option value="mq5">.mq5</option>
-              <option value="mq4">.mq4</option>
-              <option value="mqh">.mqh</option>
-              <option value="py">.py</option>
-              <option value="c">.c</option>
-              <option value="cpp">.cpp</option>
-            </select>
           </div>
           <button className="toolbar-btn" onClick={onOpenWorkspace} title="Open Workspace">
             <FolderOpen size={14} />
@@ -149,6 +150,36 @@ const TopBar = ({
           </button>
           <button className="toolbar-btn" onClick={onSettings} title="Settings">
             <SettingsIcon size={14} />
+          </button>
+        </div>
+        <div className="toolbar-filters">
+          <button
+            className={`filter-btn ${allSelected ? "active" : ""}`}
+            onClick={selectAll}
+            title="Todos"
+          >
+            <Layers size={12} />
+          </button>
+          <button
+            className={`filter-btn ${filters.mql ? "active" : ""}`}
+            onClick={() => toggleFilter("mql")}
+            title="MT5"
+          >
+            <Activity size={12} />
+          </button>
+          <button
+            className={`filter-btn ${filters.python ? "active" : ""}`}
+            onClick={() => toggleFilter("python")}
+            title="Python"
+          >
+            <Code2 size={12} />
+          </button>
+          <button
+            className={`filter-btn ${filters.cpp ? "active" : ""}`}
+            onClick={() => toggleFilter("cpp")}
+            title="C/C++"
+          >
+            <Braces size={12} />
           </button>
         </div>
         <div className="toolbar-right">

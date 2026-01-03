@@ -236,7 +236,7 @@ const App = () => {
     python: true,
     cpp: true
   });
-  const [newFileExt, setNewFileExt] = useState("mq5");
+  const newFileExt = "mq5";
   const [layout, setLayout] = useState<LayoutState>(() => readLayoutState());
   const [viewport, setViewport] = useState(() => ({
     width: window.innerWidth,
@@ -946,10 +946,10 @@ const App = () => {
         onToggleCursorPos={() => handleToggleSetting("editorShowCursorPosition")}
         showGuides={settings.editorShowRulers ?? false}
         showCursorPos={settings.editorShowCursorPosition ?? false}
-        newFileExtension={newFileExt}
-        onNewFileExtensionChange={setNewFileExt}
         onNewFile={handleNewFile}
         uiTheme={settings.uiTheme}
+        filters={fileFilters}
+        onFiltersChange={handleFiltersChange}
       />
       <div
         className="workspace-area"
@@ -979,14 +979,16 @@ const App = () => {
               setExpandedDirs(dirs, workspaceId);
             }}
             filters={fileFilters}
-            onFiltersChange={handleFiltersChange}
             onOpenFile={handleOpenFile}
             onLoadDir={handleLoadDir}
             onWatchDirsChange={handleWatchDirsChange}
             activeFilePath={activeFilePath}
             collapsed={layout.leftCollapsed}
           />
-          <div className="splitter vertical" onMouseDown={(event) => startResize("left", event)}>
+          <div
+            className={`splitter vertical ${layout.leftCollapsed ? "ghost" : ""}`}
+            onMouseDown={(event) => startResize("left", event)}
+          >
             <button
               className={`split-pin ${layout.leftCollapsed ? "" : "active"}`}
               title={layout.leftCollapsed ? "Expand sidebar" : "Collapse sidebar"}
@@ -1015,7 +1017,10 @@ const App = () => {
             editorShowCursorPosition={settings.editorShowCursorPosition}
             onFontSizeChange={handleFontSizeChange}
           />
-          <div className="splitter vertical" onMouseDown={(event) => startResize("right", event)}>
+          <div
+            className={`splitter vertical ${layout.rightCollapsed ? "ghost" : ""}`}
+            onMouseDown={(event) => startResize("right", event)}
+          >
             <button
               className={`split-pin ${layout.rightCollapsed ? "" : "active"}`}
               title={layout.rightCollapsed ? "Expand Codex" : "Collapse Codex"}
@@ -1045,7 +1050,10 @@ const App = () => {
             collapsed={layout.rightCollapsed}
           />
         </div>
-        <div className="splitter horizontal" onMouseDown={(event) => startResize("bottom", event)}>
+        <div
+          className={`splitter horizontal ${bottomPanelOpen ? "" : "ghost"}`}
+          onMouseDown={(event) => startResize("bottom", event)}
+        >
           <button
             className={`split-pin ${bottomPanelOpen ? "active" : ""}`}
             title={bottomPanelOpen ? "Collapse panel" : "Expand panel"}

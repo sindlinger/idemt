@@ -1,5 +1,4 @@
 import { useEffect, useMemo } from "react";
-import { Activity, Braces, Code2, Layers } from "lucide-react";
 import type { WorkspaceNode } from "@shared/ipc";
 
 type FileFilter = "mql" | "python" | "cpp";
@@ -150,7 +149,6 @@ type LeftSidebarProps = {
   expandedDirs: string[];
   onExpandedDirsChange: (dirs: string[]) => void;
   filters: Record<FileFilter, boolean>;
-  onFiltersChange: (filters: Record<FileFilter, boolean>) => void;
   onOpenFile: (path: string) => void;
   onLoadDir: (path: string) => void;
   onWatchDirsChange: (dirs: string[]) => void;
@@ -164,7 +162,6 @@ const LeftSidebar = ({
   expandedDirs,
   onExpandedDirsChange,
   filters,
-  onFiltersChange,
   onOpenFile,
   onLoadDir,
   onWatchDirsChange,
@@ -197,14 +194,6 @@ const LeftSidebar = ({
     return filters[category];
   };
 
-  const toggleFilter = (filter: FileFilter) => {
-    onFiltersChange({ ...filters, [filter]: !filters[filter] });
-  };
-
-  const selectAll = () => {
-    onFiltersChange({ mql: true, python: true, cpp: true });
-  };
-
   const handleToggleDir = (node: WorkspaceNode) => {
     if (node.type !== "dir") return;
     const next = new Set(expandedSet);
@@ -229,36 +218,6 @@ const LeftSidebar = ({
   const treeNodes = rootNode ? [rootNode] : [];
   return (
     <aside className={`sidebar ${collapsed ? "collapsed" : ""}`}>
-      <div className="file-filters">
-        <button
-          className={`filter-btn ${allSelected ? "active" : ""}`}
-          onClick={selectAll}
-          title="Todos"
-        >
-          <Layers size={12} />
-        </button>
-        <button
-          className={`filter-btn ${filters.mql ? "active" : ""}`}
-          onClick={() => toggleFilter("mql")}
-          title="MT5"
-        >
-          <Activity size={12} />
-        </button>
-        <button
-          className={`filter-btn ${filters.python ? "active" : ""}`}
-          onClick={() => toggleFilter("python")}
-          title="Python"
-        >
-          <Code2 size={12} />
-        </button>
-        <button
-          className={`filter-btn ${filters.cpp ? "active" : ""}`}
-          onClick={() => toggleFilter("cpp")}
-          title="C/C++"
-        >
-          <Braces size={12} />
-        </button>
-      </div>
       <div className="file-tree">
         {tree ? (
           treeNodes.flatMap((node) =>

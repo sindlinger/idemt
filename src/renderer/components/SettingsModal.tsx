@@ -298,6 +298,9 @@ const SettingsModal = ({
           ) : null}
         </div>
         <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
+          <button className="button" onClick={onClose}>
+            Cancelar
+          </button>
           <button className="button" onClick={handleValidate}>
             <CheckCircle2 size={12} />
             Validate

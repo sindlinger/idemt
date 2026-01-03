@@ -16,6 +16,7 @@
   --toolbar-border: #1f2833;
   --scroll-thumb: rgba(148, 163, 184, 0.45);
   --scroll-thumb-hover: rgba(148, 163, 184, 0.75);
+  --app-bg: radial-gradient(circle at top left, #1a2230 0%, #0b0f15 60%);
   --radius-xs: 4px;
   --radius-sm: 6px;
   --radius-md: 10px;
@@ -59,12 +60,15 @@ body,
 #root {
   height: 100%;
   min-height: 0;
+  background: transparent;
+  border-radius: 12px;
+  overflow: hidden;
 }
 
 body {
   margin: 0;
   font-family: "Space Grotesk", "IBM Plex Sans", "Segoe UI", sans-serif;
-  background: radial-gradient(circle at top left, #1a2230 0%, #0b0f15 60%);
+  background: transparent;
   color: var(--text);
   height: 100%;
   overflow: hidden;
@@ -85,6 +89,7 @@ button {
   border-radius: 12px;
   overflow: hidden;
   background: var(--bg);
+  background-image: var(--app-bg);
 }
 
 .app[data-theme="windows11"] {
@@ -425,6 +430,12 @@ button {
   align-items: center;
 }
 
+.toolbar-filters {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
 .toolbar-right {
   display: flex;
   gap: 8px;
@@ -510,15 +521,6 @@ button {
   align-items: center;
 }
 
-.new-file-select {
-  background: var(--panel-2);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  color: var(--text);
-  padding: 6px 8px;
-  font-size: 12px;
-}
-
 .app[data-mode="light"] {
   --bg: #f1f4f8;
   --bg-soft: #f4f6f9;
@@ -545,6 +547,7 @@ button {
   --editor-bg: #f4f6f9;
   --splitter-bg: #e1e6ee;
   --splitter-hover: rgba(47, 143, 115, 0.25);
+  --app-bg: #f1f4f8;
 }
 
 .app[data-theme="windows11"] .toolbar .toolbar-btn {
@@ -642,7 +645,7 @@ button {
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 2;
+  z-index: 1;
 }
 
 .splitter.vertical {
@@ -657,6 +660,11 @@ button {
 
 .splitter:hover {
   background: var(--splitter-hover);
+}
+
+.splitter.ghost,
+.splitter.ghost:hover {
+  background: transparent;
 }
 
 .split-pin {
@@ -1524,6 +1532,7 @@ button {
   display: flex;
   align-items: center;
   justify-content: center;
+  z-index: 50;
 }
 
 .settings-card {
