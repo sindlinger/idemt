@@ -53,8 +53,14 @@ const renderNode = (
     entries.push(
       <div
         key={key}
-        className="file-node dir"
-        style={{ paddingLeft: depth * 12 }}
+        className={`file-node dir ${expanded ? "open" : ""}`}
+        data-depth={depth}
+        style={
+          {
+            paddingLeft: 18 + depth * 14,
+            "--depth": depth
+          } as React.CSSProperties
+        }
         onClick={() => onToggleDir(node)}
       >
         <span className={`file-caret ${expanded ? "open" : ""}`}>{expanded ? "▾" : "▸"}</span>
@@ -68,7 +74,13 @@ const renderNode = (
           <div
             key={`${key}-loading`}
             className="file-node placeholder"
-            style={{ paddingLeft: (depth + 1) * 12 }}
+            data-depth={depth + 1}
+            style={
+              {
+                paddingLeft: 18 + (depth + 1) * 14,
+                "--depth": depth + 1
+              } as React.CSSProperties
+            }
           >
             Loading...
           </div>
@@ -78,7 +90,13 @@ const renderNode = (
           <div
             key={`${key}-empty`}
             className="file-node placeholder"
-            style={{ paddingLeft: (depth + 1) * 12 }}
+            data-depth={depth + 1}
+            style={
+              {
+                paddingLeft: 18 + (depth + 1) * 14,
+                "--depth": depth + 1
+              } as React.CSSProperties
+            }
           >
             Empty
           </div>
@@ -106,7 +124,13 @@ const renderNode = (
       <div
         key={key}
         className={`file-node ${isActive ? "active" : ""}`}
-        style={{ paddingLeft: depth * 12 }}
+        data-depth={depth}
+        style={
+          {
+            paddingLeft: 18 + depth * 14,
+            "--depth": depth
+          } as React.CSSProperties
+        }
         onDoubleClick={() => onOpenFile(node.path)}
       >
         <span className={`file-icon ${icon.className}`}>{icon.label}</span>
@@ -144,7 +168,7 @@ const LeftSidebar = ({
   activeFilePath,
   collapsed
 }: LeftSidebarProps) => {
-  const rootName = workspaceRoot?.split(/[\\/]/).pop();
+  const rootName = workspaceRoot ?? "";
   const expandedSet = useMemo(() => new Set(expandedDirs), [expandedDirs]);
 
   useEffect(() => {
@@ -199,7 +223,6 @@ const LeftSidebar = ({
       {workspaceRoot ? (
         <div className="workspace-meta">
           <div className="workspace-name">{rootName}</div>
-          <div className="workspace-path">{workspaceRoot}</div>
         </div>
       ) : null}
       <div className="panel-title" style={{ marginTop: 12 }}>

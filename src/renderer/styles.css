@@ -82,6 +82,8 @@ button {
   min-width: 0;
   border: 1px solid var(--topbar-border);
   box-shadow: var(--shadow);
+  border-radius: 12px;
+  overflow: hidden;
 }
 
 .app[data-theme="windows11"] {
@@ -732,6 +734,11 @@ button {
   min-height: 0;
   overflow: auto;
   scrollbar-gutter: stable;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 6px 6px 8px;
+  position: relative;
 }
 
 .file-filters {
@@ -781,6 +788,36 @@ button {
   align-items: center;
   gap: 8px;
   font-size: 12px;
+  position: relative;
+}
+
+.file-node::before {
+  content: "";
+  position: absolute;
+  left: calc(10px + var(--depth, 0) * 14px);
+  top: -8px;
+  bottom: -8px;
+  width: 1px;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.file-node::after {
+  content: "";
+  position: absolute;
+  left: calc(10px + var(--depth, 0) * 14px);
+  top: 50%;
+  width: 10px;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.file-node[data-depth="0"]::before,
+.file-node[data-depth="0"]::after {
+  display: none;
+}
+
+.file-node.dir.open {
+  color: #b8c7de;
 }
 
 .file-node:hover {

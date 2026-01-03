@@ -53,6 +53,19 @@ const EditorPane = ({
   const activeFile = files.find((file) => file.path === activeFilePath);
 
   useEffect(() => {
+    if (!activeFilePath && files.length > 0) {
+      onSelectTab(files[0].path);
+    }
+  }, [activeFilePath, files, onSelectTab]);
+
+  useEffect(() => {
+    if (!activeFile) return;
+    const editor = editorRef.current;
+    if (!editor) return;
+    editor.focus();
+  }, [activeFile]);
+
+  useEffect(() => {
     const editor = editorRef.current;
     if (!editor) return;
     if (!reviewChange) {
