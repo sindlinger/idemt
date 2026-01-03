@@ -65,7 +65,6 @@ const renderNode = (
         onClick={() => onToggleDir(node)}
       >
         <span className={`file-caret ${expanded ? "open" : ""}`}>{expanded ? "▾" : "▸"}</span>
-        <span className={`file-icon ${icon.className}`}>{icon.label}</span>
         <span className="file-name">{node.name}</span>
       </div>
     );

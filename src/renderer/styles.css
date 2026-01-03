@@ -922,15 +922,8 @@ button {
   border-color: rgba(148, 163, 184, 0.3);
 }
 
-.file-icon.folder {
-  width: 6px;
-  height: 6px;
-  padding: 0;
-  border-radius: 50%;
-  border: none;
-  background: rgba(148, 163, 184, 0.7);
-  color: transparent;
-  font-size: 0;
+.file-node.dir .file-icon {
+  display: none;
 }
 
 .editor-area {
