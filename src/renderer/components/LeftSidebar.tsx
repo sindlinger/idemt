@@ -20,6 +20,7 @@ const getIcon = (node: WorkspaceNode) => {
   if (ext === "ex4") return { label: "EX4", className: "mql" };
   if (ext === "dll") return { label: "DLL", className: "mql" };
   if (ext === "py") return { label: "PY", className: "python" };
+  if (CPP_EXT.has(ext)) return { label: ext === "c" ? "C" : "C++", className: "cpp" };
   if (ext === "ini") return { label: "INI", className: "ini" };
   if (ext === "json") return { label: "JS", className: "json" };
   if (ext === "md") return { label: "MD", className: "doc" };
@@ -145,13 +146,6 @@ const LeftSidebar = ({
 }: LeftSidebarProps) => {
   const rootName = workspaceRoot?.split(/[\\/]/).pop();
   const expandedSet = useMemo(() => new Set(expandedDirs), [expandedDirs]);
-
-  useEffect(() => {
-    if (!workspaceRoot) return;
-    if (!expandedSet.has(workspaceRoot)) {
-      onExpandedDirsChange([workspaceRoot, ...expandedDirs]);
-    }
-  }, [expandedDirs, expandedSet, onExpandedDirsChange, workspaceRoot]);
 
   useEffect(() => {
     if (!workspaceRoot) return;

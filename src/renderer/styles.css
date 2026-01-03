@@ -229,14 +229,14 @@ button {
 
 .window-controls {
   display: flex;
-  gap: 6px;
+  gap: 4px;
   -webkit-app-region: no-drag;
 }
 
 .window-btn {
-  width: 30px;
-  height: 24px;
-  border-radius: var(--radius-sm);
+  width: 26px;
+  height: 20px;
+  border-radius: var(--radius-xs);
   border: 1px solid transparent;
   background: transparent;
   color: var(--muted);
@@ -244,7 +244,7 @@ button {
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.15s ease;
+  transition: transform 0.1s ease, border 0.2s ease, background 0.2s ease, color 0.2s ease;
 }
 
 .window-btn.close {
@@ -255,6 +255,10 @@ button {
   border-color: var(--border);
   background: rgba(255, 255, 255, 0.06);
   color: var(--text);
+}
+
+.window-btn:active {
+  transform: translateY(1px);
 }
 
 .window-btn.close:hover {
@@ -271,6 +275,69 @@ button {
   fill: none;
   stroke-linecap: round;
   stroke-linejoin: round;
+}
+
+.win-icon {
+  width: 12px;
+  height: 12px;
+  position: relative;
+  display: inline-block;
+  color: currentColor;
+}
+
+.win-icon.win-min::before {
+  content: "";
+  position: absolute;
+  left: 1px;
+  right: 1px;
+  bottom: 2px;
+  height: 2px;
+  background: currentColor;
+}
+
+.win-icon.win-max::before {
+  content: "";
+  position: absolute;
+  inset: 1px;
+  border: 2px solid currentColor;
+  box-sizing: border-box;
+}
+
+.win-icon.win-restore::before {
+  content: "";
+  position: absolute;
+  inset: 2px 1px 1px 3px;
+  border: 2px solid currentColor;
+  box-sizing: border-box;
+}
+
+.win-icon.win-restore::after {
+  content: "";
+  position: absolute;
+  inset: 1px 3px 3px 1px;
+  border: 2px solid currentColor;
+  box-sizing: border-box;
+  opacity: 0.8;
+}
+
+.win-icon.win-close::before,
+.win-icon.win-close::after {
+  content: "";
+  position: absolute;
+  left: 1px;
+  right: 1px;
+  top: 5px;
+  height: 2px;
+  background: currentColor;
+  transform-origin: center;
+}
+
+.win-icon.win-close::before {
+  transform: rotate(45deg);
+}
+
+.win-icon.win-close::after {
+  transform: rotate(-45deg);
 }
 
 .app[data-theme="macos"] .titlebar {
@@ -324,6 +391,10 @@ button {
   color: #111;
 }
 
+.app[data-theme="windowsClassic"] .window-btn:active {
+  box-shadow: inset -1px -1px 0 #f3f3f3, inset 1px 1px 0 #9a9a9a;
+}
+
 .settings-field select {
   background: var(--panel-2);
   border: 1px solid var(--border);
@@ -358,8 +429,8 @@ button {
 }
 
 .toolbar-btn {
-  width: 32px;
-  height: 32px;
+  width: 28px;
+  height: 28px;
   padding: 0;
   border-radius: var(--radius-sm);
   border: 1px solid var(--border);
@@ -660,6 +731,7 @@ button {
   flex: 1;
   min-height: 0;
   overflow: auto;
+  scrollbar-gutter: stable;
 }
 
 .file-filters {
@@ -680,6 +752,17 @@ button {
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  transition: background 0.2s ease, border 0.2s ease, color 0.2s ease, transform 0.08s ease;
+}
+
+.filter-btn:hover {
+  border-color: rgba(49, 208, 154, 0.5);
+  background: rgba(49, 208, 154, 0.08);
+  color: var(--text);
+}
+
+.filter-btn:active {
+  transform: translateY(1px);
 }
 
 .filter-btn.active {
@@ -751,10 +834,28 @@ button {
   border-color: rgba(245, 215, 110, 0.4);
 }
 
+.file-icon.cpp {
+  background: rgba(125, 211, 252, 0.12);
+  color: #7dd3fc;
+  border-color: rgba(125, 211, 252, 0.35);
+}
+
 .file-icon.ini {
   background: rgba(245, 139, 122, 0.12);
   color: var(--danger);
   border-color: rgba(245, 139, 122, 0.35);
+}
+
+.file-icon.json {
+  background: rgba(99, 102, 241, 0.12);
+  color: #a5b4fc;
+  border-color: rgba(99, 102, 241, 0.3);
+}
+
+.file-icon.doc {
+  background: rgba(148, 163, 184, 0.12);
+  color: #cbd5e1;
+  border-color: rgba(148, 163, 184, 0.3);
 }
 
 .file-icon.folder {
@@ -934,9 +1035,10 @@ button {
 }
 
 .codex-toggle {
-  font-size: 11px;
-  padding: 4px 10px;
-  border-radius: 999px;
+  font-size: 10px;
+  height: 22px;
+  padding: 0 8px;
+  border-radius: var(--radius-pill);
   border: 1px solid var(--border);
   background: var(--panel-2);
   color: var(--muted);
@@ -947,11 +1049,25 @@ button {
   transition: all 0.2s ease;
 }
 
+.codex-toggle::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--muted);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.25);
+}
+
 .codex-toggle.active {
   background: var(--accent);
   color: #0c0f14;
   box-shadow: 0 0 12px rgba(77, 212, 255, 0.4);
   border-color: transparent;
+}
+
+.codex-toggle.active::before {
+  background: #0c0f14;
+  box-shadow: 0 0 6px rgba(255, 255, 255, 0.6);
 }
 
 .codex-section {
@@ -968,8 +1084,9 @@ button {
 }
 
 .codex-view-toggle {
-  font-size: 11px;
-  padding: 4px 8px;
+  font-size: 10px;
+  padding: 0 8px;
+  height: 24px;
   border-radius: var(--radius-sm);
   border: 1px solid var(--border);
   background: var(--panel-2);
@@ -978,11 +1095,18 @@ button {
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  transition: background 0.2s ease, border 0.2s ease, color 0.2s ease;
 }
 
 .codex-view-toggle.active {
   color: var(--text);
   border-color: var(--accent);
+}
+
+.codex-view-toggle:hover {
+  border-color: rgba(49, 208, 154, 0.5);
+  color: var(--text);
+  background: rgba(49, 208, 154, 0.08);
 }
 
 .codex-chat {
@@ -993,6 +1117,7 @@ button {
   border-radius: var(--radius-md);
   padding: 10px;
   overflow: auto;
+  scrollbar-gutter: stable;
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -1037,6 +1162,7 @@ button {
   padding: 8px;
   max-height: 160px;
   overflow: auto;
+  scrollbar-gutter: stable;
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -1223,6 +1349,7 @@ button {
   flex: 1;
   overflow: auto;
   padding: 10px;
+  scrollbar-gutter: stable;
 }
 
 .app[data-theme="windows11"] .bottom-panel {

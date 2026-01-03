@@ -32,7 +32,8 @@ const TopBar = ({
   showCursorPos,
   newFileExtension,
   onNewFileExtensionChange,
-  onNewFile
+  onNewFile,
+  uiTheme
 }: {
   workspaces: string[];
   activeWorkspaceId?: string;
@@ -51,14 +52,16 @@ const TopBar = ({
   newFileExtension: string;
   onNewFileExtensionChange: (value: string) => void;
   onNewFile: () => void;
+  uiTheme?: "windows11" | "windowsClassic" | "macos";
 }) => {
   const [maximized, setMaximized] = useState(false);
+  const isClassic = uiTheme === "windowsClassic";
 
   useEffect(() => {
-    if (typeof window.api.windowStateGet !== "function") return;
+    if (typeof window.api?.windowStateGet !== "function") return;
     window.api.windowStateGet().then((state) => setMaximized(state.maximized));
-    const unsub = window.api.onWindowState((state) => setMaximized(state.maximized));
-    return () => unsub();
+    const unsub = window.api.onWindowState?.((state) => setMaximized(state.maximized));
+    return () => unsub?.();
   }, []);
 
   return (
@@ -96,18 +99,20 @@ const TopBar = ({
           })}
         </div>
         <div className="window-controls">
-          <button className="window-btn" onClick={() => window.api.windowMinimize()}>
-            <Minus size={12} />
+          <button className="window-btn" onClick={() => window.api?.windowMinimize?.()}>
+            {isClassic ? <span className="win-icon win-min" /> : <Minus size={12} />}
           </button>
-          <button className="window-btn" onClick={() => window.api.windowMaximize()}>
-            {maximized ? (
+          <button className="window-btn" onClick={() => window.api?.windowMaximize?.()}>
+            {isClassic ? (
+              <span className={`win-icon ${maximized ? "win-restore" : "win-max"}`} />
+            ) : maximized ? (
               <Copy size={12} />
             ) : (
               <Square size={12} />
             )}
           </button>
-          <button className="window-btn close" onClick={() => window.api.windowClose()}>
-            <X size={12} />
+          <button className="window-btn close" onClick={() => window.api?.windowClose?.()}>
+            {isClassic ? <span className="win-icon win-close" /> : <X size={12} />}
           </button>
         </div>
       </div>

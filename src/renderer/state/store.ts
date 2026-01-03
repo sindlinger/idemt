@@ -64,7 +64,7 @@ const createWorkspaceSession = (root: string): WorkspaceSession => ({
   codexEvents: [],
   codexMessages: [],
   codexStatus: { running: false, startedAt: 0 },
-  codexSessionActive: false,
+  codexSessionActive: true,
   reviewChanges: {},
   testStatus: undefined,
   reportHtml: undefined
