@@ -9,6 +9,7 @@ Settings are stored in the user data directory:
 
 ## Editor tab
 - **Editor Font Size**
+- **Ctrl + Scroll** adjusts editor font size (auto-saved).
 - **Column Guides** (toggle)
 - **Cursor Position** (toggle)
 - **Guide Columns**: comma-separated list (e.g. `80, 120`)
@@ -40,5 +41,6 @@ The app also stores:
 - `workspaceRoot`: last active workspace
 - `recentWorkspaces`: list of open workspaces (max 4)
 - `windowBounds`: last window size/position (restored on next launch)
+- `layoutState` (localStorage): sidebar sizes, bottom panel height, collapsed pins
 
 See `docs/WORKSPACES.md` for details on multi-workspace behavior.
