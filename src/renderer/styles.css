@@ -84,6 +84,15 @@ button {
   height: 100vh;
   min-height: 0;
   min-width: 0;
+  background: transparent;
+}
+
+.app-surface {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
   border: 1px solid var(--topbar-border);
   box-shadow: var(--shadow);
   border-radius: 12px;
@@ -643,6 +652,16 @@ button {
   z-index: 1;
 }
 
+.splitter.left {
+  justify-content: flex-start;
+  padding-left: 2px;
+}
+
+.splitter.right {
+  justify-content: flex-end;
+  padding-right: 2px;
+}
+
 .splitter.vertical {
   width: var(--splitter-size);
   cursor: col-resize;
@@ -945,8 +964,8 @@ button {
 }
 
 .editor-plus {
-  width: 24px;
-  height: 24px;
+  width: 22px;
+  height: 22px;
   border-radius: 6px;
   border: 1px solid var(--border);
   background: var(--panel-2);
@@ -977,6 +996,11 @@ button {
   scrollbar-width: thin;
 }
 
+.tab-right {
+  display: inline-flex;
+  align-items: center;
+}
+
 .tab {
   padding: 6px 12px;
   border-radius: 6px 6px 0 0;
@@ -1005,22 +1029,24 @@ button {
 }
 
 .ext-trigger {
-  height: 24px;
-  padding: 0 6px;
+  width: 22px;
+  height: 22px;
+  padding: 0;
   border-radius: 6px;
   border: 1px solid var(--border);
   background: var(--panel-2);
   color: var(--text);
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  justify-content: center;
   cursor: pointer;
 }
 
 .ext-menu {
   position: absolute;
   top: calc(100% + 6px);
-  left: 0;
+  right: 0;
+  left: auto;
   min-width: 180px;
   background: var(--panel);
   border: 1px solid var(--border);
@@ -1046,6 +1072,12 @@ button {
   text-align: left;
 }
 
+.ext-option .ext-icon {
+  width: 22px;
+  height: 22px;
+  font-size: 9px;
+}
+
 .ext-option:hover {
   background: rgba(255, 255, 255, 0.06);
 }
@@ -1057,15 +1089,15 @@ button {
 }
 
 .ext-icon {
-  min-width: 38px;
-  height: 20px;
+  width: 18px;
+  height: 18px;
   border-radius: 6px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 10px;
+  font-size: 7px;
   font-weight: 600;
-  letter-spacing: 0.3px;
+  letter-spacing: 0.2px;
   background: rgba(255, 255, 255, 0.08);
   color: var(--text);
 }

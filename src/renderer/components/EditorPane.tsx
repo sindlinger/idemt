@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { ChevronDown, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 import "../monaco/setup";
 import MonacoEditor from "@monaco-editor/react";
 import type * as monacoType from "monaco-editor";
@@ -151,6 +151,20 @@ const EditorPane = ({
           >
             <Plus size={12} />
           </button>
+        </div>
+        <div className="tab-list">
+          {files.map((file) => (
+            <div
+              key={file.path}
+              className={`tab ${file.path === activeFilePath ? "active" : ""}`}
+              onClick={() => onSelectTab(file.path)}
+            >
+              <span>{file.path.split(/[\\/]/).pop()}</span>
+              {file.dirty ? <span className="dirty" /> : null}
+            </div>
+          ))}
+        </div>
+        <div className="tab-right">
           <div className="ext-dropdown" ref={extMenuRef}>
             <button
               className="ext-trigger"
@@ -159,7 +173,6 @@ const EditorPane = ({
               title={`New file extension: .${currentExt.id}`}
             >
               <span className={`ext-icon ext-${currentExt.id}`}>{currentExt.short}</span>
-              <ChevronDown size={10} />
             </button>
             {extMenuOpen ? (
               <div className="ext-menu">
@@ -182,18 +195,6 @@ const EditorPane = ({
               </div>
             ) : null}
           </div>
-        </div>
-        <div className="tab-list">
-          {files.map((file) => (
-            <div
-              key={file.path}
-              className={`tab ${file.path === activeFilePath ? "active" : ""}`}
-              onClick={() => onSelectTab(file.path)}
-            >
-              <span>{file.path.split(/[\\/]/).pop()}</span>
-              {file.dirty ? <span className="dirty" /> : null}
-            </div>
-          ))}
         </div>
       </div>
       <div className="editor-wrapper">

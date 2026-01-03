@@ -928,7 +928,8 @@ const App = () => {
       data-theme={settings.uiTheme ?? "windows11"}
       data-mode={settings.uiMode ?? "dark"}
     >
-      <TopBar
+      <div className="app-surface">
+        <TopBar
         workspaces={workspaceOrder}
         activeWorkspaceId={activeWorkspaceId}
         onSelectWorkspace={handleActivateWorkspace}
@@ -950,15 +951,15 @@ const App = () => {
         filters={fileFilters}
         onFiltersChange={handleFiltersChange}
       />
-      <div
-        className="workspace-area"
-        style={
-          {
-            "--splitter-size": `${SPLITTER_SIZE}px`,
-            "--bottom-pane": `${bottomPaneHeight}px`
-          } as React.CSSProperties
-        }
-      >
+        <div
+          className="workspace-area"
+          style={
+            {
+              "--splitter-size": `${SPLITTER_SIZE}px`,
+              "--bottom-pane": `${bottomPaneHeight}px`
+            } as React.CSSProperties
+          }
+        >
         <div
           className="main-layout"
           style={
@@ -985,7 +986,7 @@ const App = () => {
             collapsed={layout.leftCollapsed}
           />
           <div
-            className={`splitter vertical ${layout.leftCollapsed ? "ghost" : ""}`}
+            className={`splitter vertical left ${layout.leftCollapsed ? "ghost" : ""}`}
             onMouseDown={(event) => startResize("left", event)}
           >
             <button
@@ -1020,7 +1021,7 @@ const App = () => {
             onNewFileExtensionChange={setNewFileExt}
           />
           <div
-            className={`splitter vertical ${layout.rightCollapsed ? "ghost" : ""}`}
+            className={`splitter vertical right ${layout.rightCollapsed ? "ghost" : ""}`}
             onMouseDown={(event) => startResize("right", event)}
           >
             <button
@@ -1079,11 +1080,11 @@ const App = () => {
           onNavigateDiagnostic={handleDiagnosticNavigate}
         />
       </div>
-      <SettingsModal
-        open={settingsOpen}
-        settings={settings}
-        onClose={() => setSettingsOpen(false)}
-        onSave={(next) => {
+        <SettingsModal
+          open={settingsOpen}
+          settings={settings}
+          onClose={() => setSettingsOpen(false)}
+          onSave={(next) => {
           setSettings(next);
           api.settingsSet?.(next);
           const recent = (next.recentWorkspaces ?? []).filter(Boolean);
@@ -1116,8 +1117,9 @@ const App = () => {
           } else {
             setActiveWorkspace(undefined);
           }
-        }}
-      />
+          }}
+        />
+      </div>
     </div>
   );
 };
