@@ -236,7 +236,7 @@ const App = () => {
     python: true,
     cpp: true
   });
-  const newFileExt = "mq5";
+  const [newFileExt, setNewFileExt] = useState("mq5");
   const [layout, setLayout] = useState<LayoutState>(() => readLayoutState());
   const [viewport, setViewport] = useState(() => ({
     width: window.innerWidth,
@@ -1016,6 +1016,8 @@ const App = () => {
             editorRulers={settings.editorRulers}
             editorShowCursorPosition={settings.editorShowCursorPosition}
             onFontSizeChange={handleFontSizeChange}
+            newFileExtension={newFileExt}
+            onNewFileExtensionChange={setNewFileExt}
           />
           <div
             className={`splitter vertical ${layout.rightCollapsed ? "ghost" : ""}`}

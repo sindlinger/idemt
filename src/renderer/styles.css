@@ -936,17 +936,19 @@ button {
 
 .tabs {
   display: flex;
-  gap: 4px;
-  padding: 6px 8px;
+  gap: 6px;
+  padding: 6px 8px 0;
   border-bottom: 1px solid var(--border);
   background: var(--tabs-bg);
+  align-items: flex-end;
 }
 
 .tab {
-  padding: 6px 10px;
-  border-radius: var(--radius-sm);
+  padding: 6px 12px;
+  border-radius: 6px 6px 0 0;
   background: var(--tab-bg);
   border: 1px solid transparent;
+  border-bottom: none;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -957,8 +959,35 @@ button {
 
 .tab.active {
   color: var(--text);
-  border-color: rgba(49, 208, 154, 0.35);
+  border-color: var(--border);
+  border-top: 2px solid var(--accent);
   background: var(--tab-active-bg);
+}
+
+.ext-tabs {
+  margin-left: auto;
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  padding-bottom: 6px;
+}
+
+.ext-tab {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--panel-2);
+  color: var(--muted);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+}
+
+.ext-tab.active {
+  color: #eafff7;
+  border-color: rgba(49, 208, 154, 0.6);
+  background: rgba(49, 208, 154, 0.12);
 }
 
 .app[data-theme="windows11"] .sidebar {

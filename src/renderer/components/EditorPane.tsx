@@ -26,6 +26,8 @@ export type EditorPaneProps = {
   editorRulers?: number[];
   editorShowCursorPosition?: boolean;
   onFontSizeChange?: (size: number) => void;
+  newFileExtension?: string;
+  onNewFileExtensionChange?: (value: string) => void;
 };
 
 const EditorPane = ({
@@ -43,7 +45,9 @@ const EditorPane = ({
   editorShowRulers,
   editorRulers,
   editorShowCursorPosition,
-  onFontSizeChange
+  onFontSizeChange,
+  newFileExtension,
+  onNewFileExtensionChange
 }: EditorPaneProps) => {
   const editorRef = useRef<monacoType.editor.IStandaloneCodeEditor | null>(null);
   const monacoRef = useRef<typeof monacoType | null>(null);
@@ -108,6 +112,8 @@ const EditorPane = ({
   const fontSize = getEditorFontSize({ uiTheme, editorFontSize });
   const rulers = editorShowRulers ? editorRulers ?? [80, 120] : [];
 
+  const extensions = ["mq5", "mq4", "mqh", "py", "c", "cpp"];
+
   return (
     <div className="editor-area">
       <div className="tabs">
@@ -121,6 +127,19 @@ const EditorPane = ({
             {file.dirty ? <span className="dirty" /> : null}
           </div>
         ))}
+        <div className="ext-tabs">
+          {extensions.map((ext) => (
+            <button
+              key={ext}
+              className={`ext-tab ${newFileExtension === ext ? "active" : ""}`}
+              onClick={() => onNewFileExtensionChange?.(ext)}
+              title={`New file extension: .${ext}`}
+              type="button"
+            >
+              .{ext}
+            </button>
+          ))}
+        </div>
       </div>
       <div className="editor-wrapper">
         {activeFile ? (
