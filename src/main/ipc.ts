@@ -59,19 +59,6 @@ export const registerIpc = async (window: BrowserWindow, settingsService: Settin
   ipcMain.handle("workspace:select", async () => {
     logLine("ipc", "workspace:select");
     const currentRoot = settingsService.get().workspaceRoot;
-    if (!currentRoot) {
-      const autoRoot = await findLatestTerminalHash();
-      if (autoRoot) {
-        logLine("ipc", `workspace:autoRoot ${autoRoot}`);
-        await updateRecentWorkspaces(autoRoot);
-        await workspaceService.setWorkspace(autoRoot);
-        window.webContents.send("workspace:selected", autoRoot);
-        const tree = await workspaceService.buildTree();
-        if (tree) window.webContents.send("workspace:tree", tree);
-        return autoRoot;
-      }
-    }
-
     const defaultPath = await resolveDefaultWorkspacePath(currentRoot);
     logLine("ipc", `workspace:dialog defaultPath=${defaultPath}`);
     const result = await dialog.showOpenDialog(window, {
@@ -299,9 +286,12 @@ export const registerIpc = async (window: BrowserWindow, settingsService: Settin
 };
 
 const resolveDefaultWorkspacePath = async (current?: string) => {
-  if (current && (await pathExists(current))) return current;
-
   const candidates = await resolveTerminalRoots();
+  if (current && (await pathExists(current))) {
+    const parent = path.dirname(current);
+    const match = candidates.find((root) => samePath(root, parent));
+    return match ?? current;
+  }
 
   for (const candidate of candidates) {
     if (await pathExists(candidate)) return candidate;
@@ -309,6 +299,9 @@ const resolveDefaultWorkspacePath = async (current?: string) => {
 
   return app.getPath("home");
 };
+
+const samePath = (left: string, right: string) =>
+  path.resolve(left).toLowerCase() === path.resolve(right).toLowerCase();
 
 const pathExists = async (value: string) => {
   try {

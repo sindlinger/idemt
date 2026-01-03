@@ -58,11 +58,13 @@ const SettingsModal = ({
 
   const browse = async (key: keyof Settings, type: "file" | "directory") => {
     const title = `Select ${String(key)}`;
+    if (typeof window.api?.selectPath !== "function") return;
     const result = await window.api.selectPath({ type, title });
     if (result) updateField(key, result);
   };
 
   const handleValidate = async () => {
+    if (typeof window.api?.settingsValidate !== "function") return;
     const result = await window.api.settingsValidate(local);
     setValidation(result);
   };

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import "../monaco/setup";
 import MonacoEditor from "@monaco-editor/react";
 import type * as monacoType from "monaco-editor";
 import type { OpenFileState, ReviewChange } from "@state/store";

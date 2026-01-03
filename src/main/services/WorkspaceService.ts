@@ -85,20 +85,25 @@ export class WorkspaceService {
     }
   }
 
-  async listWorkspaceFiles(): Promise<string[]> {
+  async listWorkspaceFiles(extensions?: string[]): Promise<string[]> {
     if (!this.workspaceRoot) return [];
     const results: string[] = [];
-    await this.walk(this.workspaceRoot, results);
+    const extSet = extensions ? new Set(extensions.map((ext) => ext.toLowerCase())) : null;
+    await this.walk(this.workspaceRoot, results, extSet);
     return results;
   }
 
-  private async walk(dir: string, results: string[]) {
+  private async walk(dir: string, results: string[], extSet: Set<string> | null) {
     const entries = await fs.readdir(dir, { withFileTypes: true });
     for (const entry of entries) {
       if (entry.isDirectory()) {
         if (IGNORED_DIRS.has(entry.name)) continue;
-        await this.walk(path.join(dir, entry.name), results);
+        await this.walk(path.join(dir, entry.name), results, extSet);
       } else {
+        if (extSet) {
+          const ext = path.extname(entry.name).toLowerCase();
+          if (!extSet.has(ext)) continue;
+        }
         results.push(path.join(dir, entry.name));
       }
     }

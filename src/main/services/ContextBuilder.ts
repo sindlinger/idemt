@@ -50,7 +50,19 @@ export const buildContext = async (inputs: ContextInputs) => {
   }
 
   buffer.push("\n# Relevant Files");
-  const allFiles = await workspace.listWorkspaceFiles();
+  const allFiles = await workspace.listWorkspaceFiles([
+    ".mq4",
+    ".mq5",
+    ".mqh",
+    ".py",
+    ".c",
+    ".cpp",
+    ".cc",
+    ".cxx",
+    ".h",
+    ".hpp",
+    ".hh"
+  ]);
   const relevantFiles = selectRelevantFiles(allFiles, activeFilePath);
   for (const file of relevantFiles) {
     try {
@@ -66,9 +78,20 @@ export const buildContext = async (inputs: ContextInputs) => {
 };
 
 const selectRelevantFiles = (files: string[], activeFilePath?: string) => {
-  const mqlFiles = files.filter((file) =>
-    [".mq4", ".mq5", ".mqh"].includes(path.extname(file).toLowerCase())
-  );
+  const allowed = new Set([
+    ".mq4",
+    ".mq5",
+    ".mqh",
+    ".py",
+    ".c",
+    ".cpp",
+    ".cc",
+    ".cxx",
+    ".h",
+    ".hpp",
+    ".hh"
+  ]);
+  const mqlFiles = files.filter((file) => allowed.has(path.extname(file).toLowerCase()));
 
   if (!activeFilePath) return mqlFiles.slice(0, MAX_FILES);
 

@@ -58,6 +58,7 @@ export class CodexService {
     const codexPath = settings.codexPath || "codex";
     const extraArgs = parseArgs(settings.codexArgs);
     const args = ["--skip-git-repo-check", "exec", ...extraArgs, "-"];
+    this.logs.append("system", `Codex exec: ${codexPath} ${args.join(" ")}`);
     const child = spawn(codexPath, args, {
       cwd: this.workspace.getRoot() ?? process.cwd(),
       env: { ...process.env }
@@ -142,7 +143,23 @@ export class CodexService {
 }
 
 const snapshotWorkspace = async (workspace: WorkspaceService) => {
-  const files = await workspace.listWorkspaceFiles();
+  const files = await workspace.listWorkspaceFiles([
+    ".mq4",
+    ".mq5",
+    ".mqh",
+    ".py",
+    ".c",
+    ".cpp",
+    ".cc",
+    ".cxx",
+    ".h",
+    ".hpp",
+    ".hh",
+    ".ts",
+    ".tsx",
+    ".json",
+    ".md"
+  ]);
   const snapshots = new Map<string, string>();
   const candidates = files.filter((file) =>
     [".mq4", ".mq5", ".mqh", ".ts", ".tsx", ".json", ".md"].includes(

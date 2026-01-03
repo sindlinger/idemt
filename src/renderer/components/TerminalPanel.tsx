@@ -27,38 +27,42 @@ const TerminalPanel = ({ cwd }: { cwd?: string }) => {
 
     let unsubscribe: (() => void) | undefined;
 
-    window.api
-      .terminalSpawn({ cwd })
-      .then(({ id }) => {
-        if (!id) return;
-        setSessionId(id);
-        sessionRef.current = id;
-        fitAddon.fit();
-        window.api.terminalResize(id, terminal.cols, terminal.rows);
-        unsubscribe = window.api.onTerminalData(({ id: incoming, data }) => {
-          if (incoming === id) {
-            terminal.write(data);
+    if (typeof window.api?.terminalSpawn === "function") {
+      window.api
+        .terminalSpawn({ cwd })
+        .then(({ id }) => {
+          if (!id) return;
+          setSessionId(id);
+          sessionRef.current = id;
+          fitAddon.fit();
+          window.api?.terminalResize?.(id, terminal.cols, terminal.rows);
+          unsubscribe = window.api?.onTerminalData?.(({ id: incoming, data }) => {
+            if (incoming === id) {
+              terminal.write(data);
+            }
+          });
+        })
+        .catch((err) => {
+          const message = err ? String(err) : "terminal spawn failed";
+          terminal.write(`\r\n[terminal error] ${message}\r\n`);
+          if (typeof window?.api?.log === "function") {
+            window.api.log({ scope: "renderer:terminal", message });
           }
         });
-      })
-      .catch((err) => {
-        const message = err ? String(err) : "terminal spawn failed";
-        terminal.write(`\r\n[terminal error] ${message}\r\n`);
-        if (typeof window?.api?.log === "function") {
-          window.api.log({ scope: "renderer:terminal", message });
-        }
-      });
+    } else {
+      terminal.write("\r\n[terminal error] API unavailable.\r\n");
+    }
 
     terminal.onData((data) => {
       if (sessionRef.current) {
-        window.api.terminalWrite(sessionRef.current, data);
+        window.api?.terminalWrite?.(sessionRef.current, data);
       }
     });
 
     const handleResize = () => {
       fitAddon.fit();
       if (sessionRef.current) {
-        window.api.terminalResize(sessionRef.current, terminal.cols, terminal.rows);
+        window.api?.terminalResize?.(sessionRef.current, terminal.cols, terminal.rows);
       }
     };
 
@@ -67,7 +71,7 @@ const TerminalPanel = ({ cwd }: { cwd?: string }) => {
     return () => {
       window.removeEventListener("resize", handleResize);
       unsubscribe?.();
-      if (sessionRef.current) window.api.terminalClose(sessionRef.current);
+      if (sessionRef.current) window.api?.terminalClose?.(sessionRef.current);
       terminal.dispose();
     };
   }, [cwd]);

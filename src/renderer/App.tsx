@@ -211,6 +211,7 @@ const App = () => {
     settingsOpen,
     setSettingsOpen
   } = useAppStore();
+  const api = window.api as Partial<typeof window.api>;
 
   const activeWorkspace = activeWorkspaceId ? workspaces[activeWorkspaceId] : undefined;
   const workspaceRoot =
@@ -237,6 +238,10 @@ const App = () => {
   });
   const [newFileExt, setNewFileExt] = useState("mq5");
   const [layout, setLayout] = useState<LayoutState>(() => readLayoutState());
+  const [viewport, setViewport] = useState(() => ({
+    width: window.innerWidth,
+    height: window.innerHeight
+  }));
   const [navigationTarget, setNavigationTarget] = useState<{
     path: string;
     line: number;
@@ -261,7 +266,11 @@ const App = () => {
 
   useEffect(() => {
     log("App mounted", "renderer:startup");
-    window.api.settingsGet().then((loaded) => {
+    if (typeof api.settingsGet !== "function") {
+      log("window.api.settingsGet missing", "renderer:startup");
+      return;
+    }
+    api.settingsGet().then((loaded) => {
       log("settings loaded", "renderer:startup");
       setSettings(loaded);
       const recent = (loaded.recentWorkspaces ?? []).filter(Boolean);
@@ -274,34 +283,44 @@ const App = () => {
       const activeRoot = roots[roots.length - 1];
       if (activeRoot) {
         setActiveWorkspace(activeRoot);
-        window.api.activateWorkspace(activeRoot).then((tree) => {
-          if (tree) setTree(tree, activeRoot);
-          log("workspace tree requested", "renderer:startup");
-        });
-        window.api.setWatchedDirs([activeRoot]);
+        if (typeof api.activateWorkspace === "function") {
+          api.activateWorkspace(activeRoot).then((tree) => {
+            if (tree) setTree(tree, activeRoot);
+            log("workspace tree requested", "renderer:startup");
+          });
+        } else if (typeof api.requestWorkspaceTree === "function") {
+          api.requestWorkspaceTree(fileFilters).then((tree) => {
+            if (tree) setTree(tree, activeRoot);
+            log("workspace tree requested", "renderer:startup");
+          });
+        }
+        api.setWatchedDirs?.([activeRoot]);
       }
     });
-  }, [addWorkspace, fileFilters, setActiveWorkspace, setSettings, setTree]);
+  }, [addWorkspace, api, fileFilters, setActiveWorkspace, setSettings, setTree]);
 
   useEffect(() => {
-    if (typeof window.api.setWorkspaceFilters === "function") {
-      window.api.setWorkspaceFilters(fileFilters);
-    }
+    api.setWorkspaceFilters?.(fileFilters);
     if (!workspaceRoot) return;
-    window.api.requestWorkspaceTree(fileFilters).then((tree) => {
+    api.requestWorkspaceTree?.(fileFilters).then((tree) => {
       if (tree) {
         const id = activeWorkspaceId ?? LOCAL_WORKSPACE_ID;
         setTree(tree, id);
       }
     });
-  }, [activeWorkspaceId, fileFilters, workspaceRoot, setTree]);
+  }, [activeWorkspaceId, api, fileFilters, workspaceRoot, setTree]);
 
   useEffect(() => {
     if (!workspaceRoot) return;
-    if (typeof window.api.setWatchedDirs === "function") {
-      window.api.setWatchedDirs([workspaceRoot]);
-    }
-  }, [workspaceRoot]);
+    api.setWatchedDirs?.([workspaceRoot]);
+  }, [api, workspaceRoot]);
+
+  useEffect(() => {
+    const handleResize = () =>
+      setViewport({ width: window.innerWidth, height: window.innerHeight });
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   useEffect(() => {
     const workspaceId = activeWorkspaceId ?? LOCAL_WORKSPACE_ID;
@@ -385,7 +404,7 @@ const App = () => {
           count + workspace.openFiles.filter((file) => file.dirty).length,
         0
       );
-      window.api.replyAppCloseRequest({ requestId, dirtyCount });
+      api.replyAppCloseRequest?.({ requestId, dirtyCount });
     };
 
     const handleAppSaveAll = async ({ requestId }: { requestId: number }) => {
@@ -399,62 +418,98 @@ const App = () => {
       for (const { file, workspaceId } of dirtyFiles) {
         const ok = await saveOpenFile(file, workspaceId);
         if (!ok) {
-          window.api.replyAppSaveAll({ requestId, success: false });
+          api.replyAppSaveAll?.({ requestId, success: false });
           return;
         }
       }
-      window.api.replyAppSaveAll({ requestId, success: true });
+      api.replyAppSaveAll?.({ requestId, success: true });
     };
 
-    const unsubscribers = [
-      window.api.onWorkspaceSelected((root) => {
-        addWorkspace(root);
-        setActiveWorkspace(root);
-      }),
-      window.api.onWorkspaceTree((tree) => {
-        const state = useAppStore.getState();
-        const id = state.activeWorkspaceId ?? LOCAL_WORKSPACE_ID;
-        setTree(tree, id);
-      }),
-      window.api.onWorkspaceDirUpdate((payload) => {
-        const state = useAppStore.getState();
-        const id = state.activeWorkspaceId ?? LOCAL_WORKSPACE_ID;
-        const current = state.workspaces[id]?.tree;
-        if (!current) return;
-        setTree(updateTreeChildren(current, payload.dirPath, payload.children), id);
-      }),
-      window.api.onFileChanged((payload) => handleFileChanged(payload)),
-      window.api.onCodexEvent((event) => {
-        const id =
-          codexWorkspaceRef.current ??
-          useAppStore.getState().activeWorkspaceId ??
-          LOCAL_WORKSPACE_ID;
-        addCodexEvent(event, id);
-      }),
-      window.api.onCodexDone((status) => handleCodexDone(status)),
-      window.api.onBuildResult((result) => {
-        const id = useAppStore.getState().activeWorkspaceId ?? LOCAL_WORKSPACE_ID;
-        setDiagnostics(result.diagnostics, id);
-      }),
-      window.api.onTestStatus((status) => {
-        const id = useAppStore.getState().activeWorkspaceId ?? LOCAL_WORKSPACE_ID;
-        handleTestStatus(status, id);
-      }),
-      window.api.onTestDone((status) => {
-        const id = useAppStore.getState().activeWorkspaceId ?? LOCAL_WORKSPACE_ID;
-        handleTestStatus(status, id);
-      }),
-      window.api.logsAppend((payload) => {
-        const id = useAppStore.getState().activeWorkspaceId ?? LOCAL_WORKSPACE_ID;
-        addOutputLog(payload, id);
-      })
-    ];
+    const unsubscribers: Array<() => void> = [];
 
-    if (typeof window.api.onAppCloseRequest === "function") {
-      unsubscribers.push(window.api.onAppCloseRequest(handleAppCloseRequest));
+    if (api.onWorkspaceSelected) {
+      unsubscribers.push(
+        api.onWorkspaceSelected((root) => {
+          addWorkspace(root);
+          setActiveWorkspace(root);
+        })
+      );
     }
-    if (typeof window.api.onAppSaveAll === "function") {
-      unsubscribers.push(window.api.onAppSaveAll(handleAppSaveAll));
+    if (api.onWorkspaceTree) {
+      unsubscribers.push(
+        api.onWorkspaceTree((tree) => {
+          const state = useAppStore.getState();
+          const id = state.activeWorkspaceId ?? LOCAL_WORKSPACE_ID;
+          setTree(tree, id);
+        })
+      );
+    }
+    if (api.onWorkspaceDirUpdate) {
+      unsubscribers.push(
+        api.onWorkspaceDirUpdate((payload) => {
+          const state = useAppStore.getState();
+          const id = state.activeWorkspaceId ?? LOCAL_WORKSPACE_ID;
+          const current = state.workspaces[id]?.tree;
+          if (!current) return;
+          setTree(updateTreeChildren(current, payload.dirPath, payload.children), id);
+        })
+      );
+    }
+    if (api.onFileChanged) {
+      unsubscribers.push(api.onFileChanged((payload) => handleFileChanged(payload)));
+    }
+    if (api.onCodexEvent) {
+      unsubscribers.push(
+        api.onCodexEvent((event) => {
+          const id =
+            codexWorkspaceRef.current ??
+            useAppStore.getState().activeWorkspaceId ??
+            LOCAL_WORKSPACE_ID;
+          addCodexEvent(event, id);
+        })
+      );
+    }
+    if (api.onCodexDone) {
+      unsubscribers.push(api.onCodexDone((status) => handleCodexDone(status)));
+    }
+    if (api.onBuildResult) {
+      unsubscribers.push(
+        api.onBuildResult((result) => {
+          const id = useAppStore.getState().activeWorkspaceId ?? LOCAL_WORKSPACE_ID;
+          setDiagnostics(result.diagnostics, id);
+        })
+      );
+    }
+    if (api.onTestStatus) {
+      unsubscribers.push(
+        api.onTestStatus((status) => {
+          const id = useAppStore.getState().activeWorkspaceId ?? LOCAL_WORKSPACE_ID;
+          handleTestStatus(status, id);
+        })
+      );
+    }
+    if (api.onTestDone) {
+      unsubscribers.push(
+        api.onTestDone((status) => {
+          const id = useAppStore.getState().activeWorkspaceId ?? LOCAL_WORKSPACE_ID;
+          handleTestStatus(status, id);
+        })
+      );
+    }
+    if (api.logsAppend) {
+      unsubscribers.push(
+        api.logsAppend((payload) => {
+          const id = useAppStore.getState().activeWorkspaceId ?? LOCAL_WORKSPACE_ID;
+          addOutputLog(payload, id);
+        })
+      );
+    }
+
+    if (api.onAppCloseRequest) {
+      unsubscribers.push(api.onAppCloseRequest(handleAppCloseRequest));
+    }
+    if (api.onAppSaveAll) {
+      unsubscribers.push(api.onAppSaveAll(handleAppSaveAll));
     }
     return () => {
       unsubscribers.forEach((unsub) => unsub());
@@ -487,8 +542,8 @@ const App = () => {
 
   useEffect(() => {
     if (!settingsOpen) return;
-    window.api.settingsGet().then((loaded) => setSettings(loaded));
-  }, [settingsOpen, setSettings]);
+    api.settingsGet?.().then((loaded) => loaded && setSettings(loaded));
+  }, [api, settingsOpen, setSettings]);
 
   useEffect(() => {
     if (!activeFilePath) return;
@@ -512,7 +567,7 @@ const App = () => {
     const load = async () => {
       for (const filePath of saved.openFiles) {
         if (cancelled) return;
-        const file = await window.api.openFile(filePath);
+        const file = await api.openFile?.(filePath);
         if (file) openFile(file, workspaceId);
       }
       if (!cancelled && saved.activeFilePath) {
@@ -538,7 +593,7 @@ const App = () => {
   }, [activeWorkspaceId, activeFilePath, expandedDirs, openFiles]);
 
   const handleOpenWorkspace = async () => {
-    const root = await window.api.selectWorkspace();
+    const root = await api.selectWorkspace?.();
     if (root) {
       addWorkspace(root);
       setActiveWorkspace(root);
@@ -549,18 +604,19 @@ const App = () => {
     if (!root) return;
     addWorkspace(root);
     setActiveWorkspace(root);
-    if (typeof window.api.activateWorkspace === "function") {
-      const tree = await window.api.activateWorkspace(root);
+    if (typeof api.activateWorkspace === "function") {
+      const tree = await api.activateWorkspace(root);
       if (tree) setTree(tree, root);
-    } else {
-      const tree = await window.api.requestWorkspaceTree(fileFilters);
+    } else if (typeof api.requestWorkspaceTree === "function") {
+      const tree = await api.requestWorkspaceTree(fileFilters);
       if (tree) setTree(tree, root);
     }
   };
 
   const handleCloseWorkspace = async (root: string) => {
     if (!root) return;
-    const result = await window.api.closeWorkspace(root);
+    const result = await api.closeWorkspace?.(root);
+    if (!result) return;
     removeWorkspaceState(root);
     removeWorkspace(root);
     if (result.workspaceRoot) {
@@ -575,14 +631,14 @@ const App = () => {
   };
 
   const handleOpenFile = async (path: string) => {
-    const file = await window.api.openFile(path);
+    const file = await api.openFile?.(path);
     if (!file) return;
     const workspaceId = activeWorkspaceId ?? LOCAL_WORKSPACE_ID;
     openFile(file, workspaceId);
   };
 
   const handleLoadDir = async (dirPath: string) => {
-    const children = await window.api.listDirectory(dirPath, fileFilters);
+    const children = await api.listDirectory?.(dirPath, fileFilters);
     if (!children) return;
     const state = useAppStore.getState();
     const workspaceId = state.activeWorkspaceId ?? LOCAL_WORKSPACE_ID;
@@ -596,10 +652,11 @@ const App = () => {
   };
 
   const handleWatchDirsChange = (dirs: string[]) => {
-    if (typeof window.api.setWatchedDirs !== "function") return;
+    if (typeof api.setWatchedDirs !== "function") return;
     const next = new Set(dirs);
     if (workspaceRoot) next.add(workspaceRoot);
-    window.api.setWatchedDirs(Array.from(next));
+    const MAX_WATCH_DIRS = 48;
+    api.setWatchedDirs(Array.from(next).slice(0, MAX_WATCH_DIRS));
   };
 
   const handleSave = async () => {
@@ -621,7 +678,7 @@ const App = () => {
     ? 0
     : clamp(layout.rightWidth, MIN_RIGHT, MAX_RIGHT);
   const bottomPaneHeight = bottomPanelOpen
-    ? clamp(layout.bottomHeight, MIN_BOTTOM, Math.max(MIN_BOTTOM, window.innerHeight - 220))
+    ? clamp(layout.bottomHeight, MIN_BOTTOM, Math.max(MIN_BOTTOM, viewport.height - 220))
     : 0;
 
   const startResize = (axis: "left" | "right" | "bottom", event: React.MouseEvent) => {
@@ -654,7 +711,11 @@ const App = () => {
         const next = clamp(startRight + (startX - moveEvent.clientX), MIN_RIGHT, MAX_RIGHT);
         setLayout((prev) => ({ ...prev, rightWidth: next, rightCollapsed: false }));
       } else {
-        const next = clamp(startBottom + (startY - moveEvent.clientY), MIN_BOTTOM, window.innerHeight - 220);
+        const next = clamp(
+          startBottom + (startY - moveEvent.clientY),
+          MIN_BOTTOM,
+          viewport.height - 220
+        );
         setLayout((prev) => ({ ...prev, bottomHeight: next }));
       }
     };
@@ -674,6 +735,7 @@ const App = () => {
     file: typeof openFiles[number],
     workspaceId: string = activeWorkspaceId ?? LOCAL_WORKSPACE_ID
   ) => {
+    if (typeof api.saveFile !== "function") return false;
     if (file.path.startsWith("untitled:")) {
       const extMatch = file.path.match(/\.(\w+)$/);
       const ext = extMatch ? `.${extMatch[1]}` : ".mq5";
@@ -681,19 +743,19 @@ const App = () => {
       const defaultRoot =
         workspaceId && workspaceId !== LOCAL_WORKSPACE_ID ? workspaceId : workspaceRoot;
       const defaultPath = defaultRoot ? joinPath(defaultRoot, defaultName) : defaultName;
-      const target = await window.api.savePath({
+      const target = await api.savePath?.({
         title: "Save File",
         defaultPath
       });
       if (!target) return false;
-      const saved = await window.api.saveFile(target, file.content);
+      const saved = await api.saveFile(target, file.content);
       if (saved) {
         renameOpenFile(file.path, target, file.content, workspaceId);
         return true;
       }
       return false;
     }
-    const saved = await window.api.saveFile(file.path, file.content);
+    const saved = await api.saveFile(file.path, file.content);
     if (saved) {
       markSaved(file.path, file.content, workspaceId);
     }
@@ -717,7 +779,7 @@ const App = () => {
   const handleToggleSetting = (key: "editorShowRulers" | "editorShowCursorPosition") => {
     const next = { ...settings, [key]: !settings[key] };
     setSettings(next);
-    window.api.settingsSet(next);
+    api.settingsSet?.(next);
   };
 
   const handleFontSizeChange = (size: number) => {
@@ -725,13 +787,14 @@ const App = () => {
     if (settings.editorFontSize === normalized) return;
     const next = { ...settings, editorFontSize: normalized };
     setSettings(next);
-    window.api.settingsSet(next);
+    api.settingsSet?.(next);
   };
 
   const handleCompile = async () => {
     const current = openFiles.find((file) => file.path === activeFilePath) ?? openFiles[0];
     if (!current) return;
-    await window.api.buildStart({ filePath: current.path });
+    if (typeof api.buildStart !== "function") return;
+    await api.buildStart({ filePath: current.path });
     setBottomTab("problems");
     openBottomPanel();
   };
@@ -748,7 +811,8 @@ const App = () => {
     const reportDir = settings.reportsDir || (workspaceRoot ? joinPath(workspaceRoot, "reports") : "reports");
     const reportPath = joinPath(reportDir, `report-${Date.now()}.html`);
     const request: TestRequest = { ...testConfig, reportPath };
-    await window.api.testStart(request);
+    if (typeof api.testStart !== "function") return;
+    await api.testStart(request);
     setBottomTab("output");
     openBottomPanel();
   };
@@ -758,7 +822,8 @@ const App = () => {
     addCodexMessage({ role: "user", text: message, timestamp: Date.now() }, workspaceId);
     codexWorkspaceRef.current = workspaceId;
     codexRunStartIndexRef.current[workspaceId] = codexEvents.length;
-    const status = await window.api.runCodex({
+    if (typeof api.runCodex !== "function") return;
+    const status = await api.runCodex({
       userMessage: message,
       activeFilePath,
       selection,
@@ -824,7 +889,9 @@ const App = () => {
   const handleRevertChange = async (path: string) => {
     const change = reviewChanges[path];
     if (!change) return;
-    await window.api.saveFile(path, change.before);
+    if (typeof api.saveFile === "function") {
+      await api.saveFile(path, change.before);
+    }
     const workspaceId = activeWorkspaceId ?? LOCAL_WORKSPACE_ID;
     updateFileContent(path, change.before, change.before, workspaceId);
     removeReviewChange(path, workspaceId);
@@ -842,9 +909,11 @@ const App = () => {
   const handleTestStatus = async (status: TestStatus, workspaceId: string) => {
     setTestStatus(status, workspaceId);
     if (status.reportReady && status.reportPath) {
-      const html = await window.api.readReport(status.reportPath);
-      setReportHtml(html, workspaceId);
-      setBottomTab("report");
+      const html = await api.readReport?.(status.reportPath);
+      if (html) {
+        setReportHtml(html, workspaceId);
+        setBottomTab("report");
+      }
     }
   };
 
@@ -880,6 +949,7 @@ const App = () => {
         newFileExtension={newFileExt}
         onNewFileExtensionChange={setNewFileExt}
         onNewFile={handleNewFile}
+        uiTheme={settings.uiTheme}
       />
       <div
         className="workspace-area"
@@ -964,7 +1034,7 @@ const App = () => {
             sessionActive={codexSessionActive}
             reviewChanges={reviewChanges}
             onRun={handleCodexRun}
-            onCancel={() => window.api.cancelCodex()}
+            onCancel={() => api.cancelCodex?.()}
             onToggleSession={(active) => {
               const workspaceId = activeWorkspaceId ?? LOCAL_WORKSPACE_ID;
               setCodexSessionActive(active, workspaceId);
@@ -1005,7 +1075,7 @@ const App = () => {
         onClose={() => setSettingsOpen(false)}
         onSave={(next) => {
           setSettings(next);
-          window.api.settingsSet(next);
+          api.settingsSet?.(next);
           const recent = (next.recentWorkspaces ?? []).filter(Boolean);
           const activeRoot = next.workspaceRoot || recent[recent.length - 1];
           const state = useAppStore.getState();
@@ -1023,16 +1093,16 @@ const App = () => {
           }
           if (activeRoot) {
             setActiveWorkspace(activeRoot);
-            if (typeof window.api.activateWorkspace === "function") {
-              window.api.activateWorkspace(activeRoot).then((tree) => {
+            if (typeof api.activateWorkspace === "function") {
+              api.activateWorkspace(activeRoot).then((tree) => {
                 if (tree) setTree(tree, activeRoot);
               });
-            } else {
-              window.api.requestWorkspaceTree(fileFilters).then((tree) => {
+            } else if (typeof api.requestWorkspaceTree === "function") {
+              api.requestWorkspaceTree(fileFilters).then((tree) => {
                 if (tree) setTree(tree, activeRoot);
               });
             }
-            window.api.setWatchedDirs([activeRoot]);
+            api.setWatchedDirs?.([activeRoot]);
           } else {
             setActiveWorkspace(undefined);
           }
