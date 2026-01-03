@@ -1095,29 +1095,13 @@ button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 7px;
-  font-weight: 600;
-  letter-spacing: 0.2px;
-  background: rgba(255, 255, 255, 0.08);
-  color: var(--text);
+  background: transparent;
 }
 
-.ext-icon.ext-py {
-  background: linear-gradient(135deg, #3b82f6, #facc15);
-  color: #0c0f16;
-}
-
-.ext-icon.ext-c,
-.ext-icon.ext-cpp {
-  background: linear-gradient(135deg, #2563eb, #7dd3fc);
-  color: #0b1220;
-}
-
-.ext-icon.ext-mq5,
-.ext-icon.ext-mq4,
-.ext-icon.ext-mqh {
-  background: linear-gradient(135deg, #16a34a, #22c55e);
-  color: #03130a;
+.ext-icon-img {
+  width: 100%;
+  height: 100%;
+  display: block;
 }
 
 .app[data-theme="windows11"] .sidebar {

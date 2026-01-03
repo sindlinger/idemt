@@ -1,5 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { Plus } from "lucide-react";
+import iconMql from "../assets/icons/mql.svg";
+import iconPython from "../assets/icons/python.svg";
+import iconC from "../assets/icons/c.svg";
+import iconCpp from "../assets/icons/cpp.svg";
 import "../monaco/setup";
 import MonacoEditor from "@monaco-editor/react";
 import type * as monacoType from "monaco-editor";
@@ -129,12 +133,12 @@ const EditorPane = ({
   const rulers = editorShowRulers ? editorRulers ?? [80, 120] : [];
 
   const extensionOptions = [
-    { id: "mq5", label: "MQL5", short: "MQL5" },
-    { id: "mq4", label: "MQL4", short: "MQL4" },
-    { id: "mqh", label: "MQL Header", short: "MQH" },
-    { id: "py", label: "Python", short: "PY" },
-    { id: "c", label: "C", short: "C" },
-    { id: "cpp", label: "C++", short: "C++" }
+    { id: "mq5", label: "MQL5", icon: iconMql },
+    { id: "mq4", label: "MQL4", icon: iconMql },
+    { id: "mqh", label: "MQL Header", icon: iconMql },
+    { id: "py", label: "Python", icon: iconPython },
+    { id: "c", label: "C", icon: iconC },
+    { id: "cpp", label: "C++", icon: iconCpp }
   ];
   const currentExt =
     extensionOptions.find((option) => option.id === newFileExtension) ?? extensionOptions[0];
@@ -172,7 +176,9 @@ const EditorPane = ({
               type="button"
               title={`New file extension: .${currentExt.id}`}
             >
-              <span className={`ext-icon ext-${currentExt.id}`}>{currentExt.short}</span>
+              <span className="ext-icon">
+                <img className="ext-icon-img" src={currentExt.icon} alt={currentExt.label} />
+              </span>
             </button>
             {extMenuOpen ? (
               <div className="ext-menu">
@@ -188,7 +194,9 @@ const EditorPane = ({
                     }}
                     type="button"
                   >
-                    <span className={`ext-icon ext-${option.id}`}>{option.short}</span>
+                    <span className="ext-icon">
+                      <img className="ext-icon-img" src={option.icon} alt={option.label} />
+                    </span>
                     <span className="ext-label">{option.label}</span>
                   </button>
                 ))}
