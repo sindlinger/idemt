@@ -946,7 +946,6 @@ const App = () => {
         onToggleCursorPos={() => handleToggleSetting("editorShowCursorPosition")}
         showGuides={settings.editorShowRulers ?? false}
         showCursorPos={settings.editorShowCursorPosition ?? false}
-        onNewFile={handleNewFile}
         uiTheme={settings.uiTheme}
         filters={fileFilters}
         onFiltersChange={handleFiltersChange}
@@ -1016,6 +1015,7 @@ const App = () => {
             editorRulers={settings.editorRulers}
             editorShowCursorPosition={settings.editorShowCursorPosition}
             onFontSizeChange={handleFontSizeChange}
+            onNewFile={handleNewFile}
             newFileExtension={newFileExt}
             onNewFileExtensionChange={setNewFileExt}
           />

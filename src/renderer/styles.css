@@ -515,11 +515,6 @@ button {
   color: var(--accent);
 }
 
-.new-file-group {
-  display: flex;
-  gap: 6px;
-  align-items: center;
-}
 
 .app[data-mode="light"] {
   --bg: #f1f4f8;
@@ -936,11 +931,50 @@ button {
 
 .tabs {
   display: flex;
-  gap: 6px;
+  gap: 10px;
   padding: 6px 8px 0;
   border-bottom: 1px solid var(--border);
   background: var(--tabs-bg);
+  align-items: center;
+}
+
+.tab-actions {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.editor-plus {
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--panel-2);
+  color: var(--text);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.2s ease, border 0.2s ease, transform 0.08s ease;
+}
+
+.editor-plus:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.editor-plus:active {
+  transform: translateY(1px);
+}
+
+.tab-list {
+  display: flex;
+  gap: 6px;
   align-items: flex-end;
+  flex: 1;
+  min-width: 0;
+  overflow-x: auto;
+  padding-bottom: 0;
+  scrollbar-width: thin;
 }
 
 .tab {
@@ -955,6 +989,7 @@ button {
   gap: 6px;
   font-size: 13px;
   color: var(--muted);
+  white-space: nowrap;
 }
 
 .tab.active {
@@ -964,30 +999,93 @@ button {
   background: var(--tab-active-bg);
 }
 
-.ext-tabs {
-  margin-left: auto;
-  display: flex;
-  gap: 6px;
-  align-items: center;
-  padding-bottom: 6px;
+.ext-dropdown {
+  position: relative;
+  display: inline-flex;
 }
 
-.ext-tab {
-  font-size: 11px;
-  padding: 2px 8px;
+.ext-trigger {
+  height: 24px;
+  padding: 0 6px;
   border-radius: 6px;
   border: 1px solid var(--border);
   background: var(--panel-2);
-  color: var(--muted);
-  cursor: pointer;
+  color: var(--text);
   display: inline-flex;
   align-items: center;
+  gap: 4px;
+  cursor: pointer;
 }
 
-.ext-tab.active {
-  color: #eafff7;
-  border-color: rgba(49, 208, 154, 0.6);
+.ext-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  min-width: 180px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  z-index: 20;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.28);
+}
+
+.ext-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+  text-align: left;
+}
+
+.ext-option:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.ext-option.active {
+  border-color: rgba(49, 208, 154, 0.5);
   background: rgba(49, 208, 154, 0.12);
+  color: #eafff7;
+}
+
+.ext-icon {
+  min-width: 38px;
+  height: 20px;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text);
+}
+
+.ext-icon.ext-py {
+  background: linear-gradient(135deg, #3b82f6, #facc15);
+  color: #0c0f16;
+}
+
+.ext-icon.ext-c,
+.ext-icon.ext-cpp {
+  background: linear-gradient(135deg, #2563eb, #7dd3fc);
+  color: #0b1220;
+}
+
+.ext-icon.ext-mq5,
+.ext-icon.ext-mq4,
+.ext-icon.ext-mqh {
+  background: linear-gradient(135deg, #16a34a, #22c55e);
+  color: #03130a;
 }
 
 .app[data-theme="windows11"] .sidebar {
@@ -1446,12 +1544,12 @@ button {
 .bottom-tabs {
   display: flex;
   gap: 8px;
-  padding: 8px;
+  padding: 6px 8px;
   border-bottom: 1px solid var(--border);
 }
 
 .bottom-tab {
-  padding: 6px 10px;
+  padding: 4px 8px;
   border-radius: var(--radius-sm);
   cursor: pointer;
   background: var(--panel-2);
@@ -1459,6 +1557,7 @@ button {
   display: inline-flex;
   align-items: center;
   gap: 6px;
+  font-size: 11px;
 }
 
 .bottom-tab.active {

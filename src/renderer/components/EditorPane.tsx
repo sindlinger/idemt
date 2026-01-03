@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { ChevronDown, Plus } from "lucide-react";
 import "../monaco/setup";
 import MonacoEditor from "@monaco-editor/react";
 import type * as monacoType from "monaco-editor";
@@ -26,6 +27,7 @@ export type EditorPaneProps = {
   editorRulers?: number[];
   editorShowCursorPosition?: boolean;
   onFontSizeChange?: (size: number) => void;
+  onNewFile?: () => void;
   newFileExtension?: string;
   onNewFileExtensionChange?: (value: string) => void;
 };
@@ -46,13 +48,16 @@ const EditorPane = ({
   editorRulers,
   editorShowCursorPosition,
   onFontSizeChange,
+  onNewFile,
   newFileExtension,
   onNewFileExtensionChange
 }: EditorPaneProps) => {
   const editorRef = useRef<monacoType.editor.IStandaloneCodeEditor | null>(null);
   const monacoRef = useRef<typeof monacoType | null>(null);
   const decorationsRef = useRef<string[]>([]);
+  const extMenuRef = useRef<HTMLDivElement | null>(null);
   const [cursorPos, setCursorPos] = useState({ line: 1, column: 1 });
+  const [extMenuOpen, setExtMenuOpen] = useState(false);
 
   const activeFile = files.find((file) => file.path === activeFilePath);
 
@@ -107,37 +112,87 @@ const EditorPane = ({
     monaco.editor.setTheme(theme);
   }, [uiTheme, uiMode]);
 
+  useEffect(() => {
+    const handleClick = (event: MouseEvent) => {
+      if (!extMenuRef.current) return;
+      if (!extMenuRef.current.contains(event.target as Node)) {
+        setExtMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, []);
+
   const themeName = getMqlThemeName({ uiTheme, uiMode });
   const fontFamily = getEditorFont({ uiTheme });
   const fontSize = getEditorFontSize({ uiTheme, editorFontSize });
   const rulers = editorShowRulers ? editorRulers ?? [80, 120] : [];
 
-  const extensions = ["mq5", "mq4", "mqh", "py", "c", "cpp"];
+  const extensionOptions = [
+    { id: "mq5", label: "MQL5", short: "MQL5" },
+    { id: "mq4", label: "MQL4", short: "MQL4" },
+    { id: "mqh", label: "MQL Header", short: "MQH" },
+    { id: "py", label: "Python", short: "PY" },
+    { id: "c", label: "C", short: "C" },
+    { id: "cpp", label: "C++", short: "C++" }
+  ];
+  const currentExt =
+    extensionOptions.find((option) => option.id === newFileExtension) ?? extensionOptions[0];
 
   return (
     <div className="editor-area">
       <div className="tabs">
-        {files.map((file) => (
-          <div
-            key={file.path}
-            className={`tab ${file.path === activeFilePath ? "active" : ""}`}
-            onClick={() => onSelectTab(file.path)}
+        <div className="tab-actions">
+          <button
+            className="editor-plus"
+            onClick={() => onNewFile?.()}
+            title="New File"
+            type="button"
           >
-            <span>{file.path.split(/[\\/]/).pop()}</span>
-            {file.dirty ? <span className="dirty" /> : null}
-          </div>
-        ))}
-        <div className="ext-tabs">
-          {extensions.map((ext) => (
+            <Plus size={12} />
+          </button>
+          <div className="ext-dropdown" ref={extMenuRef}>
             <button
-              key={ext}
-              className={`ext-tab ${newFileExtension === ext ? "active" : ""}`}
-              onClick={() => onNewFileExtensionChange?.(ext)}
-              title={`New file extension: .${ext}`}
+              className="ext-trigger"
+              onClick={() => setExtMenuOpen((open) => !open)}
               type="button"
+              title={`New file extension: .${currentExt.id}`}
             >
-              .{ext}
+              <span className={`ext-icon ext-${currentExt.id}`}>{currentExt.short}</span>
+              <ChevronDown size={10} />
             </button>
+            {extMenuOpen ? (
+              <div className="ext-menu">
+                {extensionOptions.map((option) => (
+                  <button
+                    key={option.id}
+                    className={`ext-option ${
+                      newFileExtension === option.id ? "active" : ""
+                    }`}
+                    onClick={() => {
+                      onNewFileExtensionChange?.(option.id);
+                      setExtMenuOpen(false);
+                    }}
+                    type="button"
+                  >
+                    <span className={`ext-icon ext-${option.id}`}>{option.short}</span>
+                    <span className="ext-label">{option.label}</span>
+                  </button>
+                ))}
+              </div>
+            ) : null}
+          </div>
+        </div>
+        <div className="tab-list">
+          {files.map((file) => (
+            <div
+              key={file.path}
+              className={`tab ${file.path === activeFilePath ? "active" : ""}`}
+              onClick={() => onSelectTab(file.path)}
+            >
+              <span>{file.path.split(/[\\/]/).pop()}</span>
+              {file.dirty ? <span className="dirty" /> : null}
+            </div>
           ))}
         </div>
       </div>

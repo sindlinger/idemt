@@ -9,7 +9,6 @@ import {
   Hammer,
   Layers,
   Minus,
-  Plus,
   Ruler,
   Save,
   Settings as SettingsIcon,
@@ -34,7 +33,6 @@ const TopBar = ({
   onToggleCursorPos,
   showGuides,
   showCursorPos,
-  onNewFile,
   uiTheme,
   filters,
   onFiltersChange
@@ -53,7 +51,6 @@ const TopBar = ({
   onToggleCursorPos: () => void;
   showGuides: boolean;
   showCursorPos: boolean;
-  onNewFile: () => void;
   uiTheme?: "windows11" | "windowsClassic" | "macos";
   filters: { mql: boolean; python: boolean; cpp: boolean };
   onFiltersChange: (filters: { mql: boolean; python: boolean; cpp: boolean }) => void;
@@ -131,11 +128,6 @@ const TopBar = ({
       </div>
       <div className="toolbar">
         <div className="toolbar-actions">
-          <div className="new-file-group">
-            <button className="toolbar-btn" onClick={onNewFile} title="New File">
-              <Plus size={14} />
-            </button>
-          </div>
           <button className="toolbar-btn" onClick={onOpenWorkspace} title="Open Workspace">
             <FolderOpen size={14} />
           </button>
@@ -152,37 +144,37 @@ const TopBar = ({
             <SettingsIcon size={14} />
           </button>
         </div>
-        <div className="toolbar-filters">
-          <button
-            className={`filter-btn ${allSelected ? "active" : ""}`}
-            onClick={selectAll}
-            title="Todos"
-          >
-            <Layers size={12} />
-          </button>
-          <button
-            className={`filter-btn ${filters.mql ? "active" : ""}`}
-            onClick={() => toggleFilter("mql")}
-            title="MT5"
-          >
-            <Activity size={12} />
-          </button>
-          <button
-            className={`filter-btn ${filters.python ? "active" : ""}`}
-            onClick={() => toggleFilter("python")}
-            title="Python"
-          >
-            <Code2 size={12} />
-          </button>
-          <button
-            className={`filter-btn ${filters.cpp ? "active" : ""}`}
-            onClick={() => toggleFilter("cpp")}
-            title="C/C++"
-          >
-            <Braces size={12} />
-          </button>
-        </div>
         <div className="toolbar-right">
+          <div className="toolbar-filters">
+            <button
+              className={`filter-btn ${allSelected ? "active" : ""}`}
+              onClick={selectAll}
+              title="Todos"
+            >
+              <Layers size={12} />
+            </button>
+            <button
+              className={`filter-btn ${filters.mql ? "active" : ""}`}
+              onClick={() => toggleFilter("mql")}
+              title="MT5"
+            >
+              <Activity size={12} />
+            </button>
+            <button
+              className={`filter-btn ${filters.python ? "active" : ""}`}
+              onClick={() => toggleFilter("python")}
+              title="Python"
+            >
+              <Code2 size={12} />
+            </button>
+            <button
+              className={`filter-btn ${filters.cpp ? "active" : ""}`}
+              onClick={() => toggleFilter("cpp")}
+              title="C/C++"
+            >
+              <Braces size={12} />
+            </button>
+          </div>
           <button
             className={`toolbar-btn ${showGuides ? "active" : ""}`}
             onClick={onToggleGuides}
