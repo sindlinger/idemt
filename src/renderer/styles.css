@@ -29,6 +29,8 @@
   --editor-bg: var(--bg-soft);
   --splitter-bg: rgba(31, 40, 51, 0.85);
   --splitter-hover: rgba(49, 208, 154, 0.18);
+  --line-highlight: rgba(49, 208, 154, 0.16);
+  --line-highlight-border: #31d09a;
 }
 
 * {
@@ -140,6 +142,8 @@ button {
   --editor-bg: #e6e6e6;
   --splitter-bg: #bcbcbc;
   --splitter-hover: #a9c6ff;
+  --line-highlight: rgba(47, 111, 237, 0.16);
+  --line-highlight-border: #2f6fed;
 }
 
 .app[data-theme="macos"] {
@@ -153,6 +157,8 @@ button {
   --editor-bg: #11151f;
   --splitter-bg: rgba(255, 255, 255, 0.08);
   --splitter-hover: rgba(255, 255, 255, 0.18);
+  --line-highlight: rgba(148, 163, 184, 0.2);
+  --line-highlight-border: #94a3b8;
 }
 
 
@@ -552,6 +558,37 @@ button {
   --splitter-bg: #e1e6ee;
   --splitter-hover: rgba(47, 143, 115, 0.25);
   --app-bg: #f1f4f8;
+  --line-highlight: rgba(47, 143, 115, 0.16);
+  --line-highlight-border: #2f8f73;
+}
+
+.app[data-mode="light"] .workspace-chip.active,
+.app[data-mode="light"] .workspace-chip:hover,
+.app[data-mode="light"] .toolbar-btn.active,
+.app[data-mode="light"] .filter-btn.active,
+.app[data-mode="light"] .ext-option.active {
+  color: #1e2431;
+}
+
+.app[data-mode="light"] .toolbar-btn.active {
+  background: rgba(47, 143, 115, 0.18);
+  border-color: rgba(47, 143, 115, 0.5);
+}
+
+.app[data-mode="light"] .filter-btn.active {
+  background: rgba(47, 143, 115, 0.18);
+  border-color: rgba(47, 143, 115, 0.5);
+}
+
+.app[data-mode="light"] .workspace-chip.active,
+.app[data-mode="light"] .workspace-chip:hover {
+  background: rgba(47, 143, 115, 0.18);
+  border-color: rgba(47, 143, 115, 0.5);
+}
+
+.app[data-mode="light"] .ext-option.active {
+  background: rgba(47, 143, 115, 0.18);
+  border-color: rgba(47, 143, 115, 0.5);
 }
 
 .app[data-theme="windows11"] .toolbar .toolbar-btn {
@@ -717,7 +754,12 @@ button {
 }
 
 .sidebar.collapsed {
-  display: none;
+  width: 0;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  pointer-events: none;
 }
 
 .sidebar.right {
@@ -964,8 +1006,8 @@ button {
 }
 
 .editor-plus {
-  width: 22px;
-  height: 22px;
+  width: 24px;
+  height: 24px;
   border-radius: 6px;
   border: 1px solid var(--border);
   background: var(--panel-2);
@@ -1029,8 +1071,8 @@ button {
 }
 
 .ext-trigger {
-  width: 22px;
-  height: 22px;
+  width: 24px;
+  height: 24px;
   padding: 0;
   border-radius: 6px;
   border: 1px solid var(--border);
@@ -1073,8 +1115,8 @@ button {
 }
 
 .ext-option .ext-icon {
-  width: 22px;
-  height: 22px;
+  width: 24px;
+  height: 24px;
   font-size: 9px;
 }
 
@@ -1089,8 +1131,8 @@ button {
 }
 
 .ext-icon {
-  width: 18px;
-  height: 18px;
+  width: 20px;
+  height: 20px;
   border-radius: 6px;
   display: inline-flex;
   align-items: center;
@@ -1804,9 +1846,9 @@ button {
 }
 
 .line-highlight {
-  background: rgba(77, 212, 255, 0.12);
+  background: var(--line-highlight);
 }
 
 .line-highlight-margin {
-  border-left: 3px solid var(--accent);
+  border-left: 3px solid var(--line-highlight-border);
 }

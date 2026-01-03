@@ -930,27 +930,27 @@ const App = () => {
     >
       <div className="app-surface">
         <TopBar
-        workspaces={workspaceOrder}
-        activeWorkspaceId={activeWorkspaceId}
-        onSelectWorkspace={handleActivateWorkspace}
-        onCloseWorkspace={handleCloseWorkspace}
-        onOpenWorkspace={handleOpenWorkspace}
-        onSave={handleSave}
-        onCompile={handleCompile}
-        onRunTest={handleRunTest}
-        onSettings={() => setSettingsOpen(true)}
-        onToggleTerminal={() => {
-          setBottomTab("terminal");
-          openBottomPanel();
-        }}
-        onToggleGuides={() => handleToggleSetting("editorShowRulers")}
-        onToggleCursorPos={() => handleToggleSetting("editorShowCursorPosition")}
-        showGuides={settings.editorShowRulers ?? false}
-        showCursorPos={settings.editorShowCursorPosition ?? false}
-        uiTheme={settings.uiTheme}
-        filters={fileFilters}
-        onFiltersChange={handleFiltersChange}
-      />
+          workspaces={workspaceOrder}
+          activeWorkspaceId={activeWorkspaceId}
+          onSelectWorkspace={handleActivateWorkspace}
+          onCloseWorkspace={handleCloseWorkspace}
+          onOpenWorkspace={handleOpenWorkspace}
+          onSave={handleSave}
+          onCompile={handleCompile}
+          onRunTest={handleRunTest}
+          onSettings={() => setSettingsOpen(true)}
+          onToggleTerminal={() => {
+            setBottomTab("terminal");
+            openBottomPanel();
+          }}
+          onToggleGuides={() => handleToggleSetting("editorShowRulers")}
+          onToggleCursorPos={() => handleToggleSetting("editorShowCursorPosition")}
+          showGuides={settings.editorShowRulers ?? false}
+          showCursorPos={settings.editorShowCursorPosition ?? false}
+          uiTheme={settings.uiTheme}
+          filters={fileFilters}
+          onFiltersChange={handleFiltersChange}
+        />
         <div
           className="workspace-area"
           style={
@@ -960,16 +960,16 @@ const App = () => {
             } as React.CSSProperties
           }
         >
-        <div
-          className="main-layout"
-          style={
-            {
-              "--splitter-size": `${SPLITTER_SIZE}px`,
-              "--left-pane": `${leftPaneWidth}px`,
-              "--right-pane": `${rightPaneWidth}px`
-            } as React.CSSProperties
-          }
-        >
+          <div
+            className="main-layout"
+            style={
+              {
+                "--splitter-size": `${SPLITTER_SIZE}px`,
+                "--left-pane": `${leftPaneWidth}px`,
+                "--right-pane": `${rightPaneWidth}px`
+              } as React.CSSProperties
+            }
+          >
           <LeftSidebar
             tree={tree}
             workspaceRoot={workspaceRoot}
@@ -1079,46 +1079,46 @@ const App = () => {
           onTabChange={setBottomTab}
           onNavigateDiagnostic={handleDiagnosticNavigate}
         />
-      </div>
         <SettingsModal
           open={settingsOpen}
           settings={settings}
           onClose={() => setSettingsOpen(false)}
           onSave={(next) => {
-          setSettings(next);
-          api.settingsSet?.(next);
-          const recent = (next.recentWorkspaces ?? []).filter(Boolean);
-          const activeRoot = next.workspaceRoot || recent[recent.length - 1];
-          const state = useAppStore.getState();
-          const existing = Object.keys(state.workspaces).filter(
-            (id) => id !== LOCAL_WORKSPACE_ID
-          );
-          for (const root of existing) {
-            if (!recent.includes(root)) {
-              removeWorkspaceState(root);
-              removeWorkspace(root);
+            setSettings(next);
+            api.settingsSet?.(next);
+            const recent = (next.recentWorkspaces ?? []).filter(Boolean);
+            const activeRoot = next.workspaceRoot || recent[recent.length - 1];
+            const state = useAppStore.getState();
+            const existing = Object.keys(state.workspaces).filter(
+              (id) => id !== LOCAL_WORKSPACE_ID
+            );
+            for (const root of existing) {
+              if (!recent.includes(root)) {
+                removeWorkspaceState(root);
+                removeWorkspace(root);
+              }
             }
-          }
-          for (const root of recent) {
-            addWorkspace(root);
-          }
-          if (activeRoot) {
-            setActiveWorkspace(activeRoot);
-            if (typeof api.activateWorkspace === "function") {
-              api.activateWorkspace(activeRoot).then((tree) => {
-                if (tree) setTree(tree, activeRoot);
-              });
-            } else if (typeof api.requestWorkspaceTree === "function") {
-              api.requestWorkspaceTree(fileFilters).then((tree) => {
-                if (tree) setTree(tree, activeRoot);
-              });
+            for (const root of recent) {
+              addWorkspace(root);
             }
-            api.setWatchedDirs?.([activeRoot]);
-          } else {
-            setActiveWorkspace(undefined);
-          }
+            if (activeRoot) {
+              setActiveWorkspace(activeRoot);
+              if (typeof api.activateWorkspace === "function") {
+                api.activateWorkspace(activeRoot).then((tree) => {
+                  if (tree) setTree(tree, activeRoot);
+                });
+              } else if (typeof api.requestWorkspaceTree === "function") {
+                api.requestWorkspaceTree(fileFilters).then((tree) => {
+                  if (tree) setTree(tree, activeRoot);
+                });
+              }
+              api.setWatchedDirs?.([activeRoot]);
+            } else {
+              setActiveWorkspace(undefined);
+            }
           }}
         />
+        </div>
       </div>
     </div>
   );
