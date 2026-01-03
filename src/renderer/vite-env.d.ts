@@ -11,7 +11,9 @@ import type {
   Settings,
   TestRequest,
   TestStatus,
-  WorkspaceNode
+  WorkspaceNode,
+  FileFilters,
+  WorkspaceDirUpdate
 } from "@shared/ipc";
 
 declare global {
@@ -21,11 +23,19 @@ declare global {
       settingsSet: (settings: Settings) => Promise<Settings>;
       settingsValidate: (settings: Settings) => Promise<Record<string, boolean>>;
       selectWorkspace: () => Promise<string | null>;
-      requestWorkspaceTree: () => Promise<WorkspaceNode | null>;
+      activateWorkspace: (root: string) => Promise<WorkspaceNode | null>;
+      closeWorkspace: (
+        root: string
+      ) => Promise<{ workspaceRoot: string; recentWorkspaces: string[]; tree?: WorkspaceNode | null }>;
+      requestWorkspaceTree: (filters?: FileFilters) => Promise<WorkspaceNode | null>;
+      listDirectory: (dirPath: string, filters?: FileFilters) => Promise<WorkspaceNode[] | null>;
+      setWorkspaceFilters: (filters: FileFilters) => void;
+      setWatchedDirs: (dirs: string[]) => void;
       openFile: (filePath: string) => Promise<OpenFile | null>;
       saveFile: (filePath: string, content: string) => Promise<boolean>;
       onWorkspaceSelected: (handler: (root: string) => void) => () => void;
       onWorkspaceTree: (handler: (tree: WorkspaceNode) => void) => () => void;
+      onWorkspaceDirUpdate: (handler: (payload: WorkspaceDirUpdate) => void) => () => void;
       onFileChanged: (handler: (payload: FileChangePayload) => void) => () => void;
       runCodex: (request: CodexRunRequest) => Promise<CodexRunStatus>;
       cancelCodex: () => void;
@@ -45,6 +55,18 @@ declare global {
       readReport: (filePath: string) => Promise<string>;
       selectPath: (options: { type: "file" | "directory"; title: string }) =>
         Promise<string | null>;
+      savePath: (options: { title: string; defaultPath?: string }) =>
+        Promise<string | null>;
+      windowMinimize: () => void;
+      windowMaximize: () => void;
+      windowClose: () => void;
+      windowStateGet: () => Promise<{ maximized: boolean }>;
+      onWindowState: (handler: (payload: { maximized: boolean }) => void) => () => void;
+      onAppCloseRequest: (handler: (payload: { requestId: number }) => void) => () => void;
+      replyAppCloseRequest: (payload: { requestId: number; dirtyCount: number }) => void;
+      onAppSaveAll: (handler: (payload: { requestId: number }) => void) => () => void;
+      replyAppSaveAll: (payload: { requestId: number; success: boolean }) => void;
+      log: (payload: { scope?: string; message: string }) => void;
     };
   }
 }

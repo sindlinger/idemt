@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { CheckCircle2, FolderOpen, Save, Trash2 } from "lucide-react";
 import type { Settings } from "@shared/ipc";
 
 const SettingsModal = ({
@@ -14,15 +15,45 @@ const SettingsModal = ({
 }) => {
   const [local, setLocal] = useState<Settings>(settings);
   const [validation, setValidation] = useState<Record<string, boolean>>({});
+  const [activeTab, setActiveTab] = useState<"ui" | "editor" | "paths" | "codex" | "workspaces">(
+    "ui"
+  );
 
   useEffect(() => {
     setLocal(settings);
+    setValidation({});
   }, [settings]);
 
   if (!open) return null;
 
-  const updateField = (key: keyof Settings, value: string) => {
+  const updateField = (key: keyof Settings, value: string | number) => {
     setLocal((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const updateNumberField = (key: keyof Settings, value: string) => {
+    const parsed = Number(value);
+    if (Number.isNaN(parsed)) return;
+    setLocal((prev) => ({ ...prev, [key]: parsed }));
+  };
+
+  const updateBooleanField = (key: keyof Settings, value: boolean) => {
+    setLocal((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const updateRulersField = (value: string) => {
+    const parsed = value
+      .split(",")
+      .map((part) => Number(part.trim()))
+      .filter((num) => Number.isFinite(num) && num > 0);
+    setLocal((prev) => ({ ...prev, editorRulers: parsed }));
+  };
+
+  const updateRecentWorkspaces = (list: string[]) => {
+    const next = list.filter(Boolean);
+    const nextRoot = next.includes(local.workspaceRoot ?? "")
+      ? local.workspaceRoot
+      : next[next.length - 1] ?? "";
+    setLocal((prev) => ({ ...prev, recentWorkspaces: next, workspaceRoot: nextRoot }));
   };
 
   const browse = async (key: keyof Settings, type: "file" | "directory") => {
@@ -40,38 +71,197 @@ const SettingsModal = ({
     <div className="settings-modal" onClick={onClose}>
       <div className="settings-card" onClick={(event) => event.stopPropagation()}>
         <h2>Settings</h2>
-        {(
-          [
-            { key: "workspaceRoot", label: "Workspace Root", type: "directory" },
-            { key: "metaeditorPath", label: "MetaEditor Path", type: "file" },
-            { key: "terminalPath", label: "Terminal Path", type: "file" },
-            { key: "codexPath", label: "Codex Path", type: "file" },
-            { key: "mtDataDir", label: "MT Data Dir", type: "directory" },
-            { key: "reportsDir", label: "Reports Dir", type: "directory" }
-          ] as const
-        ).map((field) => (
-          <div className="settings-field" key={field.key}>
-            <label>{field.label}</label>
-            <div style={{ display: "flex", gap: 8 }}>
-              <input
-                value={local[field.key] ?? ""}
-                onChange={(event) => updateField(field.key, event.target.value)}
-              />
-              <button
-                className="button"
-                type="button"
-                onClick={() => browse(field.key, field.type)}
-              >
-                Browse
-              </button>
-            </div>
-            {validation[field.key] === false ? (
-              <span style={{ color: "var(--danger)", fontSize: 12 }}>Path not found.</span>
-            ) : null}
-          </div>
-        ))}
+        <div className="settings-tabs">
+          <button
+            className={`settings-tab ${activeTab === "ui" ? "active" : ""}`}
+            onClick={() => setActiveTab("ui")}
+          >
+            UI
+          </button>
+          <button
+            className={`settings-tab ${activeTab === "editor" ? "active" : ""}`}
+            onClick={() => setActiveTab("editor")}
+          >
+            Editor
+          </button>
+          <button
+            className={`settings-tab ${activeTab === "paths" ? "active" : ""}`}
+            onClick={() => setActiveTab("paths")}
+          >
+            Paths
+          </button>
+          <button
+            className={`settings-tab ${activeTab === "codex" ? "active" : ""}`}
+            onClick={() => setActiveTab("codex")}
+          >
+            Codex
+          </button>
+          <button
+            className={`settings-tab ${activeTab === "workspaces" ? "active" : ""}`}
+            onClick={() => setActiveTab("workspaces")}
+          >
+            Workspaces
+          </button>
+        </div>
+        <div className="settings-section">
+          {activeTab === "ui" ? (
+            <>
+              <div className="settings-field">
+                <label>Color Mode</label>
+                <select
+                  value={local.uiMode ?? "dark"}
+                  onChange={(event) => updateField("uiMode", event.target.value)}
+                >
+                  <option value="dark">Dark</option>
+                  <option value="light">Light</option>
+                </select>
+              </div>
+              <div className="settings-field">
+                <label>UI Theme</label>
+                <select
+                  value={local.uiTheme ?? "windows11"}
+                  onChange={(event) => updateField("uiTheme", event.target.value)}
+                >
+                  <option value="windows11">Windows 11</option>
+                  <option value="windowsClassic">Windows Classic</option>
+                  <option value="macos">macOS</option>
+                </select>
+              </div>
+            </>
+          ) : null}
+          {activeTab === "editor" ? (
+            <>
+              <div className="settings-field">
+                <label>Editor Font Size</label>
+                <input
+                  type="number"
+                  min={10}
+                  max={22}
+                  value={local.editorFontSize ?? 13}
+                  onChange={(event) => updateNumberField("editorFontSize", event.target.value)}
+                />
+              </div>
+              <div className="settings-field">
+                <label>Column Guides</label>
+                <input
+                  type="checkbox"
+                  checked={local.editorShowRulers ?? false}
+                  onChange={(event) => updateBooleanField("editorShowRulers", event.target.checked)}
+                />
+              </div>
+              <div className="settings-field">
+                <label>Cursor Position</label>
+                <input
+                  type="checkbox"
+                  checked={local.editorShowCursorPosition ?? false}
+                  onChange={(event) => updateBooleanField("editorShowCursorPosition", event.target.checked)}
+                />
+              </div>
+              <div className="settings-field">
+                <label>Guide Columns (comma-separated)</label>
+                <input
+                  value={(local.editorRulers ?? [80, 120]).join(", ")}
+                  onChange={(event) => updateRulersField(event.target.value)}
+                />
+              </div>
+            </>
+          ) : null}
+          {activeTab === "paths" ? (
+            <>
+              {(
+                [
+                  { key: "workspaceRoot", label: "Workspace Root", type: "directory" },
+                  { key: "metaeditorPath", label: "MetaEditor Path", type: "file" },
+                  { key: "terminalPath", label: "Terminal Path", type: "file" },
+                  { key: "codexPath", label: "Codex Path", type: "file" },
+                  { key: "mtDataDir", label: "MT Data Dir", type: "directory" },
+                  { key: "reportsDir", label: "Reports Dir", type: "directory" }
+                ] as const
+              ).map((field) => (
+                <div className="settings-field" key={field.key}>
+                  <label>{field.label}</label>
+                  <div style={{ display: "flex", gap: 8 }}>
+                    <input
+                      value={local[field.key] ?? ""}
+                      onChange={(event) => updateField(field.key, event.target.value)}
+                    />
+                    <button
+                      className="button"
+                      type="button"
+                      onClick={() => browse(field.key, field.type)}
+                    >
+                      <FolderOpen size={12} />
+                      Browse
+                    </button>
+                  </div>
+                  {validation[field.key] === false ? (
+                    <span style={{ color: "var(--danger)", fontSize: 12 }}>Path not found.</span>
+                  ) : null}
+                </div>
+              ))}
+            </>
+          ) : null}
+          {activeTab === "codex" ? (
+            <>
+              <div className="settings-field">
+                <label>Extra Codex Args (space-separated)</label>
+                <input
+                  value={local.codexArgs ?? ""}
+                  onChange={(event) => updateField("codexArgs", event.target.value)}
+                />
+                <span style={{ color: "var(--muted)", fontSize: 11 }}>
+                  Example: --model gpt-5 --max-tokens 2048
+                </span>
+              </div>
+            </>
+          ) : null}
+          {activeTab === "workspaces" ? (
+            <>
+              <div className="settings-field">
+                <label>Recent Workspaces</label>
+                <div className="settings-list">
+                  {(local.recentWorkspaces ?? []).length === 0 ? (
+                    <div className="settings-list-empty">No recent workspaces.</div>
+                  ) : (
+                    (local.recentWorkspaces ?? []).map((root) => (
+                      <div key={root} className="settings-list-row">
+                        <span className="settings-list-text">{root}</span>
+                        <button
+                          className="button"
+                          type="button"
+                          onClick={() =>
+                            updateRecentWorkspaces(
+                              (local.recentWorkspaces ?? []).filter((item) => item !== root)
+                            )
+                          }
+                        >
+                          <Trash2 size={12} />
+                          Remove
+                        </button>
+                      </div>
+                    ))
+                  )}
+                </div>
+                <span style={{ color: "var(--muted)", fontSize: 11 }}>
+                  Max 4 workspaces. Oldest entries are dropped automatically.
+                </span>
+              </div>
+              <div style={{ display: "flex", gap: 8 }}>
+                <button
+                  className="button"
+                  type="button"
+                  onClick={() => updateRecentWorkspaces([])}
+                >
+                  <Trash2 size={12} />
+                  Clear List
+                </button>
+              </div>
+            </>
+          ) : null}
+        </div>
         <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
           <button className="button" onClick={handleValidate}>
+            <CheckCircle2 size={12} />
             Validate
           </button>
           <button
@@ -81,6 +271,7 @@ const SettingsModal = ({
               onClose();
             }}
           >
+            <Save size={12} />
             Save
           </button>
         </div>

@@ -5,7 +5,7 @@
     "moduleResolution": "Node",
     "lib": ["ES2020"],
     "types": ["node", "electron"],
-    "outDir": "dist/preload",
+    "outDir": "dist",
     "noEmit": false
   },
   "include": ["src/preload/**/*.ts", "src/shared/**/*.ts"]

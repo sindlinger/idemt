@@ -5,11 +5,21 @@ import type { Settings } from "../../shared/ipc";
 
 const DEFAULTS: Settings = {
   workspaceRoot: "",
+  recentWorkspaces: [],
   metaeditorPath: "",
   terminalPath: "",
   codexPath: "codex",
+  codexArgs: "",
   mtDataDir: "",
-  reportsDir: ""
+  reportsDir: "",
+  uiTheme: "windows11",
+  uiMode: "dark",
+  editorFontSize: 13,
+  editorLineNumbers: true,
+  editorShowRulers: false,
+  editorRulers: [80, 120],
+  editorShowCursorPosition: false,
+  windowBounds: undefined
 };
 
 export class SettingsService {

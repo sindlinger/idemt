@@ -1,5 +1,14 @@
-import { useEffect, useMemo, useState } from "react";
-import type { Diagnostic, FileChangePayload, TestRequest, TestStatus } from "@shared/ipc";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Pin, PinOff } from "lucide-react";
+import type {
+  CodexRunStatus,
+  Diagnostic,
+  FileChangePayload,
+  FileFilters,
+  TestRequest,
+  TestStatus,
+  WorkspaceNode
+} from "@shared/ipc";
 import { useAppStore } from "@state/store";
 import { calculateChangedLines, createUnifiedDiff } from "@state/diff";
 import TopBar from "./components/TopBar";
@@ -24,34 +33,176 @@ const joinPath = (base: string, file: string) => {
   return `${base.replace(/[\\/]+$/, "")}${slash}${file}`;
 };
 
+const getLanguageForExtension = (ext: string) => {
+  switch (ext.toLowerCase()) {
+    case "mq4":
+    case "mq5":
+    case "mqh":
+      return "mql";
+    case "py":
+      return "python";
+    case "c":
+      return "c";
+    case "cpp":
+    case "cc":
+    case "cxx":
+    case "hpp":
+    case "hh":
+    case "h":
+      return "cpp";
+    default:
+      return "plaintext";
+  }
+};
+
+const CODEX_STORAGE_KEY = "mt5ide.codex.session";
+const LOCAL_WORKSPACE_ID = "__local__";
+const getCodexStorageKey = (workspaceId: string) => `${CODEX_STORAGE_KEY}:${workspaceId}`;
+const WORKSPACE_STATE_STORAGE_KEY = "mt5ide.workspace.state";
+const LAYOUT_STORAGE_KEY = "mt5ide.layout.state";
+const SPLITTER_SIZE = 8;
+
+type LayoutState = {
+  leftWidth: number;
+  rightWidth: number;
+  bottomHeight: number;
+  leftCollapsed: boolean;
+  rightCollapsed: boolean;
+};
+
+const DEFAULT_LAYOUT: LayoutState = {
+  leftWidth: 260,
+  rightWidth: 320,
+  bottomHeight: 260,
+  leftCollapsed: false,
+  rightCollapsed: false
+};
+
+type WorkspaceStateCache = Record<
+  string,
+  { openFiles: string[]; activeFilePath?: string; expandedDirs?: string[] }
+>;
+
+const readWorkspaceState = () => {
+  try {
+    const raw = window.localStorage.getItem(WORKSPACE_STATE_STORAGE_KEY);
+    if (!raw) return {} as WorkspaceStateCache;
+    return JSON.parse(raw) as WorkspaceStateCache;
+  } catch {
+    return {} as WorkspaceStateCache;
+  }
+};
+
+const writeWorkspaceState = (state: WorkspaceStateCache) => {
+  try {
+    window.localStorage.setItem(WORKSPACE_STATE_STORAGE_KEY, JSON.stringify(state));
+  } catch {
+    return;
+  }
+};
+
+const readLayoutState = (): LayoutState => {
+  try {
+    const raw = window.localStorage.getItem(LAYOUT_STORAGE_KEY);
+    if (!raw) return DEFAULT_LAYOUT;
+    const parsed = JSON.parse(raw) as Partial<LayoutState>;
+    return {
+      leftWidth: Number.isFinite(parsed.leftWidth) ? parsed.leftWidth! : DEFAULT_LAYOUT.leftWidth,
+      rightWidth: Number.isFinite(parsed.rightWidth)
+        ? parsed.rightWidth!
+        : DEFAULT_LAYOUT.rightWidth,
+      bottomHeight: Number.isFinite(parsed.bottomHeight)
+        ? parsed.bottomHeight!
+        : DEFAULT_LAYOUT.bottomHeight,
+      leftCollapsed: Boolean(parsed.leftCollapsed),
+      rightCollapsed: Boolean(parsed.rightCollapsed)
+    };
+  } catch {
+    return DEFAULT_LAYOUT;
+  }
+};
+
+const writeLayoutState = (state: LayoutState) => {
+  try {
+    window.localStorage.setItem(LAYOUT_STORAGE_KEY, JSON.stringify(state));
+  } catch {
+    return;
+  }
+};
+
+const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
+
+const removeWorkspaceState = (workspaceId: string) => {
+  const state = readWorkspaceState();
+  delete state[workspaceId];
+  writeWorkspaceState(state);
+  try {
+    window.localStorage.removeItem(getCodexStorageKey(workspaceId));
+  } catch {
+    return;
+  }
+};
+
+const buildCodexContextBundle = (messages: { role: string; text: string }[]) => {
+  const recent = messages.slice(-8);
+  const lines = recent.map((message) => `${message.role.toUpperCase()}: ${message.text}`);
+  return lines.join("\n");
+};
+
+const trimCodexMessage = (text: string, limit = 4000) => {
+  if (text.length <= limit) return text;
+  return `${text.slice(0, limit)}\n...`;
+};
+
+const log = (message: string, scope = "renderer") => {
+  if (typeof window?.api?.log === "function") {
+    window.api.log({ scope, message });
+  }
+};
+
+const updateTreeChildren = (
+  node: WorkspaceNode,
+  dirPath: string,
+  children: WorkspaceNode[]
+): WorkspaceNode => {
+  if (node.type === "dir" && node.path === dirPath) {
+    return { ...node, children };
+  }
+  if (!node.children || node.children.length === 0) return node;
+  return {
+    ...node,
+    children: node.children.map((child) => updateTreeChildren(child, dirPath, children))
+  };
+};
+
 const App = () => {
   const {
     settings,
     setSettings,
-    workspaceRoot,
-    setWorkspaceRoot,
-    tree,
+    workspaces,
+    workspaceOrder,
+    activeWorkspaceId,
+    addWorkspace,
+    removeWorkspace,
+    setActiveWorkspace,
     setTree,
-    openFiles,
-    activeFilePath,
+    setExpandedDirs,
     setActiveFile,
     openFile,
     updateFileContent,
     markSaved,
-    diagnostics,
+    renameOpenFile,
     setDiagnostics,
-    outputLogs,
     addOutputLog,
-    codexEvents,
     addCodexEvent,
-    codexStatus,
+    addCodexMessage,
+    setCodexMessages,
     setCodexStatus,
-    reviewChanges,
+    setCodexSessionActive,
+    clearCodexSession,
     addReviewChange,
     removeReviewChange,
-    testStatus,
     setTestStatus,
-    reportHtml,
     setReportHtml,
     bottomPanelOpen,
     toggleBottomPanel,
@@ -61,46 +212,262 @@ const App = () => {
     setSettingsOpen
   } = useAppStore();
 
+  const activeWorkspace = activeWorkspaceId ? workspaces[activeWorkspaceId] : undefined;
+  const workspaceRoot =
+    activeWorkspaceId && activeWorkspaceId !== LOCAL_WORKSPACE_ID ? activeWorkspaceId : undefined;
+  const tree = activeWorkspace?.tree;
+  const openFiles = activeWorkspace?.openFiles ?? [];
+  const activeFilePath = activeWorkspace?.activeFilePath;
+  const expandedDirs = activeWorkspace?.expandedDirs ?? [];
+  const diagnostics = activeWorkspace?.diagnostics ?? [];
+  const outputLogs = activeWorkspace?.outputLogs ?? [];
+  const codexEvents = activeWorkspace?.codexEvents ?? [];
+  const codexMessages = activeWorkspace?.codexMessages ?? [];
+  const codexStatus = activeWorkspace?.codexStatus ?? { running: false, startedAt: 0 };
+  const codexSessionActive = activeWorkspace?.codexSessionActive ?? false;
+  const reviewChanges = activeWorkspace?.reviewChanges ?? {};
+  const testStatus = activeWorkspace?.testStatus;
+  const reportHtml = activeWorkspace?.reportHtml;
+
   const [selection, setSelection] = useState("");
+  const [fileFilters, setFileFilters] = useState<FileFilters>({
+    mql: true,
+    python: true,
+    cpp: true
+  });
+  const [newFileExt, setNewFileExt] = useState("mq5");
+  const [layout, setLayout] = useState<LayoutState>(() => readLayoutState());
   const [navigationTarget, setNavigationTarget] = useState<{
     path: string;
     line: number;
     column: number;
   } | null>(null);
   const [testConfig, setTestConfig] = useState<TestRequest>(defaultTestConfig);
+  const codexRunStartIndexRef = useRef<Record<string, number>>({});
+  const codexWorkspaceRef = useRef<string | null>(null);
+  const untitledCounterRef = useRef(1);
+
+  const openBottomPanel = () => {
+    toggleBottomPanel(true);
+  };
+
+  const toggleBottomPanelOpen = () => {
+    toggleBottomPanel(!bottomPanelOpen);
+  };
 
   useEffect(() => {
+    writeLayoutState(layout);
+  }, [layout]);
+
+  useEffect(() => {
+    log("App mounted", "renderer:startup");
     window.api.settingsGet().then((loaded) => {
+      log("settings loaded", "renderer:startup");
       setSettings(loaded);
-      if (loaded.workspaceRoot) {
-        setWorkspaceRoot(loaded.workspaceRoot);
-        window.api.requestWorkspaceTree().then((tree) => tree && setTree(tree));
+      const recent = (loaded.recentWorkspaces ?? []).filter(Boolean);
+      const roots = recent.length
+        ? recent
+        : loaded.workspaceRoot
+        ? [loaded.workspaceRoot]
+        : [];
+      roots.forEach((root) => addWorkspace(root));
+      const activeRoot = roots[roots.length - 1];
+      if (activeRoot) {
+        setActiveWorkspace(activeRoot);
+        window.api.activateWorkspace(activeRoot).then((tree) => {
+          if (tree) setTree(tree, activeRoot);
+          log("workspace tree requested", "renderer:startup");
+        });
+        window.api.setWatchedDirs([activeRoot]);
       }
     });
-  }, [setSettings, setTree, setWorkspaceRoot]);
+  }, [addWorkspace, fileFilters, setActiveWorkspace, setSettings, setTree]);
 
   useEffect(() => {
+    if (typeof window.api.setWorkspaceFilters === "function") {
+      window.api.setWorkspaceFilters(fileFilters);
+    }
+    if (!workspaceRoot) return;
+    window.api.requestWorkspaceTree(fileFilters).then((tree) => {
+      if (tree) {
+        const id = activeWorkspaceId ?? LOCAL_WORKSPACE_ID;
+        setTree(tree, id);
+      }
+    });
+  }, [activeWorkspaceId, fileFilters, workspaceRoot, setTree]);
+
+  useEffect(() => {
+    if (!workspaceRoot) return;
+    if (typeof window.api.setWatchedDirs === "function") {
+      window.api.setWatchedDirs([workspaceRoot]);
+    }
+  }, [workspaceRoot]);
+
+  useEffect(() => {
+    const workspaceId = activeWorkspaceId ?? LOCAL_WORKSPACE_ID;
+    if (openFiles.length > 0) return;
+    if (workspaceId !== LOCAL_WORKSPACE_ID) {
+      const saved = readWorkspaceState()[workspaceId];
+      if (saved?.openFiles?.length) return;
+    }
+    openFile(
+      {
+        path: "untitled:1",
+        content: "",
+        version: 1,
+        language: "mql"
+      },
+      workspaceId
+    );
+    log("opened untitled:1", "renderer:startup");
+    untitledCounterRef.current = 2;
+  }, [activeWorkspaceId, openFiles.length, openFile]);
+
+  useEffect(() => {
+    const workspaceId = activeWorkspaceId ?? LOCAL_WORKSPACE_ID;
+    try {
+      const raw = window.localStorage.getItem(getCodexStorageKey(workspaceId));
+      if (!raw) return;
+      const parsed = JSON.parse(raw) as {
+        messages?: typeof codexMessages;
+        sessionActive?: boolean;
+      };
+      if (parsed.messages && Array.isArray(parsed.messages)) {
+        setCodexMessages(parsed.messages, workspaceId);
+      }
+      if (typeof parsed.sessionActive === "boolean") {
+        setCodexSessionActive(parsed.sessionActive, workspaceId);
+      }
+    } catch {
+      return;
+    }
+  }, [activeWorkspaceId, setCodexMessages, setCodexSessionActive]);
+
+  useEffect(() => {
+    const workspaceId = activeWorkspaceId ?? LOCAL_WORKSPACE_ID;
+    try {
+      window.localStorage.setItem(
+        getCodexStorageKey(workspaceId),
+        JSON.stringify({ messages: codexMessages, sessionActive: codexSessionActive })
+      );
+    } catch {
+      return;
+    }
+  }, [activeWorkspaceId, codexMessages, codexSessionActive]);
+
+  useEffect(() => {
+    const handleCodexDone = (status: CodexRunStatus) => {
+      const workspaceId =
+        codexWorkspaceRef.current ??
+        useAppStore.getState().activeWorkspaceId ??
+        LOCAL_WORKSPACE_ID;
+      setCodexStatus(status, workspaceId);
+      const state = useAppStore.getState();
+      const workspace = state.workspaces[workspaceId];
+      const startIndex = codexRunStartIndexRef.current[workspaceId] ?? 0;
+      const recent = workspace?.codexEvents.slice(startIndex) ?? [];
+      delete codexRunStartIndexRef.current[workspaceId];
+      codexWorkspaceRef.current = null;
+      const response = recent
+        .filter((event) => event.type === "stdout" || event.type === "stderr")
+        .map((event) => event.data)
+        .join("")
+        .trim();
+      const finalText = response ? trimCodexMessage(response) : "Codex finished.";
+      addCodexMessage({ role: "codex", text: finalText, timestamp: Date.now() }, workspaceId);
+    };
+
+    const handleAppCloseRequest = ({ requestId }: { requestId: number }) => {
+      log(`app:close-request id=${requestId}`, "renderer:close");
+      const state = useAppStore.getState();
+      const dirtyCount = Object.values(state.workspaces).reduce(
+        (count, workspace) =>
+          count + workspace.openFiles.filter((file) => file.dirty).length,
+        0
+      );
+      window.api.replyAppCloseRequest({ requestId, dirtyCount });
+    };
+
+    const handleAppSaveAll = async ({ requestId }: { requestId: number }) => {
+      log(`app:save-all id=${requestId}`, "renderer:close");
+      const state = useAppStore.getState();
+      const dirtyFiles = Object.entries(state.workspaces).flatMap(([workspaceId, workspace]) =>
+        workspace.openFiles
+          .filter((file) => file.dirty)
+          .map((file) => ({ workspaceId, file }))
+      );
+      for (const { file, workspaceId } of dirtyFiles) {
+        const ok = await saveOpenFile(file, workspaceId);
+        if (!ok) {
+          window.api.replyAppSaveAll({ requestId, success: false });
+          return;
+        }
+      }
+      window.api.replyAppSaveAll({ requestId, success: true });
+    };
+
     const unsubscribers = [
-      window.api.onWorkspaceSelected((root) => setWorkspaceRoot(root)),
-      window.api.onWorkspaceTree((tree) => setTree(tree)),
+      window.api.onWorkspaceSelected((root) => {
+        addWorkspace(root);
+        setActiveWorkspace(root);
+      }),
+      window.api.onWorkspaceTree((tree) => {
+        const state = useAppStore.getState();
+        const id = state.activeWorkspaceId ?? LOCAL_WORKSPACE_ID;
+        setTree(tree, id);
+      }),
+      window.api.onWorkspaceDirUpdate((payload) => {
+        const state = useAppStore.getState();
+        const id = state.activeWorkspaceId ?? LOCAL_WORKSPACE_ID;
+        const current = state.workspaces[id]?.tree;
+        if (!current) return;
+        setTree(updateTreeChildren(current, payload.dirPath, payload.children), id);
+      }),
       window.api.onFileChanged((payload) => handleFileChanged(payload)),
-      window.api.onCodexEvent((event) => addCodexEvent(event)),
-      window.api.onCodexDone((status) => setCodexStatus(status)),
-      window.api.onBuildResult((result) => setDiagnostics(result.diagnostics)),
-      window.api.onTestStatus((status) => handleTestStatus(status)),
-      window.api.onTestDone((status) => handleTestStatus(status)),
-      window.api.logsAppend((payload) => addOutputLog(payload))
+      window.api.onCodexEvent((event) => {
+        const id =
+          codexWorkspaceRef.current ??
+          useAppStore.getState().activeWorkspaceId ??
+          LOCAL_WORKSPACE_ID;
+        addCodexEvent(event, id);
+      }),
+      window.api.onCodexDone((status) => handleCodexDone(status)),
+      window.api.onBuildResult((result) => {
+        const id = useAppStore.getState().activeWorkspaceId ?? LOCAL_WORKSPACE_ID;
+        setDiagnostics(result.diagnostics, id);
+      }),
+      window.api.onTestStatus((status) => {
+        const id = useAppStore.getState().activeWorkspaceId ?? LOCAL_WORKSPACE_ID;
+        handleTestStatus(status, id);
+      }),
+      window.api.onTestDone((status) => {
+        const id = useAppStore.getState().activeWorkspaceId ?? LOCAL_WORKSPACE_ID;
+        handleTestStatus(status, id);
+      }),
+      window.api.logsAppend((payload) => {
+        const id = useAppStore.getState().activeWorkspaceId ?? LOCAL_WORKSPACE_ID;
+        addOutputLog(payload, id);
+      })
     ];
+
+    if (typeof window.api.onAppCloseRequest === "function") {
+      unsubscribers.push(window.api.onAppCloseRequest(handleAppCloseRequest));
+    }
+    if (typeof window.api.onAppSaveAll === "function") {
+      unsubscribers.push(window.api.onAppSaveAll(handleAppSaveAll));
+    }
     return () => {
       unsubscribers.forEach((unsub) => unsub());
     };
   }, [
     addCodexEvent,
+    addCodexMessage,
     addOutputLog,
+    addWorkspace,
+    setActiveWorkspace,
     setCodexStatus,
     setDiagnostics,
-    setTree,
-    setWorkspaceRoot
+    setTree
   ]);
 
   useEffect(() => {
@@ -111,12 +478,17 @@ const App = () => {
       }
       if (event.ctrlKey && event.key.toLowerCase() === "j") {
         event.preventDefault();
-        toggleBottomPanel();
+        toggleBottomPanelOpen();
       }
     };
     window.addEventListener("keydown", handleKey);
     return () => window.removeEventListener("keydown", handleKey);
-  }, [toggleBottomPanel, openFiles, activeFilePath]);
+  }, [toggleBottomPanelOpen, openFiles, activeFilePath]);
+
+  useEffect(() => {
+    if (!settingsOpen) return;
+    window.api.settingsGet().then((loaded) => setSettings(loaded));
+  }, [settingsOpen, setSettings]);
 
   useEffect(() => {
     if (!activeFilePath) return;
@@ -125,23 +497,235 @@ const App = () => {
     }
   }, [activeFilePath]);
 
+  useEffect(() => {
+    const workspaceId = activeWorkspaceId ?? LOCAL_WORKSPACE_ID;
+    if (workspaceId === LOCAL_WORKSPACE_ID) return;
+    const workspace = workspaces[workspaceId];
+    if (!workspace) return;
+    const saved = readWorkspaceState()[workspaceId];
+    if (saved?.expandedDirs?.length && workspace.expandedDirs.length === 0) {
+      setExpandedDirs(saved.expandedDirs, workspaceId);
+    }
+    if (workspace.openFiles.length > 0) return;
+    if (!saved?.openFiles?.length) return;
+    let cancelled = false;
+    const load = async () => {
+      for (const filePath of saved.openFiles) {
+        if (cancelled) return;
+        const file = await window.api.openFile(filePath);
+        if (file) openFile(file, workspaceId);
+      }
+      if (!cancelled && saved.activeFilePath) {
+        setActiveFile(saved.activeFilePath, workspaceId);
+      }
+    };
+    void load();
+    return () => {
+      cancelled = true;
+    };
+  }, [activeWorkspaceId, openFile, setActiveFile, setExpandedDirs, workspaces]);
+
+  useEffect(() => {
+    const workspaceId = activeWorkspaceId ?? LOCAL_WORKSPACE_ID;
+    if (workspaceId === LOCAL_WORKSPACE_ID) return;
+    const state = readWorkspaceState();
+    state[workspaceId] = {
+      openFiles: openFiles.map((file) => file.path),
+      activeFilePath,
+      expandedDirs
+    };
+    writeWorkspaceState(state);
+  }, [activeWorkspaceId, activeFilePath, expandedDirs, openFiles]);
+
   const handleOpenWorkspace = async () => {
     const root = await window.api.selectWorkspace();
-    if (root) setWorkspaceRoot(root);
+    if (root) {
+      addWorkspace(root);
+      setActiveWorkspace(root);
+    }
+  };
+
+  const handleActivateWorkspace = async (root: string) => {
+    if (!root) return;
+    addWorkspace(root);
+    setActiveWorkspace(root);
+    if (typeof window.api.activateWorkspace === "function") {
+      const tree = await window.api.activateWorkspace(root);
+      if (tree) setTree(tree, root);
+    } else {
+      const tree = await window.api.requestWorkspaceTree(fileFilters);
+      if (tree) setTree(tree, root);
+    }
+  };
+
+  const handleCloseWorkspace = async (root: string) => {
+    if (!root) return;
+    const result = await window.api.closeWorkspace(root);
+    removeWorkspaceState(root);
+    removeWorkspace(root);
+    if (result.workspaceRoot) {
+      addWorkspace(result.workspaceRoot);
+      setActiveWorkspace(result.workspaceRoot);
+      if (result.tree) {
+        setTree(result.tree, result.workspaceRoot);
+      }
+    } else {
+      setActiveWorkspace(undefined);
+    }
   };
 
   const handleOpenFile = async (path: string) => {
     const file = await window.api.openFile(path);
-    if (file) openFile(file);
+    if (!file) return;
+    const workspaceId = activeWorkspaceId ?? LOCAL_WORKSPACE_ID;
+    openFile(file, workspaceId);
+  };
+
+  const handleLoadDir = async (dirPath: string) => {
+    const children = await window.api.listDirectory(dirPath, fileFilters);
+    if (!children) return;
+    const state = useAppStore.getState();
+    const workspaceId = state.activeWorkspaceId ?? LOCAL_WORKSPACE_ID;
+    const current = state.workspaces[workspaceId]?.tree;
+    if (!current) return;
+    setTree(updateTreeChildren(current, dirPath, children), workspaceId);
+  };
+
+  const handleFiltersChange = (next: FileFilters) => {
+    setFileFilters(next);
+  };
+
+  const handleWatchDirsChange = (dirs: string[]) => {
+    if (typeof window.api.setWatchedDirs !== "function") return;
+    const next = new Set(dirs);
+    if (workspaceRoot) next.add(workspaceRoot);
+    window.api.setWatchedDirs(Array.from(next));
   };
 
   const handleSave = async () => {
     const current = openFiles.find((file) => file.path === activeFilePath);
     if (!current) return;
-    const saved = await window.api.saveFile(current.path, current.content);
-    if (saved) {
-      markSaved(current.path, current.content);
+    await saveOpenFile(current);
+  };
+
+  const MIN_LEFT = 180;
+  const MAX_LEFT = 560;
+  const MIN_RIGHT = 240;
+  const MAX_RIGHT = 520;
+  const MIN_BOTTOM = 160;
+
+  const leftPaneWidth = layout.leftCollapsed
+    ? 0
+    : clamp(layout.leftWidth, MIN_LEFT, MAX_LEFT);
+  const rightPaneWidth = layout.rightCollapsed
+    ? 0
+    : clamp(layout.rightWidth, MIN_RIGHT, MAX_RIGHT);
+  const bottomPaneHeight = bottomPanelOpen
+    ? clamp(layout.bottomHeight, MIN_BOTTOM, Math.max(MIN_BOTTOM, window.innerHeight - 220))
+    : 0;
+
+  const startResize = (axis: "left" | "right" | "bottom", event: React.MouseEvent) => {
+    if (event.button !== 0) return;
+    event.preventDefault();
+    const startX = event.clientX;
+    const startY = event.clientY;
+    const startLeft = layout.leftWidth;
+    const startRight = layout.rightWidth;
+    const startBottom = layout.bottomHeight;
+
+    document.body.style.userSelect = "none";
+    document.body.style.cursor = axis === "bottom" ? "row-resize" : "col-resize";
+
+    if (axis === "left") {
+      setLayout((prev) => ({ ...prev, leftCollapsed: false }));
     }
+    if (axis === "right") {
+      setLayout((prev) => ({ ...prev, rightCollapsed: false }));
+    }
+    if (axis === "bottom" && !bottomPanelOpen) {
+      toggleBottomPanel(true);
+    }
+
+    const onMove = (moveEvent: MouseEvent) => {
+      if (axis === "left") {
+        const next = clamp(startLeft + (moveEvent.clientX - startX), MIN_LEFT, MAX_LEFT);
+        setLayout((prev) => ({ ...prev, leftWidth: next, leftCollapsed: false }));
+      } else if (axis === "right") {
+        const next = clamp(startRight + (startX - moveEvent.clientX), MIN_RIGHT, MAX_RIGHT);
+        setLayout((prev) => ({ ...prev, rightWidth: next, rightCollapsed: false }));
+      } else {
+        const next = clamp(startBottom + (startY - moveEvent.clientY), MIN_BOTTOM, window.innerHeight - 220);
+        setLayout((prev) => ({ ...prev, bottomHeight: next }));
+      }
+    };
+
+    const onUp = () => {
+      document.body.style.userSelect = "";
+      document.body.style.cursor = "";
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mouseup", onUp);
+    };
+
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseup", onUp);
+  };
+
+  const saveOpenFile = async (
+    file: typeof openFiles[number],
+    workspaceId: string = activeWorkspaceId ?? LOCAL_WORKSPACE_ID
+  ) => {
+    if (file.path.startsWith("untitled:")) {
+      const extMatch = file.path.match(/\.(\w+)$/);
+      const ext = extMatch ? `.${extMatch[1]}` : ".mq5";
+      const defaultName = `Untitled${ext}`;
+      const defaultRoot =
+        workspaceId && workspaceId !== LOCAL_WORKSPACE_ID ? workspaceId : workspaceRoot;
+      const defaultPath = defaultRoot ? joinPath(defaultRoot, defaultName) : defaultName;
+      const target = await window.api.savePath({
+        title: "Save File",
+        defaultPath
+      });
+      if (!target) return false;
+      const saved = await window.api.saveFile(target, file.content);
+      if (saved) {
+        renameOpenFile(file.path, target, file.content, workspaceId);
+        return true;
+      }
+      return false;
+    }
+    const saved = await window.api.saveFile(file.path, file.content);
+    if (saved) {
+      markSaved(file.path, file.content, workspaceId);
+    }
+    return saved;
+  };
+
+  const handleNewFile = () => {
+    const count = untitledCounterRef.current++;
+    const ext = newFileExt ? `.${newFileExt}` : "";
+    const path = `untitled:${count}${ext}`;
+    const language = getLanguageForExtension(newFileExt);
+    const workspaceId = activeWorkspaceId ?? LOCAL_WORKSPACE_ID;
+    openFile({
+      path,
+      content: "",
+      version: 1,
+      language
+    }, workspaceId);
+  };
+
+  const handleToggleSetting = (key: "editorShowRulers" | "editorShowCursorPosition") => {
+    const next = { ...settings, [key]: !settings[key] };
+    setSettings(next);
+    window.api.settingsSet(next);
+  };
+
+  const handleFontSizeChange = (size: number) => {
+    const normalized = clamp(Math.round(size), 10, 24);
+    if (settings.editorFontSize === normalized) return;
+    const next = { ...settings, editorFontSize: normalized };
+    setSettings(next);
+    window.api.settingsSet(next);
   };
 
   const handleCompile = async () => {
@@ -149,7 +733,7 @@ const App = () => {
     if (!current) return;
     await window.api.buildStart({ filePath: current.path });
     setBottomTab("problems");
-    toggleBottomPanel(true);
+    openBottomPanel();
   };
 
   const handleRunTest = async () => {
@@ -166,58 +750,84 @@ const App = () => {
     const request: TestRequest = { ...testConfig, reportPath };
     await window.api.testStart(request);
     setBottomTab("output");
-    toggleBottomPanel(true);
+    openBottomPanel();
   };
 
   const handleCodexRun = async (message: string) => {
+    const workspaceId = activeWorkspaceId ?? LOCAL_WORKSPACE_ID;
+    addCodexMessage({ role: "user", text: message, timestamp: Date.now() }, workspaceId);
+    codexWorkspaceRef.current = workspaceId;
+    codexRunStartIndexRef.current[workspaceId] = codexEvents.length;
     const status = await window.api.runCodex({
       userMessage: message,
       activeFilePath,
-      selection
+      selection,
+      contextBundle: codexSessionActive ? buildCodexContextBundle(codexMessages) : undefined
     });
-    setCodexStatus(status);
+    setCodexStatus(status, workspaceId);
+  };
+
+  const resolveWorkspaceForPath = (filePath: string) => {
+    const normalize = (value: string) => value.replace(/\\/g, "/").toLowerCase();
+    const target = normalize(filePath);
+    const state = useAppStore.getState();
+    const candidates = state.workspaceOrder.length
+      ? state.workspaceOrder
+      : Object.keys(state.workspaces).filter((id) => id !== LOCAL_WORKSPACE_ID);
+    const match = candidates.find((root) => {
+      const normalizedRoot = normalize(root).replace(/\/+$/, "");
+      return target === normalizedRoot || target.startsWith(`${normalizedRoot}/`);
+    });
+    return match ?? state.activeWorkspaceId ?? LOCAL_WORKSPACE_ID;
   };
 
   const handleFileChanged = (payload: FileChangePayload) => {
     const state = useAppStore.getState();
-    const current = state.openFiles.find((file) => file.path === payload.path);
+    const workspaceId = resolveWorkspaceForPath(payload.path);
+    const workspace = state.workspaces[workspaceId];
+    const current = workspace?.openFiles.find((file) => file.path === payload.path);
     const before = payload.previousContent ?? current?.content;
     const after = payload.content;
     if (!before || before === after) return;
 
     if (current) {
-      state.updateFileContent(current.path, after);
+      state.updateFileContent(current.path, after, undefined, workspaceId);
     }
 
-    const existing = state.reviewChanges[payload.path];
+    const existing = workspace?.reviewChanges[payload.path];
     if (existing && existing.after === after) return;
 
     const diff = createUnifiedDiff(payload.path, before, after);
     const changedLines = calculateChangedLines(before, after);
-    state.addReviewChange({
-      path: payload.path,
-      before,
-      after,
-      diff,
-      changedLines,
-      source: payload.source,
-      changeId: payload.changeId
-    });
+    state.addReviewChange(
+      {
+        path: payload.path,
+        before,
+        after,
+        diff,
+        changedLines,
+        source: payload.source,
+        changeId: payload.changeId
+      },
+      workspaceId
+    );
   };
 
   const handleAcceptChange = (path: string) => {
     const change = reviewChanges[path];
     if (!change) return;
-    markSaved(path, change.after);
-    removeReviewChange(path);
+    const workspaceId = activeWorkspaceId ?? LOCAL_WORKSPACE_ID;
+    markSaved(path, change.after, workspaceId);
+    removeReviewChange(path, workspaceId);
   };
 
   const handleRevertChange = async (path: string) => {
     const change = reviewChanges[path];
     if (!change) return;
     await window.api.saveFile(path, change.before);
-    updateFileContent(path, change.before, change.before);
-    removeReviewChange(path);
+    const workspaceId = activeWorkspaceId ?? LOCAL_WORKSPACE_ID;
+    updateFileContent(path, change.before, change.before, workspaceId);
+    removeReviewChange(path, workspaceId);
   };
 
   const handleDiagnosticNavigate = async (diag: Diagnostic) => {
@@ -229,11 +839,11 @@ const App = () => {
     });
   };
 
-  const handleTestStatus = async (status: TestStatus) => {
-    setTestStatus(status);
+  const handleTestStatus = async (status: TestStatus, workspaceId: string) => {
+    setTestStatus(status, workspaceId);
     if (status.reportReady && status.reportPath) {
       const html = await window.api.readReport(status.reportPath);
-      setReportHtml(html);
+      setReportHtml(html, workspaceId);
       setBottomTab("report");
     }
   };
@@ -244,52 +854,151 @@ const App = () => {
   }, [activeFilePath, reviewChanges]);
 
   return (
-    <div className="app">
+    <div
+      className="app"
+      data-theme={settings.uiTheme ?? "windows11"}
+      data-mode={settings.uiMode ?? "dark"}
+    >
       <TopBar
-        workspaceRoot={workspaceRoot}
+        workspaces={workspaceOrder}
+        activeWorkspaceId={activeWorkspaceId}
+        onSelectWorkspace={handleActivateWorkspace}
+        onCloseWorkspace={handleCloseWorkspace}
+        onOpenWorkspace={handleOpenWorkspace}
         onSave={handleSave}
         onCompile={handleCompile}
         onRunTest={handleRunTest}
         onSettings={() => setSettingsOpen(true)}
+        onToggleTerminal={() => {
+          setBottomTab("terminal");
+          openBottomPanel();
+        }}
+        onToggleGuides={() => handleToggleSetting("editorShowRulers")}
+        onToggleCursorPos={() => handleToggleSetting("editorShowCursorPosition")}
+        showGuides={settings.editorShowRulers ?? false}
+        showCursorPos={settings.editorShowCursorPosition ?? false}
+        newFileExtension={newFileExt}
+        onNewFileExtensionChange={setNewFileExt}
+        onNewFile={handleNewFile}
       />
-      <div className="main-layout">
-        <LeftSidebar
-          tree={tree}
+      <div
+        className="workspace-area"
+        style={
+          {
+            "--splitter-size": `${SPLITTER_SIZE}px`,
+            "--bottom-pane": `${bottomPaneHeight}px`
+          } as React.CSSProperties
+        }
+      >
+        <div
+          className="main-layout"
+          style={
+            {
+              "--splitter-size": `${SPLITTER_SIZE}px`,
+              "--left-pane": `${leftPaneWidth}px`,
+              "--right-pane": `${rightPaneWidth}px`
+            } as React.CSSProperties
+          }
+        >
+          <LeftSidebar
+            tree={tree}
+            workspaceRoot={workspaceRoot}
+            expandedDirs={expandedDirs}
+            onExpandedDirsChange={(dirs) => {
+              const workspaceId = activeWorkspaceId ?? LOCAL_WORKSPACE_ID;
+              setExpandedDirs(dirs, workspaceId);
+            }}
+            filters={fileFilters}
+            onFiltersChange={handleFiltersChange}
+            onOpenFile={handleOpenFile}
+            onLoadDir={handleLoadDir}
+            onWatchDirsChange={handleWatchDirsChange}
+            activeFilePath={activeFilePath}
+            collapsed={layout.leftCollapsed}
+          />
+          <div className="splitter vertical" onMouseDown={(event) => startResize("left", event)}>
+            <button
+              className={`split-pin ${layout.leftCollapsed ? "" : "active"}`}
+              title={layout.leftCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+              onClick={(event) => {
+                event.stopPropagation();
+                setLayout((prev) => ({ ...prev, leftCollapsed: !prev.leftCollapsed }));
+              }}
+            >
+              {layout.leftCollapsed ? <PinOff size={12} /> : <Pin size={12} />}
+            </button>
+          </div>
+          <EditorPane
+            files={openFiles}
+            activeFilePath={activeFilePath}
+            reviewChange={activeReviewChange}
+            onSelectTab={setActiveFile}
+            onChangeContent={updateFileContent}
+            onSelectionChange={setSelection}
+            navigationTarget={navigationTarget}
+            onNavigationHandled={() => setNavigationTarget(null)}
+            uiTheme={settings.uiTheme}
+            uiMode={settings.uiMode}
+            editorFontSize={settings.editorFontSize}
+            editorShowRulers={settings.editorShowRulers}
+            editorRulers={settings.editorRulers}
+            editorShowCursorPosition={settings.editorShowCursorPosition}
+            onFontSizeChange={handleFontSizeChange}
+          />
+          <div className="splitter vertical" onMouseDown={(event) => startResize("right", event)}>
+            <button
+              className={`split-pin ${layout.rightCollapsed ? "" : "active"}`}
+              title={layout.rightCollapsed ? "Expand Codex" : "Collapse Codex"}
+              onClick={(event) => {
+                event.stopPropagation();
+                setLayout((prev) => ({ ...prev, rightCollapsed: !prev.rightCollapsed }));
+              }}
+            >
+              {layout.rightCollapsed ? <PinOff size={12} /> : <Pin size={12} />}
+            </button>
+          </div>
+          <CodexSidebar
+            codexEvents={codexEvents}
+            codexMessages={codexMessages}
+            codexStatus={codexStatus}
+            sessionActive={codexSessionActive}
+            reviewChanges={reviewChanges}
+            onRun={handleCodexRun}
+            onCancel={() => window.api.cancelCodex()}
+            onToggleSession={(active) => {
+              const workspaceId = activeWorkspaceId ?? LOCAL_WORKSPACE_ID;
+              setCodexSessionActive(active, workspaceId);
+              if (!active) clearCodexSession(workspaceId);
+            }}
+            onAcceptChange={handleAcceptChange}
+            onRevertChange={handleRevertChange}
+            collapsed={layout.rightCollapsed}
+          />
+        </div>
+        <div className="splitter horizontal" onMouseDown={(event) => startResize("bottom", event)}>
+          <button
+            className={`split-pin ${bottomPanelOpen ? "active" : ""}`}
+            title={bottomPanelOpen ? "Collapse panel" : "Expand panel"}
+            onClick={(event) => {
+              event.stopPropagation();
+              toggleBottomPanelOpen();
+            }}
+          >
+            {bottomPanelOpen ? <Pin size={12} /> : <PinOff size={12} />}
+          </button>
+        </div>
+        <BottomPanel
+          open={bottomPanelOpen}
+          activeTab={bottomTab}
+          diagnostics={diagnostics}
+          logs={outputLogs}
+          reportHtml={reportHtml}
+          testStatus={testStatus}
           workspaceRoot={workspaceRoot}
-          onOpenWorkspace={handleOpenWorkspace}
-          onOpenFile={handleOpenFile}
-        />
-        <EditorPane
-          files={openFiles}
-          activeFilePath={activeFilePath}
-          reviewChange={activeReviewChange}
-          onSelectTab={setActiveFile}
-          onChangeContent={updateFileContent}
-          onSelectionChange={setSelection}
-          navigationTarget={navigationTarget}
-          onNavigationHandled={() => setNavigationTarget(null)}
-        />
-        <CodexSidebar
-          codexEvents={codexEvents}
-          codexStatus={codexStatus}
-          reviewChanges={reviewChanges}
-          onRun={handleCodexRun}
-          onCancel={() => window.api.cancelCodex()}
-          onAcceptChange={handleAcceptChange}
-          onRevertChange={handleRevertChange}
+          onTabChange={setBottomTab}
+          onNavigateDiagnostic={handleDiagnosticNavigate}
         />
       </div>
-      <BottomPanel
-        open={bottomPanelOpen}
-        activeTab={bottomTab}
-        diagnostics={diagnostics}
-        logs={outputLogs}
-        reportHtml={reportHtml}
-        testStatus={testStatus}
-        workspaceRoot={workspaceRoot}
-        onTabChange={setBottomTab}
-        onNavigateDiagnostic={handleDiagnosticNavigate}
-      />
       <SettingsModal
         open={settingsOpen}
         settings={settings}
@@ -297,9 +1006,35 @@ const App = () => {
         onSave={(next) => {
           setSettings(next);
           window.api.settingsSet(next);
-          if (next.workspaceRoot) {
-            setWorkspaceRoot(next.workspaceRoot);
-            window.api.requestWorkspaceTree().then((tree) => tree && setTree(tree));
+          const recent = (next.recentWorkspaces ?? []).filter(Boolean);
+          const activeRoot = next.workspaceRoot || recent[recent.length - 1];
+          const state = useAppStore.getState();
+          const existing = Object.keys(state.workspaces).filter(
+            (id) => id !== LOCAL_WORKSPACE_ID
+          );
+          for (const root of existing) {
+            if (!recent.includes(root)) {
+              removeWorkspaceState(root);
+              removeWorkspace(root);
+            }
+          }
+          for (const root of recent) {
+            addWorkspace(root);
+          }
+          if (activeRoot) {
+            setActiveWorkspace(activeRoot);
+            if (typeof window.api.activateWorkspace === "function") {
+              window.api.activateWorkspace(activeRoot).then((tree) => {
+                if (tree) setTree(tree, activeRoot);
+              });
+            } else {
+              window.api.requestWorkspaceTree(fileFilters).then((tree) => {
+                if (tree) setTree(tree, activeRoot);
+              });
+            }
+            window.api.setWatchedDirs([activeRoot]);
+          } else {
+            setActiveWorkspace(undefined);
           }
         }}
       />

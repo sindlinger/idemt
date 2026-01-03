@@ -44,12 +44,12 @@ export class BuildService {
     child.stdout.on("data", (chunk) => {
       const text = chunk.toString();
       rawOutput += text;
-      text.split(/\r?\n/).forEach((line) => line && this.logs.append("build", line));
+      text.split(/\r?\n/).forEach((line: string) => line && this.logs.append("build", line));
     });
     child.stderr.on("data", (chunk) => {
       const text = chunk.toString();
       rawOutput += text;
-      text.split(/\r?\n/).forEach((line) => line && this.logs.append("build", line));
+      text.split(/\r?\n/).forEach((line: string) => line && this.logs.append("build", line));
     });
 
     const exitCode: number = await new Promise((resolve) => {

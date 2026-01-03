@@ -5,11 +5,17 @@ export type WorkspaceNode = {
   children?: WorkspaceNode[];
 };
 
+export type FileFilters = {
+  mql: boolean;
+  python: boolean;
+  cpp: boolean;
+};
+
 export type OpenFile = {
   path: string;
   content: string;
   version: number;
-  language: "mql" | "plaintext";
+  language: "mql" | "plaintext" | "python" | "c" | "cpp";
 };
 
 export type Diagnostic = {
@@ -72,11 +78,29 @@ export type TestStatus = {
 
 export type Settings = {
   workspaceRoot?: string;
+  recentWorkspaces?: string[];
   metaeditorPath?: string;
   terminalPath?: string;
   codexPath?: string;
+  codexArgs?: string;
   mtDataDir?: string;
   reportsDir?: string;
+  uiTheme?: "windows11" | "windowsClassic" | "macos";
+  uiMode?: "dark" | "light";
+  editorFontSize?: number;
+  editorLineNumbers?: boolean;
+  editorShowRulers?: boolean;
+  editorRulers?: number[];
+  editorShowCursorPosition?: boolean;
+  windowBounds?: WindowBounds;
+};
+
+export type WindowBounds = {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  isMaximized?: boolean;
 };
 
 export const IPC_CHANNELS = {
@@ -111,4 +135,9 @@ export type LogsAppendPayload = {
   source: "build" | "test" | "codex" | "terminal" | "system";
   line: string;
   timestamp: number;
+};
+
+export type WorkspaceDirUpdate = {
+  dirPath: string;
+  children: WorkspaceNode[];
 };

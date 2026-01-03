@@ -27,17 +27,27 @@ const TerminalPanel = ({ cwd }: { cwd?: string }) => {
 
     let unsubscribe: (() => void) | undefined;
 
-    window.api.terminalSpawn({ cwd }).then(({ id }) => {
-      setSessionId(id);
-      sessionRef.current = id;
-      fitAddon.fit();
-      window.api.terminalResize(id, terminal.cols, terminal.rows);
-      unsubscribe = window.api.onTerminalData(({ id: incoming, data }) => {
-        if (incoming === id) {
-          terminal.write(data);
+    window.api
+      .terminalSpawn({ cwd })
+      .then(({ id }) => {
+        if (!id) return;
+        setSessionId(id);
+        sessionRef.current = id;
+        fitAddon.fit();
+        window.api.terminalResize(id, terminal.cols, terminal.rows);
+        unsubscribe = window.api.onTerminalData(({ id: incoming, data }) => {
+          if (incoming === id) {
+            terminal.write(data);
+          }
+        });
+      })
+      .catch((err) => {
+        const message = err ? String(err) : "terminal spawn failed";
+        terminal.write(`\r\n[terminal error] ${message}\r\n`);
+        if (typeof window?.api?.log === "function") {
+          window.api.log({ scope: "renderer:terminal", message });
         }
       });
-    });
 
     terminal.onData((data) => {
       if (sessionRef.current) {

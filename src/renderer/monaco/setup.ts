@@ -1,15 +1,3 @@
-declare global {
-  interface Window {
-    MonacoEnvironment?: {
-      getWorker: (moduleId: string, label: string) => Worker;
-    };
-  }
-}
+import { loader } from "@monaco-editor/react";
 
-window.MonacoEnvironment = {
-  getWorker() {
-    return new Worker(new URL("monaco-editor/esm/vs/editor/editor.worker?worker", import.meta.url), {
-      type: "module"
-    });
-  }
-};
+loader.config({ paths: { vs: "/monaco/vs" } });

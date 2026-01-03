@@ -1,4 +1,5 @@
 import type { Diagnostic, LogsAppendPayload, TestStatus } from "@shared/ipc";
+import { AlertTriangle, FileText, List, Terminal } from "lucide-react";
 import type { BottomTab } from "@state/store";
 import ProblemsPanel from "./ProblemsPanel";
 import OutputPanel from "./OutputPanel";
@@ -29,19 +30,30 @@ const BottomPanel = ({
   return (
     <div className={`bottom-panel ${open ? "" : "hidden"}`}>
       <div className="bottom-tabs">
-        {(["terminal", "problems", "output", "report"] as BottomTab[]).map((tab) => (
-          <div
-            key={tab}
-            className={`bottom-tab ${tab === activeTab ? "active" : ""}`}
-            onClick={() => onTabChange(tab)}
-          >
-            {tab.charAt(0).toUpperCase() + tab.slice(1)}
-          </div>
-        ))}
+        {(["terminal", "problems", "output", "report"] as BottomTab[]).map((tab) => {
+          const Icon =
+            tab === "terminal"
+              ? Terminal
+              : tab === "problems"
+              ? AlertTriangle
+              : tab === "output"
+              ? List
+              : FileText;
+          return (
+            <div
+              key={tab}
+              className={`bottom-tab ${tab === activeTab ? "active" : ""}`}
+              onClick={() => onTabChange(tab)}
+            >
+              <Icon size={12} />
+              {tab.charAt(0).toUpperCase() + tab.slice(1)}
+            </div>
+          );
+        })}
         {testStatus?.running ? <span className="status-pill">Tester running</span> : null}
       </div>
       <div className="panel-content">
-        {activeTab === "terminal" ? <TerminalPanel cwd={workspaceRoot} /> : null}
+        {open && activeTab === "terminal" ? <TerminalPanel cwd={workspaceRoot} /> : null}
         {activeTab === "problems" ? (
           <ProblemsPanel diagnostics={diagnostics} onNavigate={onNavigateDiagnostic} />
         ) : null}

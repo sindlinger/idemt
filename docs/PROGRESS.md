@@ -12,6 +12,9 @@
 - [x] Tester (MT5 /config) + logs + report viewer
 - [x] Bottom panel (Terminal, Problems, Output, Report) with Ctrl+J toggle
 - [x] README with setup, config, compile, test, Codex flow
+- [x] Multi-workspace sessions + persistent recent list
+- [x] Documentation: `docs/WORKSPACES.md` and `docs/SETTINGS.md`
+- [x] Architecture overview (`docs/ARCHITECTURE.md`)
 
 ## Notes
 - Evidence-first: build/test panels rely on actual logs and report files when available.

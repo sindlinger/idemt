@@ -10,6 +10,13 @@ import { BuildService } from "./BuildService";
 import { buildContext } from "./ContextBuilder";
 
 const CODEX_LOG_DIR = path.join(process.cwd(), "logs", "codex");
+const parseArgs = (value?: string): string[] => {
+  if (!value) return [];
+  return value
+    .split(/\s+/)
+    .map((part) => part.trim())
+    .filter(Boolean);
+};
 
 export class CodexService {
   private window: BrowserWindow;
@@ -49,7 +56,9 @@ export class CodexService {
     const snapshots = await snapshotWorkspace(this.workspace);
 
     const codexPath = settings.codexPath || "codex";
-    const child = spawn(codexPath, ["exec", "-"], {
+    const extraArgs = parseArgs(settings.codexArgs);
+    const args = ["--skip-git-repo-check", "exec", ...extraArgs, "-"];
+    const child = spawn(codexPath, args, {
       cwd: this.workspace.getRoot() ?? process.cwd(),
       env: { ...process.env }
     });

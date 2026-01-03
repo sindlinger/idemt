@@ -5,7 +5,7 @@
     "moduleResolution": "Node",
     "lib": ["ES2020"],
     "types": ["node", "electron"],
-    "outDir": "dist/main",
+    "outDir": "dist",
     "noEmit": false
   },
   "include": ["src/main/**/*.ts", "src/shared/**/*.ts"]

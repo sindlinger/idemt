@@ -4,6 +4,7 @@ import { randomUUID } from "node:crypto";
 import type { BrowserWindow } from "electron";
 import { spawn } from "node-pty";
 import type { IPty } from "node-pty";
+import { logLine } from "../logger";
 
 export class TerminalService {
   private window: BrowserWindow;
@@ -14,26 +15,31 @@ export class TerminalService {
   }
 
   spawnSession(options: { cwd?: string; shell?: string }) {
-    const id = randomUUID();
-    const shell = options.shell || this.defaultShell();
-    const pty = spawn(shell, [], {
-      name: "xterm-color",
-      cwd: options.cwd || process.cwd(),
-      env: { ...process.env }
-    });
+    try {
+      const id = randomUUID();
+      const shell = options.shell || this.defaultShell();
+      const pty = spawn(shell, [], {
+        name: "xterm-color",
+        cwd: options.cwd || process.cwd(),
+        env: { ...process.env }
+      });
 
-    this.sessions.set(id, pty);
+      this.sessions.set(id, pty);
 
-    pty.onData((data) => {
-      this.window.webContents.send("terminal:data", { id, data });
-    });
+      pty.onData((data) => {
+        this.window.webContents.send("terminal:data", { id, data });
+      });
 
-    pty.onExit(() => {
-      this.sessions.delete(id);
-      this.window.webContents.send("terminal:data", { id, data: "\r\n[terminal closed]\r\n" });
-    });
+      pty.onExit(() => {
+        this.sessions.delete(id);
+        this.window.webContents.send("terminal:data", { id, data: "\r\n[terminal closed]\r\n" });
+      });
 
-    return { id };
+      return { id };
+    } catch (error) {
+      logLine("terminal", `spawn failed ${String(error)}`);
+      return { id: "" };
+    }
   }
 
   write(id: string, data: string) {

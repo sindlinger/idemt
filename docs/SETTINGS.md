@@ -1,0 +1,44 @@
+# Settings Reference
+
+Settings are stored in the user data directory:
+- Path: `app.getPath("userData")/settings.json`
+
+## UI tab
+- **Color Mode**: light / dark
+- **UI Theme**: Windows 11 / Windows Classic / macOS
+
+## Editor tab
+- **Editor Font Size**
+- **Column Guides** (toggle)
+- **Cursor Position** (toggle)
+- **Guide Columns**: comma-separated list (e.g. `80, 120`)
+
+## Paths tab
+- **Workspace Root**: default workspace folder
+- **MetaEditor Path**: `metaeditor64.exe`
+- **Terminal Path**: `terminal64.exe`
+- **Codex Path**: CLI executable (default `codex` on PATH)
+- **MT Data Dir**: MetaTrader data folder (contains `MQL5`, `Logs`, `Tester`)
+- **Reports Dir**: output folder for HTML reports
+
+Use **Validate** to verify that paths exist.
+
+## Codex tab
+- **Extra Codex Args**: additional CLI flags to pass to Codex (space-separated)
+
+Codex is always executed with `--skip-git-repo-check` to avoid workspace trust errors.
+
+## Workspaces tab
+- **Recent Workspaces**: list of recently opened workspaces.
+- **Remove**: remove a single entry.
+- **Clear List**: removes all entries.
+
+Updating this list also adjusts the default `workspaceRoot` to the most recent remaining entry (if any).
+
+## Persistence
+The app also stores:
+- `workspaceRoot`: last active workspace
+- `recentWorkspaces`: list of open workspaces (max 4)
+- `windowBounds`: last window size/position (restored on next launch)
+
+See `docs/WORKSPACES.md` for details on multi-workspace behavior.

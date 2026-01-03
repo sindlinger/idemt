@@ -11,7 +11,9 @@ import type {
   Settings,
   TestRequest,
   TestStatus,
-  WorkspaceNode
+  WorkspaceNode,
+  FileFilters,
+  WorkspaceDirUpdate
 } from "../shared/ipc";
 
 const on = <T>(channel: string, handler: (payload: T) => void) => {
@@ -26,12 +28,25 @@ contextBridge.exposeInMainWorld("api", {
   settingsValidate: (settings: Settings): Promise<Record<string, boolean>> =>
     ipcRenderer.invoke("settings:validate", settings),
   selectWorkspace: (): Promise<string | null> => ipcRenderer.invoke("workspace:select"),
-  requestWorkspaceTree: (): Promise<WorkspaceNode | null> => ipcRenderer.invoke("workspace:tree:get"),
+  activateWorkspace: (root: string): Promise<WorkspaceNode | null> =>
+    ipcRenderer.invoke("workspace:activate", root),
+  closeWorkspace: (
+    root: string
+  ): Promise<{ workspaceRoot: string; recentWorkspaces: string[]; tree?: WorkspaceNode | null }> =>
+    ipcRenderer.invoke("workspace:close", root),
+  requestWorkspaceTree: (filters?: FileFilters): Promise<WorkspaceNode | null> =>
+    ipcRenderer.invoke("workspace:tree:get", filters),
+  listDirectory: (dirPath: string, filters?: FileFilters): Promise<WorkspaceNode[] | null> =>
+    ipcRenderer.invoke("workspace:dir:list", { dirPath, filters }),
+  setWorkspaceFilters: (filters: FileFilters) => ipcRenderer.send("workspace:filters:set", filters),
+  setWatchedDirs: (dirs: string[]) => ipcRenderer.send("workspace:watch:set", { dirs }),
   openFile: (filePath: string): Promise<OpenFile | null> => ipcRenderer.invoke("file:open", filePath),
   saveFile: (filePath: string, content: string): Promise<boolean> =>
     ipcRenderer.invoke("file:save", { filePath, content }),
   onWorkspaceSelected: (handler: (root: string) => void) => on("workspace:selected", handler),
   onWorkspaceTree: (handler: (tree: WorkspaceNode) => void) => on("workspace:tree", handler),
+  onWorkspaceDirUpdate: (handler: (payload: WorkspaceDirUpdate) => void) =>
+    on("workspace:dir:update", handler),
   onFileChanged: (handler: (payload: FileChangePayload) => void) => on("file:changed", handler),
   runCodex: (request: CodexRunRequest): Promise<CodexRunStatus> =>
     ipcRenderer.invoke("codex:run:start", request),
@@ -54,5 +69,22 @@ contextBridge.exposeInMainWorld("api", {
     on("terminal:data", handler),
   readReport: (filePath: string): Promise<string> => ipcRenderer.invoke("report:read", filePath),
   selectPath: (options: { type: "file" | "directory"; title: string }) =>
-    ipcRenderer.invoke("dialog:select", options)
+    ipcRenderer.invoke("dialog:select", options),
+  savePath: (options: { title: string; defaultPath?: string }) =>
+    ipcRenderer.invoke("dialog:save", options),
+  windowMinimize: () => ipcRenderer.send("window:minimize"),
+  windowMaximize: () => ipcRenderer.send("window:maximize"),
+  windowClose: () => ipcRenderer.send("window:close"),
+  windowStateGet: () => ipcRenderer.invoke("window:state:get"),
+  onWindowState: (handler: (payload: { maximized: boolean }) => void) =>
+    on("window:state", handler),
+  onAppCloseRequest: (handler: (payload: { requestId: number }) => void) =>
+    on("app:close-request", handler),
+  replyAppCloseRequest: (payload: { requestId: number; dirtyCount: number }) =>
+    ipcRenderer.send("app:close-response", payload),
+  onAppSaveAll: (handler: (payload: { requestId: number }) => void) =>
+    on("app:save-all", handler),
+  replyAppSaveAll: (payload: { requestId: number; success: boolean }) =>
+    ipcRenderer.send("app:save-all:done", payload),
+  log: (payload: { scope?: string; message: string }) => ipcRenderer.send("log:line", payload)
 });

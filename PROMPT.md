@@ -159,3 +159,21 @@ Ordem sugerida de implementação (siga, mas ajuste se travar):
 10) Polimento + README + PROGRESS + scripts.
 
 Agora execute. Faça commits pequenos por etapa. Ao final, garanta que `npm run dev` funciona e que o build não está quebrado.
+
+
+AGORA Vamos para as próximas etapas:
+Implemented the full MVP end‑to‑end: Electron main/preload/renderer with secure IPC, workspace/tree + Monaco tabs, Codex sidebar with review/diff, build/test services with log‑backed diagnostics and report viewer, terminal panel, and updated docs/config.
+
+- Main process + services (workspace watcher, Codex CLI, build/test runners, pty terminal, settings persistence) in `src/main/main.ts`, `src/main/ipc.ts`, `src/main/services/*.ts`
+- IPC contract and shared types in `src/shared/ipc.ts`
+- Preload bridge exposing `window.api` in `src/preload/index.ts`
+- Renderer UI (layout, Monaco, file tree, Codex timeline/review, bottom panels, settings modal) in `src/renderer/App.tsx`, `src/renderer/components/*.tsx`, `src/renderer/styles.css`, `src/renderer/state/*.ts`, `src/renderer/monaco/*.ts`
+- Project scaffolding in `package.json`, `vite.config.ts`, `tsconfig*.json`, `.gitignore`
+- Progress checklist and usage guide in `docs/PROGRESS.md`, `README.md`
+
+Tests/build not run (no `node_modules` in this environment, network restricted), so `npm run typecheck` and `npm run build` are still pending.
+
+Next steps:
+1) `npm install` then `npm run dev`
+2) Configure paths in Settings (MetaEditor, terminal, MT data dir, Codex)
+3) Run `npm run typecheck` and `npm run build` to validate the build

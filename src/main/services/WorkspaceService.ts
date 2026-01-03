@@ -2,16 +2,21 @@ import path from "node:path";
 import fs from "node:fs/promises";
 import { FSWatcher, watch } from "chokidar";
 import type { BrowserWindow } from "electron";
-import type { OpenFile, WorkspaceNode } from "../../shared/ipc";
+import type { FileFilters, OpenFile, WorkspaceNode } from "../../shared/ipc";
 
 const IGNORED_DIRS = new Set([".git", "node_modules", "dist", "logs", "runs", "reports"]);
-const MQL_EXTENSIONS = new Set([".mq4", ".mq5", ".mqh"]);
+const MQL_EXTENSIONS = new Set([".mq4", ".mq5", ".mqh", ".ex4", ".ex5", ".dll"]);
+const PY_EXTENSIONS = new Set([".py"]);
+const C_EXTENSIONS = new Set([".c"]);
+const CPP_EXTENSIONS = new Set([".cpp", ".cc", ".cxx", ".hpp", ".hh", ".h"]);
 
 export class WorkspaceService {
-  private watcher: FSWatcher | null = null;
   private workspaceRoot: string | null = null;
   private window: BrowserWindow;
   private openFiles = new Set<string>();
+  private dirCache = new Map<string, WorkspaceNode[]>();
+  private filters: FileFilters | null = null;
+  private dirWatchers = new Map<string, FSWatcher>();
 
   constructor(window: BrowserWindow) {
     this.window = window;
@@ -27,12 +32,33 @@ export class WorkspaceService {
 
   async setWorkspace(root: string): Promise<void> {
     this.workspaceRoot = root;
-    await this.setupWatcher();
+    this.dirCache.clear();
+    await this.setWatchedDirs([root]);
   }
 
-  async buildTree(): Promise<WorkspaceNode | null> {
+  setFilters(filters?: FileFilters) {
+    this.filters = filters ?? null;
+    this.dirCache.clear();
+  }
+
+  async buildTree(filters?: FileFilters): Promise<WorkspaceNode | null> {
     if (!this.workspaceRoot) return null;
-    return this.readDir(this.workspaceRoot);
+    const children = await this.listDirEntries(this.workspaceRoot, filters);
+    return {
+      type: "dir",
+      path: this.workspaceRoot,
+      name: path.basename(this.workspaceRoot),
+      children
+    };
+  }
+
+  async listDir(dirPath: string, filters?: FileFilters): Promise<WorkspaceNode[] | null> {
+    if (!this.workspaceRoot) return null;
+    const root = path.resolve(this.workspaceRoot);
+    const target = path.resolve(dirPath);
+    const relative = path.relative(root, target);
+    if (relative.startsWith("..") || path.isAbsolute(relative)) return null;
+    return this.listDirEntries(target, filters);
   }
 
   async openFile(filePath: string): Promise<OpenFile | null> {
@@ -43,7 +69,7 @@ export class WorkspaceService {
         path: filePath,
         content,
         version: 1,
-        language: MQL_EXTENSIONS.has(path.extname(filePath).toLowerCase()) ? "mql" : "plaintext"
+        language: getLanguageForFile(filePath)
       };
     } catch {
       return null;
@@ -78,15 +104,51 @@ export class WorkspaceService {
     }
   }
 
-  private async readDir(dirPath: string): Promise<WorkspaceNode> {
-    const name = path.basename(dirPath);
+  private allowFile(name: string, filters?: FileFilters | null): boolean {
+    const active = filters ?? this.filters;
+    const any = active !== null && (active.mql || active.python || active.cpp);
+    const allSelected = active !== null && active.mql && active.python && active.cpp;
+    if (allSelected) return true;
+    if (!any) return false;
+    const ext = path.extname(name).toLowerCase();
+    if (MQL_EXTENSIONS.has(ext)) return Boolean(active?.mql);
+    if (PY_EXTENSIONS.has(ext)) return Boolean(active?.python);
+    if (C_EXTENSIONS.has(ext) || CPP_EXTENSIONS.has(ext)) return Boolean(active?.cpp);
+    return false;
+  }
+
+  private cacheKey(dirPath: string, filters?: FileFilters | null) {
+    const active = filters ?? this.filters;
+    const any = active !== null && (active.mql || active.python || active.cpp);
+    const allSelected = active !== null && active.mql && active.python && active.cpp;
+    if (!any || allSelected) return `${dirPath}|all`;
+    return `${dirPath}|m${active?.mql ? 1 : 0}p${active?.python ? 1 : 0}c${active?.cpp ? 1 : 0}`;
+  }
+
+  private invalidateDir(dirPath: string) {
+    for (const key of this.dirCache.keys()) {
+      if (key.startsWith(`${dirPath}|`)) {
+        this.dirCache.delete(key);
+      }
+    }
+  }
+
+  private async listDirEntries(dirPath: string, filters?: FileFilters | null): Promise<WorkspaceNode[]> {
+    const key = this.cacheKey(dirPath, filters ?? null);
+    const cached = this.dirCache.get(key);
+    if (cached) return cached;
     const entries = await fs.readdir(dirPath, { withFileTypes: true });
     const children: WorkspaceNode[] = [];
     for (const entry of entries) {
       if (entry.isDirectory()) {
         if (IGNORED_DIRS.has(entry.name)) continue;
-        children.push(await this.readDir(path.join(dirPath, entry.name)));
+        children.push({
+          type: "dir",
+          path: path.join(dirPath, entry.name),
+          name: entry.name
+        });
       } else {
+        if (!this.allowFile(entry.name, filters ?? null)) continue;
         children.push({
           type: "file",
           path: path.join(dirPath, entry.name),
@@ -100,34 +162,69 @@ export class WorkspaceService {
       return a.name.localeCompare(b.name);
     });
 
-    return { type: "dir", path: dirPath, name, children };
+    this.dirCache.set(key, children);
+    return children;
   }
 
-  private async setupWatcher() {
+  async setWatchedDirs(dirs: string[]): Promise<void> {
     if (!this.workspaceRoot) return;
-    if (this.watcher) {
-      await this.watcher.close();
+    const root = path.resolve(this.workspaceRoot);
+    const next = new Set<string>();
+    next.add(root);
+    for (const dir of dirs) {
+      const resolved = path.resolve(dir);
+      const relative = path.relative(root, resolved);
+      if (relative.startsWith("..") || path.isAbsolute(relative)) continue;
+      next.add(resolved);
     }
 
-    this.watcher = watch(this.workspaceRoot, {
+    for (const [dir, watcher] of this.dirWatchers.entries()) {
+      if (!next.has(dir)) {
+        await watcher.close();
+        this.dirWatchers.delete(dir);
+      }
+    }
+
+    for (const dir of next) {
+      if (!this.dirWatchers.has(dir)) {
+        const watcher = this.createWatcher(dir);
+        this.dirWatchers.set(dir, watcher);
+      }
+    }
+  }
+
+  private createWatcher(dirPath: string): FSWatcher {
+    let debounceTimer: NodeJS.Timeout | null = null;
+    const scheduleDirUpdate = (targetPath: string) => {
+      const parent = path.dirname(targetPath);
+      if (debounceTimer) clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(async () => {
+        debounceTimer = null;
+        this.invalidateDir(parent);
+        const children = await this.listDirEntries(parent);
+        this.window.webContents.send("workspace:dir:update", { dirPath: parent, children });
+      }, 200);
+    };
+
+    const watcher = watch(dirPath, {
       ignoreInitial: true,
+      depth: 1,
+      awaitWriteFinish: {
+        stabilityThreshold: 250,
+        pollInterval: 100
+      },
       ignored: (target) => {
         const segments = target.split(path.sep);
         return segments.some((segment) => IGNORED_DIRS.has(segment));
       }
     });
 
-    const sendTree = async () => {
-      const tree = await this.buildTree();
-      if (tree) this.window.webContents.send("workspace:tree", tree);
-    };
+    watcher.on("add", scheduleDirUpdate);
+    watcher.on("unlink", scheduleDirUpdate);
+    watcher.on("addDir", scheduleDirUpdate);
+    watcher.on("unlinkDir", scheduleDirUpdate);
 
-    this.watcher.on("add", () => void sendTree());
-    this.watcher.on("unlink", () => void sendTree());
-    this.watcher.on("addDir", () => void sendTree());
-    this.watcher.on("unlinkDir", () => void sendTree());
-
-    this.watcher.on("change", async (filePath) => {
+    watcher.on("change", async (filePath) => {
       try {
         const content = await fs.readFile(filePath, "utf-8");
         this.window.webContents.send("file:changed", {
@@ -139,5 +236,16 @@ export class WorkspaceService {
         // ignore
       }
     });
+
+    return watcher;
   }
 }
+
+const getLanguageForFile = (filePath: string): OpenFile["language"] => {
+  const ext = path.extname(filePath).toLowerCase();
+  if (MQL_EXTENSIONS.has(ext)) return "mql";
+  if (PY_EXTENSIONS.has(ext)) return "python";
+  if (C_EXTENSIONS.has(ext)) return "c";
+  if (CPP_EXTENSIONS.has(ext)) return "cpp";
+  return "plaintext";
+};

@@ -1,5 +1,6 @@
 import type { BrowserWindow } from "electron";
 import type { LogsAppendPayload } from "../../shared/ipc";
+import { logLine } from "../logger";
 
 export class LogsService {
   private window: BrowserWindow;
@@ -28,6 +29,7 @@ export class LogsService {
       this.buffers[source].splice(0, this.buffers[source].length - this.maxLines);
     }
     this.window.webContents.send("logs:append", payload);
+    logLine(`logs:${source}`, line);
   }
 
   getRecent(source: LogsAppendPayload["source"], max = 200): string[] {
