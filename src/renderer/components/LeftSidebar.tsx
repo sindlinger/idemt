@@ -10,7 +10,7 @@ const CPP_EXT = new Set(["c", "cpp", "cc", "cxx", "h", "hpp", "hh"]);
 
 const getIcon = (node: WorkspaceNode) => {
   if (node.type === "dir") {
-    return { label: "DIR", className: "folder" };
+    return { label: "", className: "folder" };
   }
   const ext = node.name.split(".").pop()?.toLowerCase() ?? "";
   if (ext === "mq5") return { label: "M5", className: "mql" };
@@ -43,17 +43,19 @@ const renderNode = (
   expandedDirs: Set<string>,
   onToggleDir: (node: WorkspaceNode) => void,
   allowFile: (node: WorkspaceNode) => boolean,
-  activeFilePath?: string
+  activeFilePath?: string,
+  rootPath?: string
 ): JSX.Element[] => {
   const entries: JSX.Element[] = [];
   const key = `${node.path}-${depth}`;
   const icon = getIcon(node);
   if (node.type === "dir") {
     const expanded = expandedDirs.has(node.path);
+    const isRoot = Boolean(rootPath && node.path === rootPath && depth === 0);
     entries.push(
       <div
         key={key}
-        className={`file-node dir ${expanded ? "open" : ""}`}
+        className={`file-node dir ${expanded ? "open" : ""} ${isRoot ? "root" : ""}`}
         data-depth={depth}
         style={
           {
@@ -111,7 +113,8 @@ const renderNode = (
               expandedDirs,
               onToggleDir,
               allowFile,
-              activeFilePath
+              activeFilePath,
+              rootPath
             )
           );
         });
@@ -216,46 +219,44 @@ const LeftSidebar = ({
     onExpandedDirsChange(Array.from(next));
   };
 
-  const treeNodes = tree?.children ?? [];
+  const rootNode =
+    tree && workspaceRoot
+      ? {
+          ...tree,
+          name: workspaceRoot
+        }
+      : tree;
+  const treeNodes = rootNode ? [rootNode] : [];
   return (
     <aside className={`sidebar ${collapsed ? "collapsed" : ""}`}>
-      <div className="panel-title">Workspace</div>
-      {workspaceRoot ? (
-        <div className="workspace-meta">
-          <div className="workspace-name">{rootName}</div>
-        </div>
-      ) : null}
-      <div className="panel-title" style={{ marginTop: 12 }}>
-        Files
-      </div>
       <div className="file-filters">
         <button
           className={`filter-btn ${allSelected ? "active" : ""}`}
           onClick={selectAll}
+          title="Todos"
         >
           <Layers size={12} />
-          Todos
         </button>
         <button
           className={`filter-btn ${filters.mql ? "active" : ""}`}
           onClick={() => toggleFilter("mql")}
+          title="MT5"
         >
           <Activity size={12} />
-          MT5
         </button>
         <button
           className={`filter-btn ${filters.python ? "active" : ""}`}
           onClick={() => toggleFilter("python")}
+          title="Python"
         >
           <Code2 size={12} />
-          Python
         </button>
         <button
           className={`filter-btn ${filters.cpp ? "active" : ""}`}
           onClick={() => toggleFilter("cpp")}
+          title="C/C++"
         >
           <Braces size={12} />
-          C/C++
         </button>
       </div>
       <div className="file-tree">
@@ -268,7 +269,8 @@ const LeftSidebar = ({
               expandedSet,
               handleToggleDir,
               allowFile,
-              activeFilePath
+              activeFilePath,
+              rootName
             )
           )
         ) : (

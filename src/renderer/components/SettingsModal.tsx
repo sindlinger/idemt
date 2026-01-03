@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { CheckCircle2, FolderOpen, Save, Trash2 } from "lucide-react";
 import type { Settings } from "@shared/ipc";
 
@@ -18,6 +18,10 @@ const SettingsModal = ({
   const [activeTab, setActiveTab] = useState<"ui" | "editor" | "paths" | "codex" | "workspaces">(
     "ui"
   );
+  const [position, setPosition] = useState({ x: 0, y: 0 });
+  const dragRef = useRef<{ startX: number; startY: number; originX: number; originY: number } | null>(
+    null
+  );
 
   useEffect(() => {
     setLocal(settings);
@@ -25,6 +29,30 @@ const SettingsModal = ({
   }, [settings]);
 
   if (!open) return null;
+
+  const beginDrag = (event: React.MouseEvent) => {
+    if (event.button !== 0) return;
+    dragRef.current = {
+      startX: event.clientX,
+      startY: event.clientY,
+      originX: position.x,
+      originY: position.y
+    };
+    const handleMove = (moveEvent: MouseEvent) => {
+      const current = dragRef.current;
+      if (!current) return;
+      const nextX = current.originX + (moveEvent.clientX - current.startX);
+      const nextY = current.originY + (moveEvent.clientY - current.startY);
+      setPosition({ x: nextX, y: nextY });
+    };
+    const handleUp = () => {
+      dragRef.current = null;
+      window.removeEventListener("mousemove", handleMove);
+      window.removeEventListener("mouseup", handleUp);
+    };
+    window.addEventListener("mousemove", handleMove);
+    window.addEventListener("mouseup", handleUp);
+  };
 
   const updateField = (key: keyof Settings, value: string | number) => {
     setLocal((prev) => ({ ...prev, [key]: value }));
@@ -71,8 +99,16 @@ const SettingsModal = ({
 
   return (
     <div className="settings-modal" onClick={onClose}>
-      <div className="settings-card" onClick={(event) => event.stopPropagation()}>
-        <h2>Settings</h2>
+      <div
+        className="settings-card"
+        style={{
+          left: "50%",
+          top: "50%",
+          transform: `translate(-50%, -50%) translate(${position.x}px, ${position.y}px)`
+        }}
+        onClick={(event) => event.stopPropagation()}
+      >
+        <h2 onMouseDown={beginDrag}>Settings</h2>
         <div className="settings-tabs">
           <button
             className={`settings-tab ${activeTab === "ui" ? "active" : ""}`}

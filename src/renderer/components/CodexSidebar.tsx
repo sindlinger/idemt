@@ -36,6 +36,11 @@ const CodexSidebar = ({
   const historyEntries = useMemo(() => codexEvents.slice().reverse(), [codexEvents]);
 
   const changes = Object.values(reviewChanges);
+  const sendMessage = () => {
+    if (!message.trim()) return;
+    onRun(message.trim());
+    setMessage("");
+  };
 
   return (
     <aside className={`sidebar right codex-sidebar ${collapsed ? "collapsed" : ""}`}>
@@ -103,23 +108,29 @@ const CodexSidebar = ({
             placeholder="Type your request..."
             value={message}
             onChange={(event) => setMessage(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter" && !event.shiftKey) {
+                event.preventDefault();
+                sendMessage();
+              }
+            }}
           />
           <div className="codex-actions">
             <button
               className="codex-send"
-              onClick={() => {
-                if (!message.trim()) return;
-                onRun(message.trim());
-                setMessage("");
-              }}
+              onClick={sendMessage}
               disabled={codexStatus.running}
+              title="Send"
             >
               <Send size={12} />
-              Send
             </button>
-            <button className="button" onClick={onCancel} disabled={!codexStatus.running}>
-              <Square size={12} />
-              Stop
+            <button
+              className="codex-stop"
+              onClick={onCancel}
+              disabled={!codexStatus.running}
+              title="Stop"
+            >
+              <Square size={10} />
             </button>
           </div>
         </div>
