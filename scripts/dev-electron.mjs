@@ -47,8 +47,8 @@ const launchWindowsElectron = async () => {
     process.exit(1);
   }
   const winRoot = root
-    .replace(/^\\/mnt\\/(\\w)\\//, (_, drive) => `${drive.toUpperCase()}:\\\\`)
-    .replace(/\\//g, "\\\\");
+    .replace(/^\/mnt\/([a-z])\//i, (_, drive) => `${drive.toUpperCase()}:\\`)
+    .replace(/\//g, "\\");
   const cmdExe = process.env.WSL_INTEROP
     ? "cmd.exe"
     : "/mnt/c/Windows/System32/cmd.exe";
