@@ -68,6 +68,10 @@ body,
   border-radius: 0;
 }
 
+#root {
+  display: contents;
+}
+
 body {
   margin: 0;
   font-family: "Space Grotesk", "IBM Plex Sans", "Segoe UI", sans-serif;
