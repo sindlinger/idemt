@@ -723,8 +723,7 @@ button {
 }
 
 .splitter.horizontal.ghost {
-  border-bottom-left-radius: 12px;
-  border-bottom-right-radius: 12px;
+  background: var(--panel);
 }
 
 .split-pin {
