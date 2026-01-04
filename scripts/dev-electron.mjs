@@ -48,11 +48,26 @@ const launchWindowsElectron = async () => {
   const winRoot = root
     .replace(/^\\/mnt\\/(\\w)\\//, (_, drive) => `${drive.toUpperCase()}:\\\\`)
     .replace(/\\//g, "\\\\");
+  const cmdExe = process.env.WSL_INTEROP
+    ? "cmd.exe"
+    : "/mnt/c/Windows/System32/cmd.exe";
+  try {
+    await fs.access(cmdExe);
+  } catch {
+    console.error(
+      "[dev-electron] cmd.exe not found. WSL interop may be disabled.\n" +
+        "Enable interop or run from Windows PowerShell:\n" +
+        "  cd C:\\git\\mt5ide\n" +
+        "  npm run dev"
+    );
+    process.exit(1);
+  }
+  console.log(`[dev-electron] Launching Windows Electron from ${winRoot}`);
   const cmd = [
     "/c",
     `cd /d "${winRoot}" && .\\node_modules\\.bin\\electron.cmd .`
   ];
-  const child = spawn("cmd.exe", cmd, { env, stdio: "inherit" });
+  const child = spawn(cmdExe, cmd, { env, stdio: "inherit" });
   child.on("exit", (code) => {
     process.exit(code ?? 0);
   });
