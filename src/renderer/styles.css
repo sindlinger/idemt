@@ -86,9 +86,11 @@ button {
   display: grid;
   grid-template-columns: 1fr auto;
   grid-template-rows: auto auto minmax(0, 1fr) var(--splitter-size) var(--bottom-pane);
-  height: 100%;
+  height: calc(100% - 16px);
   min-height: 0;
   min-width: 0;
+  width: calc(100% - 16px);
+  margin: 8px;
   border: 1px solid var(--topbar-border);
   box-shadow: none;
   border-radius: 12px;

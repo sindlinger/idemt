@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
 import { Pin, PinOff } from "lucide-react";
 import type {
   CodexRunStatus,
@@ -681,22 +681,20 @@ const App = () => {
     ? clamp(layout.bottomHeight, MIN_BOTTOM, Math.max(MIN_BOTTOM, viewport.height - 220))
     : 0;
 
+  const theme = settings.uiTheme ?? "windows11";
+  const mode = settings.uiMode ?? "dark";
+  const appStyle = {
+    "--splitter-size": `${SPLITTER_SIZE}px`,
+    "--left-pane": `${leftPaneWidth}px`,
+    "--right-pane": `${rightPaneWidth}px`,
+    "--bottom-pane": `${bottomPaneHeight}px`
+  } as CSSProperties;
+
   useEffect(() => {
-    const root = document.body;
-    root.classList.add("app");
-    root.dataset.theme = settings.uiTheme ?? "windows11";
-    root.dataset.mode = settings.uiMode ?? "dark";
-    root.style.setProperty("--splitter-size", `${SPLITTER_SIZE}px`);
-    root.style.setProperty("--left-pane", `${leftPaneWidth}px`);
-    root.style.setProperty("--right-pane", `${rightPaneWidth}px`);
-    root.style.setProperty("--bottom-pane", `${bottomPaneHeight}px`);
-  }, [
-    bottomPaneHeight,
-    leftPaneWidth,
-    rightPaneWidth,
-    settings.uiMode,
-    settings.uiTheme
-  ]);
+    document.body.classList.remove("app");
+    delete document.body.dataset.theme;
+    delete document.body.dataset.mode;
+  }, []);
 
   const startResize = (axis: "left" | "right" | "bottom", event: React.MouseEvent) => {
     if (event.button !== 0) return;
@@ -940,7 +938,7 @@ const App = () => {
   }, [activeFilePath, reviewChanges]);
 
   return (
-    <>
+    <div className="app" data-theme={theme} data-mode={mode} style={appStyle}>
       <TopBar
         workspaces={workspaceOrder}
         activeWorkspaceId={activeWorkspaceId}
@@ -1112,7 +1110,7 @@ const App = () => {
           }
         }}
       />
-    </>
+    </div>
   );
 };
 
