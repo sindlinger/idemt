@@ -66,10 +66,18 @@ const TerminalPanel = ({ cwd }: { cwd?: string }) => {
       }
     };
 
+    const resizeObserver =
+      typeof ResizeObserver !== "undefined"
+        ? new ResizeObserver(() => handleResize())
+        : null;
+    if (containerRef.current && resizeObserver) {
+      resizeObserver.observe(containerRef.current);
+    }
     window.addEventListener("resize", handleResize);
 
     return () => {
       window.removeEventListener("resize", handleResize);
+      resizeObserver?.disconnect();
       unsubscribe?.();
       if (sessionRef.current) window.api?.terminalClose?.(sessionRef.current);
       terminal.dispose();

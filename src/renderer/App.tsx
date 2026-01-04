@@ -953,13 +953,25 @@ const App = () => {
         onRunTest={handleRunTest}
         onSettings={() => setSettingsOpen(true)}
         onToggleTerminal={() => {
+          if (bottomPanelOpen && bottomTab === "terminal") {
+            toggleBottomPanel(false);
+            return;
+          }
           setBottomTab("terminal");
           openBottomPanel();
         }}
         onToggleGuides={() => handleToggleSetting("editorShowRulers")}
         onToggleCursorPos={() => handleToggleSetting("editorShowCursorPosition")}
+        onToggleTheme={() => {
+          const nextMode = (settings.uiMode ?? "dark") === "dark" ? "light" : "dark";
+          const next = { ...settings, uiMode: nextMode };
+          setSettings(next);
+          api.settingsSet?.(next);
+        }}
         showGuides={settings.editorShowRulers ?? false}
         showCursorPos={settings.editorShowCursorPosition ?? false}
+        uiMode={settings.uiMode}
+        terminalActive={bottomPanelOpen && bottomTab === "terminal"}
         uiTheme={settings.uiTheme}
         filters={fileFilters}
         onFiltersChange={handleFiltersChange}

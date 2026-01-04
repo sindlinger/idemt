@@ -9,10 +9,12 @@ import {
   Hammer,
   Layers,
   Minus,
+  Moon,
   Ruler,
   Save,
   Settings as SettingsIcon,
   Square,
+  Sun,
   Terminal,
   X,
   Play
@@ -31,8 +33,11 @@ const TopBar = ({
   onToggleTerminal,
   onToggleGuides,
   onToggleCursorPos,
+  onToggleTheme,
   showGuides,
   showCursorPos,
+  uiMode,
+  terminalActive,
   uiTheme,
   filters,
   onFiltersChange
@@ -49,8 +54,11 @@ const TopBar = ({
   onToggleTerminal: () => void;
   onToggleGuides: () => void;
   onToggleCursorPos: () => void;
+  onToggleTheme: () => void;
   showGuides: boolean;
   showCursorPos: boolean;
+  uiMode?: "dark" | "light";
+  terminalActive: boolean;
   uiTheme?: "windows11" | "windowsClassic" | "macos";
   filters: { mql: boolean; python: boolean; cpp: boolean };
   onFiltersChange: (filters: { mql: boolean; python: boolean; cpp: boolean }) => void;
@@ -58,6 +66,7 @@ const TopBar = ({
   const [maximized, setMaximized] = useState(false);
   const isClassic = uiTheme === "windowsClassic";
   const allSelected = filters.mql && filters.python && filters.cpp;
+  const isDark = (uiMode ?? "dark") === "dark";
 
   const toggleFilter = (key: "mql" | "python" | "cpp") => {
     onFiltersChange({ ...filters, [key]: !filters[key] });
@@ -106,26 +115,30 @@ const TopBar = ({
             </div>
           );
         })}
-        <div className="toolbar-actions">
-          <button className="toolbar-btn" onClick={onOpenWorkspace} title="Open Workspace">
-            <FolderOpen size={14} />
-          </button>
-          <button className="toolbar-btn" onClick={onSave} title="Save">
-            <Save size={14} />
-          </button>
-          <button className="toolbar-btn" onClick={onCompile} title="Compile">
-            <Hammer size={14} />
-          </button>
-          <button className="toolbar-btn" onClick={onRunTest} title="Run Test">
-            <Play size={14} />
-          </button>
-          <button className="toolbar-btn" onClick={onSettings} title="Settings">
-            <SettingsIcon size={14} />
-          </button>
-        </div>
       </div>
       <div className="window-controls">
         <div className="toolbar-right">
+          <div className="toolbar-actions">
+            <button
+              className="toolbar-btn"
+              onClick={onOpenWorkspace}
+              title="Open Workspace"
+            >
+              <FolderOpen size={14} />
+            </button>
+            <button className="toolbar-btn" onClick={onSave} title="Save">
+              <Save size={14} />
+            </button>
+            <button className="toolbar-btn" onClick={onCompile} title="Compile">
+              <Hammer size={14} />
+            </button>
+            <button className="toolbar-btn" onClick={onRunTest} title="Run Test">
+              <Play size={14} />
+            </button>
+            <button className="toolbar-btn" onClick={onSettings} title="Settings">
+              <SettingsIcon size={14} />
+            </button>
+          </div>
           <div className="toolbar-filters">
             <button
               className={`filter-btn ${allSelected ? "active" : ""}`}
@@ -170,8 +183,15 @@ const TopBar = ({
           >
             <Crosshair size={14} />
           </button>
-          <button className="toolbar-btn" onClick={onToggleTerminal} title="Terminal">
+          <button
+            className={`toolbar-btn ${terminalActive ? "active" : ""}`}
+            onClick={onToggleTerminal}
+            title="Terminal"
+          >
             <Terminal size={14} />
+          </button>
+          <button className="toolbar-btn" onClick={onToggleTheme} title="Tema claro/escuro">
+            {isDark ? <Sun size={14} /> : <Moon size={14} />}
           </button>
         </div>
         <button className="window-btn" onClick={() => window.api?.windowMinimize?.()}>
