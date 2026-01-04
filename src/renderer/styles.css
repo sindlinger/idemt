@@ -58,15 +58,12 @@
 }
 
 html,
-body {
+body,
+#root {
   height: 100%;
   min-height: 0;
   background: transparent;
   overflow: hidden;
-}
-
-#root {
-  display: contents;
 }
 
 body {
@@ -86,11 +83,11 @@ button {
   display: grid;
   grid-template-columns: 1fr auto;
   grid-template-rows: auto minmax(0, 1fr) var(--splitter-size) var(--bottom-pane);
-  height: calc(100% - 16px);
+  height: 100%;
   min-height: 0;
   min-width: 0;
-  width: calc(100% - 16px);
-  margin: 8px;
+  width: 100%;
+  margin: 0;
   border: 1px solid var(--topbar-border);
   box-shadow: none;
   border-radius: 12px;
