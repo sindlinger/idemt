@@ -75,6 +75,8 @@ const createWindow = async () => {
   logLine("main", "createWindow start");
   await ensureSettingsLoaded();
   const savedBounds = resolveWindowBounds(settingsService.get().windowBounds);
+  const isWindows = process.platform === "win32";
+  const isLinux = process.platform === "linux";
   mainWindow = new BrowserWindow({
     width: savedBounds?.width ?? WINDOW_DEFAULTS.width,
     height: savedBounds?.height ?? WINDOW_DEFAULTS.height,
@@ -82,13 +84,13 @@ const createWindow = async () => {
     minHeight: WINDOW_DEFAULTS.minHeight,
     x: savedBounds?.x,
     y: savedBounds?.y,
-    backgroundColor: "#0b0f15",
-    transparent: false,
+    backgroundColor: isLinux ? "#00000000" : "#0b0f15",
+    transparent: isLinux,
     frame: false,
-    roundedCorners: true,
-    thickFrame: process.platform === "win32" ? false : true,
-    hasShadow: process.platform === "win32" ? false : true,
-    ...(process.platform === "win32" ? { backgroundMaterial: "mica" } : {}),
+    roundedCorners: isWindows,
+    thickFrame: isWindows ? false : true,
+    hasShadow: isWindows ? false : true,
+    ...(isWindows ? { backgroundMaterial: "mica" } : {}),
     titleBarStyle: process.platform === "darwin" ? "hiddenInset" : "hidden",
     autoHideMenuBar: true,
     webPreferences: {
