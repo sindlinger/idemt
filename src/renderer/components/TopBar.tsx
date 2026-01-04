@@ -75,7 +75,7 @@ const TopBar = ({
   }, []);
 
   return (
-    <div className="topbar">
+    <>
       <div className="title-left">
         <span className="app-title">MT5 Sidecar IDE</span>
         {workspaces.map((root) => {
@@ -190,7 +190,7 @@ const TopBar = ({
           <Terminal size={14} />
         </button>
       </div>
-    </div>
+    </>
   );
 };
 
