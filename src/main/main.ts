@@ -23,6 +23,18 @@ const isDev = process.env.NODE_ENV === "development";
 const isWsl =
   process.platform === "linux" &&
   (Boolean(process.env.WSL_INTEROP) || Boolean(process.env.WSL_DISTRO_NAME));
+const isWindows = process.platform === "win32";
+const launchedFromWsl =
+  isWindows && (Boolean(process.env.WSL_INTEROP) || Boolean(process.env.WSL_DISTRO_NAME));
+
+if (launchedFromWsl) {
+  const userData = path.join(app.getPath("appData"), "mt5ide-win");
+  const cacheDir = path.join(app.getPath("temp"), "mt5ide-cache");
+  app.setPath("userData", userData);
+  app.setPath("cache", cacheDir);
+  app.commandLine.appendSwitch("disk-cache-dir", cacheDir);
+  app.commandLine.appendSwitch("disable-gpu-shader-disk-cache");
+}
 
 if (isWsl) {
   // Avoid GPU/ANGLE issues on WSL + X servers (ex: X410).
@@ -75,7 +87,6 @@ const createWindow = async () => {
   logLine("main", "createWindow start");
   await ensureSettingsLoaded();
   const savedBounds = resolveWindowBounds(settingsService.get().windowBounds);
-  const isWindows = process.platform === "win32";
   const isLinux = process.platform === "linux";
   mainWindow = new BrowserWindow({
     width: savedBounds?.width ?? WINDOW_DEFAULTS.width,
