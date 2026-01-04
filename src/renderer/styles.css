@@ -17,6 +17,7 @@
   --scroll-thumb: rgba(148, 163, 184, 0.45);
   --scroll-thumb-hover: rgba(148, 163, 184, 0.75);
   --app-bg: radial-gradient(circle at top left, #1a2230 0%, #0b0f15 60%);
+  --window-outline: rgba(255, 255, 255, 0.12);
   --radius-xs: 4px;
   --radius-sm: 6px;
   --radius-md: 10px;
@@ -95,7 +96,7 @@ button {
   width: 100%;
   margin: 0;
   border: none;
-  box-shadow: inset 0 0 0 1px var(--topbar-border);
+  box-shadow: inset 0 0 0 1px var(--window-outline);
   border-radius: var(--window-radius);
   clip-path: inset(0 round var(--window-radius));
   overflow: hidden;
@@ -130,6 +131,7 @@ button {
   --topbar-border: #9b9b9b;
   --toolbar-bg: rgba(220, 220, 220, 0.9);
   --toolbar-border: #9b9b9b;
+  --window-outline: #8f8f8f;
   --shadow: 0 10px 24px rgba(60, 60, 60, 0.25);
   --radius-xs: 3px;
   --radius-sm: 4px;
@@ -549,6 +551,7 @@ button {
   --toolbar-border: #d6dbe6;
   --scroll-thumb: rgba(100, 116, 139, 0.5);
   --scroll-thumb-hover: rgba(100, 116, 139, 0.8);
+  --window-outline: rgba(0, 0, 0, 0.18);
   --sidebar-bg: #f6f7fb;
   --sidebar-bg-right: #f1f3f8;
   --tabs-bg: #ffffff;
