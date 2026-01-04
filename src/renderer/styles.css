@@ -252,6 +252,10 @@ button {
   padding: 6px 8px 4px;
 }
 
+.app[data-native-frame="true"] .window-controls {
+  display: none;
+}
+
 .toolbar-right {
   margin-right: 6px;
 }

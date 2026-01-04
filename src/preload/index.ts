@@ -23,6 +23,8 @@ const on = <T>(channel: string, handler: (payload: T) => void) => {
 };
 
 contextBridge.exposeInMainWorld("api", {
+  platform: process.platform,
+  nativeFrame: process.platform === "win32",
   settingsGet: (): Promise<Settings> => ipcRenderer.invoke("settings:get"),
   settingsSet: (settings: Settings): Promise<Settings> => ipcRenderer.invoke("settings:set", settings),
   settingsValidate: (settings: Settings): Promise<Record<string, boolean>> =>

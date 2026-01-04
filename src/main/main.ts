@@ -24,6 +24,7 @@ const isWsl =
   (Boolean(process.env.WSL_INTEROP) || Boolean(process.env.WSL_DISTRO_NAME));
 const isWindows = process.platform === "win32";
 const isDev = process.env.NODE_ENV === "development" || !app.isPackaged;
+const useNativeFrame = isWindows;
 const launchedFromWsl =
   isWindows && (Boolean(process.env.WSL_INTEROP) || Boolean(process.env.WSL_DISTRO_NAME));
 
@@ -97,7 +98,7 @@ const createWindow = async () => {
   await ensureSettingsLoaded();
   const savedBounds = resolveWindowBounds(settingsService.get().windowBounds);
   const isLinux = process.platform === "linux";
-  const useTransparentWindow = isLinux;
+  const useTransparentWindow = isLinux && !useNativeFrame;
   mainWindow = new BrowserWindow({
     width: savedBounds?.width ?? WINDOW_DEFAULTS.width,
     height: savedBounds?.height ?? WINDOW_DEFAULTS.height,
@@ -107,12 +108,12 @@ const createWindow = async () => {
     y: savedBounds?.y,
     backgroundColor: useTransparentWindow ? "#00000000" : "#0b0f15",
     transparent: useTransparentWindow,
-    frame: false,
+    frame: useNativeFrame ? true : false,
     roundedCorners: true,
     thickFrame: isWindows ? false : true,
     hasShadow: true,
     ...(isWindows ? { backgroundMaterial: "mica" } : {}),
-    titleBarStyle: process.platform === "darwin" ? "hiddenInset" : "hidden",
+    ...(process.platform === "darwin" ? { titleBarStyle: "hiddenInset" } : {}),
     autoHideMenuBar: true,
     webPreferences: {
       contextIsolation: true,

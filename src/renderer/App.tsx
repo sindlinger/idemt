@@ -686,6 +686,7 @@ const App = () => {
     root.classList.add("app");
     root.dataset.theme = settings.uiTheme ?? "windows11";
     root.dataset.mode = settings.uiMode ?? "dark";
+    root.dataset.nativeFrame = window.api?.nativeFrame ? "true" : "false";
     root.style.setProperty("--splitter-size", `${SPLITTER_SIZE}px`);
     root.style.setProperty("--left-pane", `${leftPaneWidth}px`);
     root.style.setProperty("--right-pane", `${rightPaneWidth}px`);

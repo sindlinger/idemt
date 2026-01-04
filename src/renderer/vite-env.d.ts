@@ -19,6 +19,8 @@ import type {
 declare global {
   interface Window {
     api: {
+      platform: string;
+      nativeFrame: boolean;
       settingsGet: () => Promise<Settings>;
       settingsSet: (settings: Settings) => Promise<Settings>;
       settingsValidate: (settings: Settings) => Promise<Record<string, boolean>>;
