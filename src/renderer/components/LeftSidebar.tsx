@@ -58,7 +58,7 @@ const renderNode = (
         data-depth={depth}
         style={
           {
-            paddingLeft: 18 + depth * 14,
+            paddingLeft: 12 + depth * 12,
             "--depth": depth
           } as React.CSSProperties
         }
@@ -77,7 +77,7 @@ const renderNode = (
             data-depth={depth + 1}
             style={
               {
-                paddingLeft: 18 + (depth + 1) * 14,
+                paddingLeft: 12 + (depth + 1) * 12,
                 "--depth": depth + 1
               } as React.CSSProperties
             }
@@ -93,7 +93,7 @@ const renderNode = (
             data-depth={depth + 1}
             style={
               {
-                paddingLeft: 18 + (depth + 1) * 14,
+                paddingLeft: 12 + (depth + 1) * 12,
                 "--depth": depth + 1
               } as React.CSSProperties
             }
@@ -128,7 +128,7 @@ const renderNode = (
         data-depth={depth}
         style={
           {
-            paddingLeft: 18 + depth * 14,
+            paddingLeft: 12 + depth * 12,
             "--depth": depth
           } as React.CSSProperties
         }
