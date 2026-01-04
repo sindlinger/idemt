@@ -10,6 +10,7 @@ const requiredFiles = [
 ];
 
 const waitForFiles = async () => {
+  console.log(`[dev-electron] waiting for dist outputs in ${root}`);
   while (true) {
     const checks = await Promise.all(
       requiredFiles.map((file) =>
@@ -51,23 +52,38 @@ const launchWindowsElectron = async () => {
   const cmdExe = process.env.WSL_INTEROP
     ? "cmd.exe"
     : "/mnt/c/Windows/System32/cmd.exe";
+  const psExe = "/mnt/c/Windows/System32/WindowsPowerShell/v1.0/powershell.exe";
   try {
     await fs.access(cmdExe);
   } catch {
-    console.error(
-      "[dev-electron] cmd.exe not found. WSL interop may be disabled.\n" +
-        "Enable interop or run from Windows PowerShell:\n" +
-        "  cd C:\\git\\mt5ide\n" +
-        "  npm run dev"
-    );
-    process.exit(1);
+    try {
+      await fs.access(psExe);
+    } catch {
+      console.error(
+        "[dev-electron] cmd.exe not found. WSL interop may be disabled.\n" +
+          "Enable interop or run from Windows PowerShell:\n" +
+          "  cd C:\\git\\mt5ide\n" +
+          "  npm run dev"
+      );
+      process.exit(1);
+    }
   }
   console.log(`[dev-electron] Launching Windows Electron from ${winRoot}`);
-  const cmd = [
-    "/c",
-    `cd /d "${winRoot}" && .\\node_modules\\.bin\\electron.cmd .`
-  ];
-  const child = spawn(cmdExe, cmd, { env, stdio: "inherit" });
+  const cmd = ["/c", `cd /d "${winRoot}" && .\\node_modules\\.bin\\electron.cmd .`];
+  const child = await fs
+    .access(cmdExe)
+    .then(() => spawn(cmdExe, cmd, { env, stdio: "inherit" }))
+    .catch(() =>
+      spawn(
+        psExe,
+        [
+          "-NoProfile",
+          "-Command",
+          `Set-Location -LiteralPath '${winRoot}'; .\\node_modules\\.bin\\electron.cmd .`
+        ],
+        { env, stdio: "inherit" }
+      )
+    );
   child.on("exit", (code) => {
     process.exit(code ?? 0);
   });
