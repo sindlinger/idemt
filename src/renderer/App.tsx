@@ -682,7 +682,7 @@ const App = () => {
     : 0;
 
   useEffect(() => {
-    const root = document.body;
+    const root = document.documentElement;
     root.classList.add("app");
     root.dataset.theme = settings.uiTheme ?? "windows11";
     root.dataset.mode = settings.uiMode ?? "dark";
