@@ -15,17 +15,21 @@ let settingsReady = false;
 const WINDOW_DEFAULTS = {
   width: 1600,
   height: 900,
-  minWidth: 1200,
-  minHeight: 720
+  minWidth: 900,
+  minHeight: 600
 };
 
-const isDev = process.env.NODE_ENV === "development" || !app.isPackaged;
 const isWsl =
   process.platform === "linux" &&
   (Boolean(process.env.WSL_INTEROP) || Boolean(process.env.WSL_DISTRO_NAME));
 const isWindows = process.platform === "win32";
+const isDev = process.env.NODE_ENV === "development" || !app.isPackaged;
 const launchedFromWsl =
   isWindows && (Boolean(process.env.WSL_INTEROP) || Boolean(process.env.WSL_DISTRO_NAME));
+
+if (isDev) {
+  process.env.ELECTRON_DISABLE_SECURITY_WARNINGS = "true";
+}
 
 if (launchedFromWsl) {
   const localAppData = process.env.LOCALAPPDATA || app.getPath("userData");
@@ -93,6 +97,7 @@ const createWindow = async () => {
   await ensureSettingsLoaded();
   const savedBounds = resolveWindowBounds(settingsService.get().windowBounds);
   const isLinux = process.platform === "linux";
+  const useTransparentWindow = isLinux || isWindows;
   mainWindow = new BrowserWindow({
     width: savedBounds?.width ?? WINDOW_DEFAULTS.width,
     height: savedBounds?.height ?? WINDOW_DEFAULTS.height,
@@ -100,12 +105,12 @@ const createWindow = async () => {
     minHeight: WINDOW_DEFAULTS.minHeight,
     x: savedBounds?.x,
     y: savedBounds?.y,
-    backgroundColor: isLinux ? "#00000000" : "#0b0f15",
-    transparent: isLinux,
+    backgroundColor: useTransparentWindow ? "#00000000" : "#0b0f15",
+    transparent: useTransparentWindow,
     frame: false,
-    roundedCorners: isWindows,
+    roundedCorners: true,
     thickFrame: isWindows ? false : true,
-    hasShadow: isWindows ? false : true,
+    hasShadow: true,
     ...(isWindows ? { backgroundMaterial: "mica" } : {}),
     titleBarStyle: process.platform === "darwin" ? "hiddenInset" : "hidden",
     autoHideMenuBar: true,
