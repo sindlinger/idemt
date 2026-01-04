@@ -64,6 +64,7 @@ body,
   min-height: 0;
   background: transparent;
   overflow: hidden;
+  border-radius: 12px;
 }
 
 body {
@@ -91,6 +92,7 @@ button {
   border: 1px solid var(--topbar-border);
   box-shadow: none;
   border-radius: 12px;
+  clip-path: inset(0 round 12px);
   overflow: hidden;
   background: var(--bg);
   background-image: var(--app-bg);
