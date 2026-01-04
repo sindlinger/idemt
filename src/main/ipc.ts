@@ -9,7 +9,6 @@ import { TerminalService } from "./services/TerminalService";
 import { TestService } from "./services/TestService";
 import { WorkspaceService } from "./services/WorkspaceService";
 import { logLine } from "./logger";
-import { resolveWindowBackground } from "./windowBackground";
 import fs from "node:fs/promises";
 import path from "node:path";
 
@@ -50,7 +49,6 @@ export const registerIpc = async (window: BrowserWindow, settingsService: Settin
   ipcMain.handle("settings:set", async (_event, partial: Settings) => {
     logLine("ipc", "settings:set");
     const updated = await settingsService.set(partial);
-    window.setBackgroundColor(resolveWindowBackground(updated));
     return updated;
   });
   ipcMain.handle("settings:validate", async (_event, settings: Settings) => {
