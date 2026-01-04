@@ -154,22 +154,15 @@ button {
 
 
 .topbar {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-rows: auto auto;
+  gap: 6px 10px;
   padding: 6px 12px 8px;
   background: var(--topbar-bg);
   border-bottom: 1px solid var(--topbar-border);
   border-radius: 12px 12px 0 0;
   overflow: hidden;
-}
-
-.titlebar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  -webkit-app-region: drag;
-  padding: 2px 4px 0;
 }
 
 .title-left {
@@ -178,6 +171,9 @@ button {
   gap: 10px;
   flex-wrap: wrap;
   row-gap: 6px;
+  grid-column: 1;
+  grid-row: 1;
+  -webkit-app-region: drag;
 }
 
 .app-title {
@@ -247,6 +243,10 @@ button {
   display: flex;
   gap: 4px;
   -webkit-app-region: no-drag;
+  grid-column: 2;
+  grid-row: 1;
+  justify-self: end;
+  align-items: center;
 }
 
 .window-btn {
@@ -419,23 +419,18 @@ button {
   color: var(--text);
 }
 
-.toolbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  -webkit-app-region: no-drag;
-  background: var(--toolbar-bg);
-  border: 1px solid var(--toolbar-border);
-  border-radius: var(--radius-sm);
-  padding: 4px 6px;
-}
-
 .toolbar-actions {
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
   align-items: center;
+  grid-column: 1;
+  grid-row: 2;
+  -webkit-app-region: no-drag;
+  background: var(--toolbar-bg);
+  border: 1px solid var(--toolbar-border);
+  border-radius: var(--radius-sm);
+  padding: 4px 6px;
 }
 
 .toolbar-filters {
@@ -448,6 +443,14 @@ button {
   display: flex;
   gap: 8px;
   align-items: center;
+  grid-column: 2;
+  grid-row: 2;
+  justify-self: end;
+  -webkit-app-region: no-drag;
+  background: var(--toolbar-bg);
+  border: 1px solid var(--toolbar-border);
+  border-radius: var(--radius-sm);
+  padding: 4px 6px;
 }
 
 .toolbar-btn {
