@@ -88,7 +88,7 @@ button {
   min-height: 0;
   min-width: 0;
   border: 1px solid var(--topbar-border);
-  box-shadow: var(--shadow);
+  box-shadow: none;
   border-radius: 12px;
   overflow: hidden;
   background: var(--bg);
