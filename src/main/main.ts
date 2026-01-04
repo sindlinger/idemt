@@ -110,7 +110,7 @@ const createWindow = async () => {
     transparent: useTransparentWindow,
     frame: useNativeFrame ? true : false,
     roundedCorners: true,
-    thickFrame: isWindows ? false : true,
+    thickFrame: isWindows ? useNativeFrame : true,
     hasShadow: true,
     ...(isWindows ? { backgroundMaterial: "mica" } : {}),
     ...(process.platform === "darwin" ? { titleBarStyle: "hiddenInset" } : {}),

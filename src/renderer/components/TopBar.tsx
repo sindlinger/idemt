@@ -59,7 +59,7 @@ const TopBar = ({
   showCursorPos: boolean;
   uiMode?: "dark" | "light";
   terminalActive: boolean;
-  uiTheme?: "windows11" | "windowsClassic" | "macos";
+  uiTheme?: "windows11" | "windowsClassic" | "macos" | "metatrader";
   filters: { mql: boolean; python: boolean; cpp: boolean };
   onFiltersChange: (filters: { mql: boolean; python: boolean; cpp: boolean }) => void;
 }) => {

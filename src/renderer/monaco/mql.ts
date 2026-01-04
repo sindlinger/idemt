@@ -128,19 +128,40 @@ export const setupMqlLanguage = (monaco: typeof monacoType) => {
       "editorCursor.foreground": "#111111"
     }
   });
+
+  monaco.editor.defineTheme("mqlMetaTrader", {
+    base: "vs-dark",
+    inherit: true,
+    rules: [
+      { token: "keyword", foreground: "7ad7a6" },
+      { token: "number", foreground: "f0c36b" },
+      { token: "string", foreground: "f29b8b" },
+      { token: "comment", foreground: "6c788a", fontStyle: "italic" }
+    ],
+    colors: {
+      "editor.background": "#0f141c",
+      "editor.lineHighlightBackground": "#14202b",
+      "editorLineNumber.foreground": "#4a5566",
+      "editorGutter.background": "#0f141c",
+      "editorIndentGuide.background": "#223042",
+      "editor.selectionBackground": "#21404a",
+      "editorCursor.foreground": "#e6ebf5"
+    }
+  });
 };
 
 export const getMqlThemeName = (options: {
-  uiTheme?: "windows11" | "windowsClassic" | "macos";
+  uiTheme?: "windows11" | "windowsClassic" | "macos" | "metatrader";
   uiMode?: "dark" | "light";
 }) => {
+  if (options.uiTheme === "metatrader") return "mqlMetaTrader";
   if (options.uiTheme === "windowsClassic") return "mqlClassic";
   if (options.uiMode === "light") return "mqlLight";
   return "mqlDark";
 };
 
 export const getEditorFont = (options: {
-  uiTheme?: "windows11" | "windowsClassic" | "macos";
+  uiTheme?: "windows11" | "windowsClassic" | "macos" | "metatrader";
 }) => {
   if (options.uiTheme === "macos") {
     return 'SF Mono, Menlo, Monaco, "Courier New", monospace';
@@ -152,11 +173,12 @@ export const getEditorFont = (options: {
 };
 
 export const getEditorFontSize = (options: {
-  uiTheme?: "windows11" | "windowsClassic" | "macos";
+  uiTheme?: "windows11" | "windowsClassic" | "macos" | "metatrader";
   editorFontSize?: number;
 }) => {
   if (options.editorFontSize) return options.editorFontSize;
   if (options.uiTheme === "windowsClassic") return 12;
   if (options.uiTheme === "macos") return 13;
+  if (options.uiTheme === "metatrader") return 13;
   return 13;
 };

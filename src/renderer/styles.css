@@ -158,6 +158,33 @@ button {
   --line-highlight-border: #94a3b8;
 }
 
+.app[data-theme="metatrader"] {
+  --bg: #0f141c;
+  --bg-soft: #101722;
+  --panel: #141b24;
+  --panel-2: #1a2230;
+  --text: #d5dbe4;
+  --muted: #8a93a3;
+  --border: #242f3d;
+  --accent: #2bbd7e;
+  --accent-2: #4dd4ff;
+  --topbar-bg: linear-gradient(180deg, #1b222c 0%, #141b24 100%);
+  --topbar-border: #263141;
+  --toolbar-bg: rgba(20, 27, 36, 0.85);
+  --toolbar-border: #273242;
+  --sidebar-bg: #141b24;
+  --sidebar-bg-right: linear-gradient(180deg, #151d28, #111823 60%);
+  --tabs-bg: #141b24;
+  --tab-bg: #1a2332;
+  --tab-active-bg: rgba(43, 189, 126, 0.18);
+  --editor-bg: #0f141c;
+  --splitter-bg: rgba(38, 50, 67, 0.85);
+  --splitter-hover: rgba(43, 189, 126, 0.2);
+  --line-highlight: rgba(43, 189, 126, 0.12);
+  --line-highlight-border: #2bbd7e;
+  --app-bg: radial-gradient(circle at top left, #18202c 0%, #0f141c 60%);
+}
+
 
 .title-left {
   display: flex;
@@ -739,14 +766,14 @@ button {
   width: 18px;
   height: 10px;
   border-radius: 0 0 999px 999px;
-  border: 1px solid rgba(148, 163, 184, 0.35);
-  background: rgba(148, 163, 184, 0.08);
+  border: 1px solid transparent;
+  background: transparent;
   color: transparent;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  opacity: 0.35;
+  opacity: 0.12;
   transition: border 0.2s ease, color 0.2s ease, background 0.2s ease, opacity 0.2s ease,
     transform 0.2s ease;
 }
@@ -758,9 +785,9 @@ button {
 }
 
 .split-pin.active {
-  border-color: rgba(148, 163, 184, 0.5);
-  background: rgba(148, 163, 184, 0.12);
-  opacity: 0.6;
+  border-color: rgba(148, 163, 184, 0.25);
+  background: rgba(148, 163, 184, 0.08);
+  opacity: 0.25;
 }
 
 .splitter.vertical .split-pin {

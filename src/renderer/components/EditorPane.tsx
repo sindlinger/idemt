@@ -24,7 +24,7 @@ export type EditorPaneProps = {
   onSelectionChange?: (selection: string) => void;
   navigationTarget?: { path: string; line: number; column: number } | null;
   onNavigationHandled: () => void;
-  uiTheme?: "windows11" | "windowsClassic" | "macos";
+  uiTheme?: "windows11" | "windowsClassic" | "macos" | "metatrader";
   uiMode?: "dark" | "light";
   editorFontSize?: number;
   editorShowRulers?: boolean;

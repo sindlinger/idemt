@@ -163,6 +163,7 @@ const SettingsModal = ({
                   <option value="windows11">Windows 11</option>
                   <option value="windowsClassic">Windows Classic</option>
                   <option value="macos">macOS</option>
+                  <option value="metatrader">MetaTrader</option>
                 </select>
               </div>
             </>

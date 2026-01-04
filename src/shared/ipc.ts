@@ -85,7 +85,7 @@ export type Settings = {
   codexArgs?: string;
   mtDataDir?: string;
   reportsDir?: string;
-  uiTheme?: "windows11" | "windowsClassic" | "macos";
+  uiTheme?: "windows11" | "windowsClassic" | "macos" | "metatrader";
   uiMode?: "dark" | "light";
   editorFontSize?: number;
   editorLineNumbers?: boolean;
