@@ -1,4 +1,4 @@
-import { spawn } from "node:child_process";
+import { execSync, spawn } from "node:child_process";
 import fs from "node:fs/promises";
 import path from "node:path";
 
@@ -33,6 +33,27 @@ const env = {
   ELECTRON_ENABLE_LOGGING: "1",
   ELECTRON_ENABLE_STACK_DUMPING: "1"
 };
+
+const resolveWslDevUrl = () => {
+  try {
+    const output = execSync("hostname -I", { stdio: ["ignore", "pipe", "ignore"] })
+      .toString()
+      .trim();
+    const ip = output.split(/\s+/)[0];
+    if (!ip) return null;
+    return `http://${ip}:5173`;
+  } catch {
+    return null;
+  }
+};
+
+if (isWsl && !env.MT5IDE_DEV_URL) {
+  const wslDevUrl = resolveWslDevUrl();
+  if (wslDevUrl) {
+    env.MT5IDE_DEV_URL = wslDevUrl;
+    console.log(`[dev-electron] Using WSL dev URL ${wslDevUrl}`);
+  }
+}
 
 const launchWindowsElectron = async () => {
   const winElectron = path.join(root, "node_modules", ".bin", "electron.cmd");
@@ -69,14 +90,7 @@ const launchWindowsElectron = async () => {
     }
   }
   console.log(`[dev-electron] Launching Windows Electron from ${winRoot}`);
-  const userDataDir = `${winRoot}\\.win-user`;
-  const cacheDir = `${winRoot}\\.win-cache`;
-  const electronArgs = [
-    ".",
-    `--user-data-dir="${userDataDir}"`,
-    `--disk-cache-dir="${cacheDir}"`,
-    "--disable-gpu-shader-disk-cache"
-  ].join(" ");
+  const electronArgs = [".", "--disable-gpu-shader-disk-cache"].join(" ");
   const cmd = ["/c", `cd /d "${winRoot}" && .\\node_modules\\.bin\\electron.cmd ${electronArgs}`];
   const child = await fs
     .access(cmdExe)

@@ -19,7 +19,7 @@ const WINDOW_DEFAULTS = {
   minHeight: 720
 };
 
-const isDev = process.env.NODE_ENV === "development";
+const isDev = process.env.NODE_ENV === "development" || !app.isPackaged;
 const isWsl =
   process.platform === "linux" &&
   (Boolean(process.env.WSL_INTEROP) || Boolean(process.env.WSL_DISTRO_NAME));
@@ -28,8 +28,9 @@ const launchedFromWsl =
   isWindows && (Boolean(process.env.WSL_INTEROP) || Boolean(process.env.WSL_DISTRO_NAME));
 
 if (launchedFromWsl) {
-  const userData = path.join(app.getPath("appData"), "mt5ide-win");
-  const cacheDir = path.join(app.getPath("temp"), "mt5ide-cache");
+  const localAppData = process.env.LOCALAPPDATA || app.getPath("userData");
+  const userData = path.join(localAppData, "mt5ide-win");
+  const cacheDir = path.join(localAppData, "mt5ide-cache");
   app.setPath("userData", userData);
   app.setPath("cache", cacheDir);
   app.commandLine.appendSwitch("disk-cache-dir", cacheDir);
@@ -43,7 +44,11 @@ if (isWsl) {
   app.commandLine.appendSwitch("use-gl", "swiftshader");
 }
 
-const DEV_URLS = ["http://localhost:5173", "http://127.0.0.1:5173"];
+const DEV_URLS = [
+  ...(process.env.MT5IDE_DEV_URL ? [process.env.MT5IDE_DEV_URL] : []),
+  "http://localhost:5173",
+  "http://127.0.0.1:5173"
+];
 
 const ensureSettingsLoaded = async () => {
   if (settingsReady) return;

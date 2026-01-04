@@ -6,13 +6,14 @@
   "scripts": {
     "predev": "node scripts/copy-monaco.mjs",
     "dev": "concurrently \"npm:dev:renderer\" \"npm:dev:main\" \"npm:dev:preload\" \"npm:dev:electron\"",
-    "dev:renderer": "vite --port 5173",
+    "dev:renderer": "vite --host 0.0.0.0 --port 5173",
     "dev:main": "tsc -w -p tsconfig.main.json",
     "dev:preload": "tsc -w -p tsconfig.preload.json",
     "dev:electron": "node scripts/dev-electron.mjs",
     "prebuild": "node scripts/copy-monaco.mjs",
     "build": "npm run build:renderer && npm run build:main",
     "build:renderer": "vite build",
+    "build:preload": "tsc -p tsconfig.preload.json",
     "build:main": "tsc -p tsconfig.main.json && tsc -p tsconfig.preload.json",
     "typecheck": "tsc -p tsconfig.renderer.json --noEmit && tsc -p tsconfig.main.json --noEmit && tsc -p tsconfig.preload.json --noEmit"
   },
