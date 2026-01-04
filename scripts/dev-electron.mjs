@@ -69,7 +69,15 @@ const launchWindowsElectron = async () => {
     }
   }
   console.log(`[dev-electron] Launching Windows Electron from ${winRoot}`);
-  const cmd = ["/c", `cd /d "${winRoot}" && .\\node_modules\\.bin\\electron.cmd .`];
+  const userDataDir = `${winRoot}\\.win-user`;
+  const cacheDir = `${winRoot}\\.win-cache`;
+  const electronArgs = [
+    ".",
+    `--user-data-dir="${userDataDir}"`,
+    `--disk-cache-dir="${cacheDir}"`,
+    "--disable-gpu-shader-disk-cache"
+  ].join(" ");
+  const cmd = ["/c", `cd /d "${winRoot}" && .\\node_modules\\.bin\\electron.cmd ${electronArgs}`];
   const child = await fs
     .access(cmdExe)
     .then(() => spawn(cmdExe, cmd, { env, stdio: "inherit" }))
