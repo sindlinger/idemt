@@ -173,6 +173,8 @@ button {
   padding: 6px 12px 8px;
   background: var(--topbar-bg);
   border-bottom: 1px solid var(--topbar-border);
+  border-radius: 12px 12px 0 0;
+  overflow: hidden;
 }
 
 .titlebar {
@@ -722,6 +724,11 @@ button {
   background: transparent;
 }
 
+.splitter.horizontal.ghost {
+  border-bottom-left-radius: 12px;
+  border-bottom-right-radius: 12px;
+}
+
 .split-pin {
   width: 18px;
   height: 18px;
@@ -812,7 +819,7 @@ button {
   background: var(--panel);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
-  padding: 4px 4px 6px 2px;
+  padding: 4px 4px 6px 0px;
   position: relative;
 }
 
@@ -1075,7 +1082,7 @@ button {
 }
 
 .ext-trigger {
-  width: 30px;
+  width: 34px;
   height: 24px;
   padding: 0;
   border-radius: 6px;
@@ -1123,8 +1130,8 @@ button {
 }
 
 .ext-option .ext-icon {
-  width: 24px;
-  height: 24px;
+  width: 26px;
+  height: 26px;
   font-size: 9px;
 }
 
@@ -1139,8 +1146,8 @@ button {
 }
 
 .ext-icon {
-  width: 20px;
-  height: 20px;
+  width: 22px;
+  height: 22px;
   border-radius: 6px;
   display: inline-flex;
   align-items: center;
@@ -1601,6 +1608,8 @@ button {
   display: flex;
   flex-direction: column;
   min-height: 0;
+  border-radius: 0 0 12px 12px;
+  overflow: hidden;
 }
 
 .bottom-panel.hidden {
