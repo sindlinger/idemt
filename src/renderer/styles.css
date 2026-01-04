@@ -81,9 +81,9 @@ button {
 }
 
 .app {
-  display: flex;
-  flex-direction: column;
-  height: 100vh;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) var(--splitter-size) var(--bottom-pane);
+  height: 100%;
   min-height: 0;
   min-width: 0;
   border: 1px solid var(--topbar-border);

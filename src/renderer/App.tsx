@@ -681,6 +681,24 @@ const App = () => {
     ? clamp(layout.bottomHeight, MIN_BOTTOM, Math.max(MIN_BOTTOM, viewport.height - 220))
     : 0;
 
+  useEffect(() => {
+    const root = document.getElementById("root");
+    if (!root) return;
+    root.classList.add("app");
+    root.dataset.theme = settings.uiTheme ?? "windows11";
+    root.dataset.mode = settings.uiMode ?? "dark";
+    root.style.setProperty("--splitter-size", `${SPLITTER_SIZE}px`);
+    root.style.setProperty("--left-pane", `${leftPaneWidth}px`);
+    root.style.setProperty("--right-pane", `${rightPaneWidth}px`);
+    root.style.setProperty("--bottom-pane", `${bottomPaneHeight}px`);
+  }, [
+    bottomPaneHeight,
+    leftPaneWidth,
+    rightPaneWidth,
+    settings.uiMode,
+    settings.uiTheme
+  ]);
+
   const startResize = (axis: "left" | "right" | "bottom", event: React.MouseEvent) => {
     if (event.button !== 0) return;
     event.preventDefault();
@@ -923,52 +941,30 @@ const App = () => {
   }, [activeFilePath, reviewChanges]);
 
   return (
-    <div
-      className="app"
-      data-theme={settings.uiTheme ?? "windows11"}
-      data-mode={settings.uiMode ?? "dark"}
-    >
+    <>
       <TopBar
-          workspaces={workspaceOrder}
-          activeWorkspaceId={activeWorkspaceId}
-          onSelectWorkspace={handleActivateWorkspace}
-          onCloseWorkspace={handleCloseWorkspace}
-          onOpenWorkspace={handleOpenWorkspace}
-          onSave={handleSave}
-          onCompile={handleCompile}
-          onRunTest={handleRunTest}
-          onSettings={() => setSettingsOpen(true)}
-          onToggleTerminal={() => {
-            setBottomTab("terminal");
-            openBottomPanel();
-          }}
-          onToggleGuides={() => handleToggleSetting("editorShowRulers")}
-          onToggleCursorPos={() => handleToggleSetting("editorShowCursorPosition")}
-          showGuides={settings.editorShowRulers ?? false}
-          showCursorPos={settings.editorShowCursorPosition ?? false}
-          uiTheme={settings.uiTheme}
-          filters={fileFilters}
-          onFiltersChange={handleFiltersChange}
-        />
-      <div
-        className="workspace-area"
-        style={
-          {
-            "--splitter-size": `${SPLITTER_SIZE}px`,
-            "--bottom-pane": `${bottomPaneHeight}px`
-          } as React.CSSProperties
-        }
-      >
-        <div
-          className="main-layout"
-          style={
-            {
-              "--splitter-size": `${SPLITTER_SIZE}px`,
-              "--left-pane": `${leftPaneWidth}px`,
-              "--right-pane": `${rightPaneWidth}px`
-            } as React.CSSProperties
-          }
-        >
+        workspaces={workspaceOrder}
+        activeWorkspaceId={activeWorkspaceId}
+        onSelectWorkspace={handleActivateWorkspace}
+        onCloseWorkspace={handleCloseWorkspace}
+        onOpenWorkspace={handleOpenWorkspace}
+        onSave={handleSave}
+        onCompile={handleCompile}
+        onRunTest={handleRunTest}
+        onSettings={() => setSettingsOpen(true)}
+        onToggleTerminal={() => {
+          setBottomTab("terminal");
+          openBottomPanel();
+        }}
+        onToggleGuides={() => handleToggleSetting("editorShowRulers")}
+        onToggleCursorPos={() => handleToggleSetting("editorShowCursorPosition")}
+        showGuides={settings.editorShowRulers ?? false}
+        showCursorPos={settings.editorShowCursorPosition ?? false}
+        uiTheme={settings.uiTheme}
+        filters={fileFilters}
+        onFiltersChange={handleFiltersChange}
+      />
+      <div className="main-layout">
           <LeftSidebar
             tree={tree}
             workspaceRoot={workspaceRoot}
@@ -1067,18 +1063,17 @@ const App = () => {
             {bottomPanelOpen ? <Pin size={12} /> : <PinOff size={12} />}
           </button>
         </div>
-        <BottomPanel
-          open={bottomPanelOpen}
-          activeTab={bottomTab}
-          diagnostics={diagnostics}
-          logs={outputLogs}
-          reportHtml={reportHtml}
-          testStatus={testStatus}
-          workspaceRoot={workspaceRoot}
-          onTabChange={setBottomTab}
-          onNavigateDiagnostic={handleDiagnosticNavigate}
-        />
-      </div>
+      <BottomPanel
+        open={bottomPanelOpen}
+        activeTab={bottomTab}
+        diagnostics={diagnostics}
+        logs={outputLogs}
+        reportHtml={reportHtml}
+        testStatus={testStatus}
+        workspaceRoot={workspaceRoot}
+        onTabChange={setBottomTab}
+        onNavigateDiagnostic={handleDiagnosticNavigate}
+      />
       <SettingsModal
         open={settingsOpen}
         settings={settings}
@@ -1118,7 +1113,7 @@ const App = () => {
           }
         }}
       />
-    </div>
+    </>
   );
 };
 
