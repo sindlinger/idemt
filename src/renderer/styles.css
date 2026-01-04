@@ -69,7 +69,10 @@ body,
 }
 
 #root {
-  display: contents;
+  display: block;
+  border-radius: var(--window-radius);
+  overflow: hidden;
+  clip-path: inset(0 round var(--window-radius));
 }
 
 body {
