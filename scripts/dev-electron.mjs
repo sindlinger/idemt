@@ -3,6 +3,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 
 const root = process.cwd();
+const isWsl = Boolean(process.env.WSL_INTEROP || process.env.WSL_DISTRO_NAME);
 const requiredFiles = [
   path.join(root, "dist", "main", "main.js"),
   path.join(root, "dist", "preload", "index.js")
@@ -25,17 +26,44 @@ const waitForFiles = async () => {
 
 await waitForFiles();
 
-const electronPath = path.join(root, "node_modules", ".bin", "electron");
-const child = spawn(electronPath, ["."], {
-  env: {
-    ...process.env,
-    NODE_ENV: "development",
-    ELECTRON_ENABLE_LOGGING: "1",
-    ELECTRON_ENABLE_STACK_DUMPING: "1"
-  },
-  stdio: "inherit"
-});
+const env = {
+  ...process.env,
+  NODE_ENV: "development",
+  ELECTRON_ENABLE_LOGGING: "1",
+  ELECTRON_ENABLE_STACK_DUMPING: "1"
+};
 
-child.on("exit", (code) => {
-  process.exit(code ?? 0);
-});
+const launchWindowsElectron = async () => {
+  const winElectron = path.join(root, "node_modules", ".bin", "electron.cmd");
+  try {
+    await fs.access(winElectron);
+  } catch {
+    console.error(
+      "[dev-electron] Windows node_modules not found. Run in Windows PowerShell:\n" +
+        "  cd C:\\git\\mt5ide\n" +
+        "  npm install"
+    );
+    process.exit(1);
+  }
+  const winRoot = root
+    .replace(/^\\/mnt\\/(\\w)\\//, (_, drive) => `${drive.toUpperCase()}:\\\\`)
+    .replace(/\\//g, "\\\\");
+  const cmd = [
+    "/c",
+    `cd /d "${winRoot}" && .\\node_modules\\.bin\\electron.cmd .`
+  ];
+  const child = spawn("cmd.exe", cmd, { env, stdio: "inherit" });
+  child.on("exit", (code) => {
+    process.exit(code ?? 0);
+  });
+};
+
+if (isWsl) {
+  await launchWindowsElectron();
+} else {
+  const electronPath = path.join(root, "node_modules", ".bin", "electron");
+  const child = spawn(electronPath, ["."], { env, stdio: "inherit" });
+  child.on("exit", (code) => {
+    process.exit(code ?? 0);
+  });
+}
