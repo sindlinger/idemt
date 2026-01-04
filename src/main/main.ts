@@ -97,7 +97,7 @@ const createWindow = async () => {
   await ensureSettingsLoaded();
   const savedBounds = resolveWindowBounds(settingsService.get().windowBounds);
   const isLinux = process.platform === "linux";
-  const useTransparentWindow = isLinux || isWindows;
+  const useTransparentWindow = isLinux;
   mainWindow = new BrowserWindow({
     width: savedBounds?.width ?? WINDOW_DEFAULTS.width,
     height: savedBounds?.height ?? WINDOW_DEFAULTS.height,
