@@ -58,13 +58,15 @@
 }
 
 html,
-body,
-#root {
+body {
   height: 100%;
   min-height: 0;
   background: transparent;
-  border-radius: 12px;
   overflow: hidden;
+}
+
+#root {
+  display: contents;
 }
 
 body {
