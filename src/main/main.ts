@@ -3,6 +3,7 @@ import path from "node:path";
 import { registerIpc } from "./ipc";
 import { logLine } from "./logger";
 import { SettingsService } from "./services/SettingsService";
+import { resolveWindowBackground } from "./windowBackground";
 import type { WindowBounds } from "../shared/ipc";
 
 let mainWindow: BrowserWindow | null = null;
@@ -75,6 +76,7 @@ const createWindow = async () => {
   logLine("main", "createWindow start");
   await ensureSettingsLoaded();
   const savedBounds = resolveWindowBounds(settingsService.get().windowBounds);
+  const backgroundColor = resolveWindowBackground(settingsService.get());
   mainWindow = new BrowserWindow({
     width: savedBounds?.width ?? WINDOW_DEFAULTS.width,
     height: savedBounds?.height ?? WINDOW_DEFAULTS.height,
@@ -82,8 +84,8 @@ const createWindow = async () => {
     minHeight: WINDOW_DEFAULTS.minHeight,
     x: savedBounds?.x,
     y: savedBounds?.y,
-    backgroundColor: "#00000000",
-    transparent: true,
+    backgroundColor,
+    transparent: false,
     frame: false,
     hasShadow: process.platform === "win32" ? false : true,
     titleBarStyle: process.platform === "darwin" ? "hiddenInset" : "hidden",
