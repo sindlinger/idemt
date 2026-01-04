@@ -928,8 +928,7 @@ const App = () => {
       data-theme={settings.uiTheme ?? "windows11"}
       data-mode={settings.uiMode ?? "dark"}
     >
-      <div className="app-surface">
-        <TopBar
+      <TopBar
           workspaces={workspaceOrder}
           activeWorkspaceId={activeWorkspaceId}
           onSelectWorkspace={handleActivateWorkspace}
@@ -951,25 +950,25 @@ const App = () => {
           filters={fileFilters}
           onFiltersChange={handleFiltersChange}
         />
+      <div
+        className="workspace-area"
+        style={
+          {
+            "--splitter-size": `${SPLITTER_SIZE}px`,
+            "--bottom-pane": `${bottomPaneHeight}px`
+          } as React.CSSProperties
+        }
+      >
         <div
-          className="workspace-area"
+          className="main-layout"
           style={
             {
               "--splitter-size": `${SPLITTER_SIZE}px`,
-              "--bottom-pane": `${bottomPaneHeight}px`
+              "--left-pane": `${leftPaneWidth}px`,
+              "--right-pane": `${rightPaneWidth}px`
             } as React.CSSProperties
           }
         >
-          <div
-            className="main-layout"
-            style={
-              {
-                "--splitter-size": `${SPLITTER_SIZE}px`,
-                "--left-pane": `${leftPaneWidth}px`,
-                "--right-pane": `${rightPaneWidth}px`
-              } as React.CSSProperties
-            }
-          >
           <LeftSidebar
             tree={tree}
             workspaceRoot={workspaceRoot}
@@ -1079,47 +1078,46 @@ const App = () => {
           onTabChange={setBottomTab}
           onNavigateDiagnostic={handleDiagnosticNavigate}
         />
-        <SettingsModal
-          open={settingsOpen}
-          settings={settings}
-          onClose={() => setSettingsOpen(false)}
-          onSave={(next) => {
-            setSettings(next);
-            api.settingsSet?.(next);
-            const recent = (next.recentWorkspaces ?? []).filter(Boolean);
-            const activeRoot = next.workspaceRoot || recent[recent.length - 1];
-            const state = useAppStore.getState();
-            const existing = Object.keys(state.workspaces).filter(
-              (id) => id !== LOCAL_WORKSPACE_ID
-            );
-            for (const root of existing) {
-              if (!recent.includes(root)) {
-                removeWorkspaceState(root);
-                removeWorkspace(root);
-              }
-            }
-            for (const root of recent) {
-              addWorkspace(root);
-            }
-            if (activeRoot) {
-              setActiveWorkspace(activeRoot);
-              if (typeof api.activateWorkspace === "function") {
-                api.activateWorkspace(activeRoot).then((tree) => {
-                  if (tree) setTree(tree, activeRoot);
-                });
-              } else if (typeof api.requestWorkspaceTree === "function") {
-                api.requestWorkspaceTree(fileFilters).then((tree) => {
-                  if (tree) setTree(tree, activeRoot);
-                });
-              }
-              api.setWatchedDirs?.([activeRoot]);
-            } else {
-              setActiveWorkspace(undefined);
-            }
-          }}
-        />
-        </div>
       </div>
+      <SettingsModal
+        open={settingsOpen}
+        settings={settings}
+        onClose={() => setSettingsOpen(false)}
+        onSave={(next) => {
+          setSettings(next);
+          api.settingsSet?.(next);
+          const recent = (next.recentWorkspaces ?? []).filter(Boolean);
+          const activeRoot = next.workspaceRoot || recent[recent.length - 1];
+          const state = useAppStore.getState();
+          const existing = Object.keys(state.workspaces).filter(
+            (id) => id !== LOCAL_WORKSPACE_ID
+          );
+          for (const root of existing) {
+            if (!recent.includes(root)) {
+              removeWorkspaceState(root);
+              removeWorkspace(root);
+            }
+          }
+          for (const root of recent) {
+            addWorkspace(root);
+          }
+          if (activeRoot) {
+            setActiveWorkspace(activeRoot);
+            if (typeof api.activateWorkspace === "function") {
+              api.activateWorkspace(activeRoot).then((tree) => {
+                if (tree) setTree(tree, activeRoot);
+              });
+            } else if (typeof api.requestWorkspaceTree === "function") {
+              api.requestWorkspaceTree(fileFilters).then((tree) => {
+                if (tree) setTree(tree, activeRoot);
+              });
+            }
+            api.setWatchedDirs?.([activeRoot]);
+          } else {
+            setActiveWorkspace(undefined);
+          }
+        }}
+      />
     </div>
   );
 };

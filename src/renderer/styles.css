@@ -86,25 +86,12 @@ button {
   height: 100vh;
   min-height: 0;
   min-width: 0;
-  background: transparent;
-  border-radius: 12px;
-  overflow: hidden;
-  clip-path: inset(0 round 12px);
-}
-
-.app-surface {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  min-height: 0;
-  min-width: 0;
   border: 1px solid var(--topbar-border);
   box-shadow: var(--shadow);
   border-radius: 12px;
   overflow: hidden;
   background: var(--bg);
   background-image: var(--app-bg);
-  clip-path: inset(0 round 12px);
 }
 
 .app[data-theme="windows11"] {
