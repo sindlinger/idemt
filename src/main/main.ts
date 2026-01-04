@@ -153,6 +153,7 @@ const createWindow = async () => {
 
   try {
     if (isDev) {
+      logLine("main", `dev urls ${DEV_URLS.join(",")}`);
       logLine("main", "loading dev URL");
       await loadDevUrl(0);
       mainWindow.webContents.openDevTools({ mode: "detach" });

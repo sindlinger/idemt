@@ -47,12 +47,13 @@ const resolveWslDevUrl = () => {
   }
 };
 
-if (isWsl && !env.MT5IDE_DEV_URL) {
-  const wslDevUrl = resolveWslDevUrl();
-  if (wslDevUrl) {
-    env.MT5IDE_DEV_URL = wslDevUrl;
-    console.log(`[dev-electron] Using WSL dev URL ${wslDevUrl}`);
-  }
+let devUrl = env.MT5IDE_DEV_URL;
+if (isWsl && !devUrl) {
+  devUrl = resolveWslDevUrl() ?? undefined;
+}
+if (devUrl) {
+  env.MT5IDE_DEV_URL = devUrl;
+  console.log(`[dev-electron] Using dev URL ${devUrl}`);
 }
 
 const launchWindowsElectron = async () => {
@@ -91,7 +92,16 @@ const launchWindowsElectron = async () => {
   }
   console.log(`[dev-electron] Launching Windows Electron from ${winRoot}`);
   const electronArgs = [".", "--disable-gpu-shader-disk-cache"].join(" ");
-  const cmd = ["/c", `cd /d "${winRoot}" && .\\node_modules\\.bin\\electron.cmd ${electronArgs}`];
+  const cmdEnv = [
+    devUrl ? `set MT5IDE_DEV_URL=${devUrl}` : null,
+    "set NODE_ENV=development"
+  ]
+    .filter(Boolean)
+    .join(" && ");
+  const cmd = [
+    "/c",
+    `${cmdEnv ? `${cmdEnv} && ` : ""}cd /d "${winRoot}" && .\\node_modules\\.bin\\electron.cmd ${electronArgs}`
+  ];
   const child = await fs
     .access(cmdExe)
     .then(() => spawn(cmdExe, cmd, { env, stdio: "inherit" }))
@@ -101,7 +111,14 @@ const launchWindowsElectron = async () => {
         [
           "-NoProfile",
           "-Command",
-          `Set-Location -LiteralPath '${winRoot}'; .\\node_modules\\.bin\\electron.cmd .`
+          [
+            devUrl ? `$env:MT5IDE_DEV_URL='${devUrl}';` : null,
+            "$env:NODE_ENV='development';",
+            `Set-Location -LiteralPath '${winRoot}';`,
+            ".\\node_modules\\.bin\\electron.cmd ."
+          ]
+            .filter(Boolean)
+            .join(" ")
         ],
         { env, stdio: "inherit" }
       )
