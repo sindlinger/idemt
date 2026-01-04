@@ -85,6 +85,7 @@ const createWindow = async () => {
     backgroundColor: "#00000000",
     transparent: true,
     frame: false,
+    hasShadow: process.platform === "win32" ? false : true,
     titleBarStyle: process.platform === "darwin" ? "hiddenInset" : "hidden",
     autoHideMenuBar: true,
     webPreferences: {
