@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import "../monaco/setup";
 import MonacoEditor from "@monaco-editor/react";
 import type * as monacoType from "monaco-editor";
@@ -24,8 +24,8 @@ export type EditorPaneProps = {
   editorFontSize?: number;
   editorShowRulers?: boolean;
   editorRulers?: number[];
-  editorShowCursorPosition?: boolean;
   onFontSizeChange?: (size: number) => void;
+  onCursorPositionChange?: (pos: { line: number; column: number }) => void;
 };
 
 const EditorPane = ({
@@ -42,13 +42,12 @@ const EditorPane = ({
   editorFontSize,
   editorShowRulers,
   editorRulers,
-  editorShowCursorPosition,
   onFontSizeChange,
+  onCursorPositionChange,
 }: EditorPaneProps) => {
   const editorRef = useRef<monacoType.editor.IStandaloneCodeEditor | null>(null);
   const monacoRef = useRef<typeof monacoType | null>(null);
   const decorationsRef = useRef<string[]>([]);
-  const [cursorPos, setCursorPos] = useState({ line: 1, column: 1 });
 
   const activeFile = files.find((file) => file.path === activeFilePath);
 
@@ -138,7 +137,7 @@ const EditorPane = ({
               setupMqlLanguage(monaco);
               monaco.editor.setTheme(themeName);
               editor.onDidChangeCursorPosition((event) => {
-                setCursorPos({
+                onCursorPositionChange?.({
                   line: event.position.lineNumber,
                   column: event.position.column
                 });
@@ -168,13 +167,6 @@ const EditorPane = ({
           <div style={{ padding: 20, color: "var(--muted)" }}>Open a file to start editing.</div>
         )}
       </div>
-      {editorShowCursorPosition ? (
-        <div className="editor-statusbar">
-          <span>
-            Ln {cursorPos.line}, Col {cursorPos.column}
-          </span>
-        </div>
-      ) : null}
     </div>
   );
 };

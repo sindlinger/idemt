@@ -261,6 +261,7 @@ const TopBar = ({
             <button
               className="ext-trigger"
               onClick={() => setExtMenuOpen((open) => !open)}
+              onMouseDown={(event) => event.stopPropagation()}
               type="button"
               title={`New file extension: .${currentExt.id}`}
             >

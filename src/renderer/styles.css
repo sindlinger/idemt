@@ -32,6 +32,7 @@
   --line-highlight: rgba(49, 208, 154, 0.12);
   --line-highlight-border: #31d09a;
   --window-radius: 8px;
+  --statusbar-height: 26px;
 }
 
 * {
@@ -85,7 +86,7 @@ button {
 .app {
   display: grid;
   grid-template-columns: 1fr auto;
-  grid-template-rows: var(--titlebar-height) auto minmax(0, 1fr) var(--splitter-size) var(--bottom-pane);
+  grid-template-rows: var(--titlebar-height) auto minmax(0, 1fr) var(--statusbar-height) var(--splitter-size) var(--bottom-pane);
   height: 100%;
   min-height: 0;
   min-width: 0;
@@ -312,6 +313,7 @@ button {
   gap: 8px;
   flex-wrap: wrap;
   width: 100%;
+  overflow: visible;
 }
 
 .toolbar-row {
@@ -325,12 +327,17 @@ button {
   padding: 6px 8px;
   gap: 8px;
   -webkit-app-region: no-drag;
+  position: relative;
+  z-index: 2;
+  overflow: visible;
 }
 
 .toolbar-ext {
   display: inline-flex;
   align-items: center;
   margin-right: 6px;
+  position: relative;
+  z-index: 3;
 }
 
 .window-btn {
@@ -815,7 +822,7 @@ button {
   height: var(--splitter-size);
   cursor: row-resize;
   grid-column: 1 / -1;
-  grid-row: 4;
+  grid-row: 5;
 }
 
 .splitter:hover {
@@ -1279,7 +1286,7 @@ button {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  z-index: 20;
+  z-index: 60;
   box-shadow: 0 12px 30px rgba(0, 0, 0, 0.28);
   -webkit-app-region: no-drag;
 }
@@ -1427,9 +1434,12 @@ button {
   min-height: 0;
 }
 
-.editor-statusbar {
+.app-statusbar {
+  grid-column: 1 / -1;
+  grid-row: 4;
   display: flex;
-  justify-content: flex-end;
+  align-items: center;
+  justify-content: space-between;
   padding: 4px 10px;
   font-size: 11px;
   color: var(--muted);
@@ -1437,18 +1447,26 @@ button {
   background: var(--panel);
 }
 
-.app[data-theme="windowsClassic"] .editor-statusbar {
+.app-statusbar .status-left {
+  color: var(--muted);
+}
+
+.app-statusbar .status-right {
+  color: var(--muted);
+}
+
+.app[data-theme="windowsClassic"] .app-statusbar {
   background: var(--panel);
   color: var(--text);
   border-top: 1px solid var(--border);
 }
 
-.app[data-theme="macos"] .editor-statusbar {
+.app[data-theme="macos"] .app-statusbar {
   background: rgba(18, 22, 32, 0.9);
   border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
 
-.app[data-mode="light"] .editor-statusbar {
+.app[data-mode="light"] .app-statusbar {
   background: #ffffff;
   color: #1e2431;
   border-top: 1px solid #d6dbe6;
@@ -1782,7 +1800,7 @@ button {
   border-radius: 0 0 12px 12px;
   overflow: hidden;
   grid-column: 1 / -1;
-  grid-row: 5;
+  grid-row: 6;
 }
 
 .bottom-panel.hidden {
@@ -1948,9 +1966,10 @@ button {
 }
 
 .settings-tab.active {
-  border-color: var(--accent);
-  color: var(--accent);
-  box-shadow: inset 0 0 0 1px rgba(49, 208, 154, 0.35);
+  border-color: var(--border);
+  color: var(--text);
+  background: var(--panel);
+  box-shadow: inset 0 0 0 1px var(--border);
 }
 
 .settings-section {

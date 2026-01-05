@@ -243,6 +243,7 @@ const App = () => {
     width: window.innerWidth,
     height: window.innerHeight
   }));
+  const [cursorPos, setCursorPos] = useState({ line: 1, column: 1 });
   const [navigationTarget, setNavigationTarget] = useState<{
     path: string;
     line: number;
@@ -1059,8 +1060,8 @@ const App = () => {
             editorFontSize={settings.editorFontSize}
             editorShowRulers={settings.editorShowRulers}
             editorRulers={settings.editorRulers}
-            editorShowCursorPosition={settings.editorShowCursorPosition}
             onFontSizeChange={handleFontSizeChange}
+            onCursorPositionChange={setCursorPos}
           />
           <div
             className={`splitter vertical right ${layout.rightCollapsed ? "ghost" : ""}`}
@@ -1094,6 +1095,24 @@ const App = () => {
             onRevertChange={handleRevertChange}
             collapsed={layout.rightCollapsed}
           />
+        </div>
+        <div className="app-statusbar">
+          <div className="status-left">
+            {activeFilePath
+              ? activeFilePath.split(/[\\/]/).pop()
+              : workspaceRoot
+              ? workspaceRoot.split(/[\\/]/).pop()
+              : "Ready"}
+          </div>
+          <div className="status-right">
+            {settings.editorShowCursorPosition ? (
+              <span>
+                Ln {cursorPos.line}, Col {cursorPos.column}
+              </span>
+            ) : (
+              <span />
+            )}
+          </div>
         </div>
         <div
           className={`splitter horizontal ${bottomPanelOpen ? "" : "ghost"}`}
