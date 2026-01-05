@@ -87,7 +87,7 @@ button {
   position: relative;
   display: grid;
   grid-template-columns: 1fr auto;
-  grid-template-rows: var(--titlebar-height) auto minmax(0, 1fr) var(--statusbar-height) var(--splitter-size) var(--bottom-pane);
+  grid-template-rows: var(--titlebar-height) auto minmax(0, 1fr) var(--splitter-size) var(--bottom-pane) var(--statusbar-height);
   height: 100%;
   min-height: 0;
   min-width: 0;
@@ -833,7 +833,7 @@ button {
   height: var(--splitter-size);
   cursor: row-resize;
   grid-column: 1 / -1;
-  grid-row: 5;
+  grid-row: 4;
 }
 
 .splitter:hover {
@@ -1142,7 +1142,11 @@ button {
   flex-direction: column;
   min-width: 0;
   min-height: 0;
-  background: var(--editor-bg);
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  margin: 8px;
 }
 
 .tabs {
@@ -1443,11 +1447,12 @@ button {
 .editor-wrapper {
   flex: 1;
   min-height: 0;
+  background: var(--editor-bg);
 }
 
 .app-statusbar {
   grid-column: 1 / -1;
-  grid-row: 4;
+  grid-row: 6;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -1532,6 +1537,11 @@ button {
   gap: 12px;
   flex: 1;
   min-height: 0;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 8px;
+  overflow: hidden;
 }
 
 .codex-view-toggles {
@@ -1804,7 +1814,7 @@ button {
   border-radius: 0 0 12px 12px;
   overflow: hidden;
   grid-column: 1 / -1;
-  grid-row: 6;
+  grid-row: 5;
 }
 
 .bottom-panel.hidden {
