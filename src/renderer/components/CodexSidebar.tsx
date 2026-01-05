@@ -45,20 +45,20 @@ const CodexSidebar = ({
   return (
     <aside className={`sidebar right codex-sidebar ${collapsed ? "collapsed" : ""}`}>
       <div className="codex-section">
-        <div className="codex-view-toggles">
+        <div className="codex-controls">
           <button
             className={`codex-view-toggle ${showHistory ? "active" : ""}`}
             onClick={() => setShowHistory((value) => !value)}
+            title="History"
           >
             <History size={12} />
-            History
           </button>
           <button
             className={`codex-view-toggle ${showReview ? "active" : ""}`}
             onClick={() => setShowReview((value) => !value)}
+            title="Review"
           >
             <GitCompare size={12} />
-            Review
           </button>
         </div>
         <div className="codex-chat">
@@ -77,20 +77,14 @@ const CodexSidebar = ({
         </div>
         {showHistory ? (
           <div className="codex-history">
-            {historyEntries.length === 0 ? (
-              <div className="muted" style={{ fontSize: 12 }}>
-                No history yet.
+            {historyEntries.map((entry) => (
+              <div key={`${entry.timestamp}-${entry.type}`} className="codex-history-line">
+                <span className="codex-history-time">
+                  {new Date(entry.timestamp).toLocaleTimeString()}
+                </span>
+                <span className="codex-history-text">{entry.data.trim()}</span>
               </div>
-            ) : (
-              historyEntries.map((entry) => (
-                <div key={`${entry.timestamp}-${entry.type}`} className="codex-history-line">
-                  <span className="codex-history-time">
-                    {new Date(entry.timestamp).toLocaleTimeString()}
-                  </span>
-                  <span className="codex-history-text">{entry.data.trim()}</span>
-                </div>
-              ))
-            )}
+            ))}
           </div>
         ) : null}
         <div className="codex-input">
@@ -106,6 +100,15 @@ const CodexSidebar = ({
             }}
           />
           <div className="codex-actions">
+            <select className="codex-combo" defaultValue="model" aria-label="Model">
+              <option value="model">Model</option>
+              <option value="default">Default</option>
+            </select>
+            <select className="codex-combo" defaultValue="level" aria-label="Level">
+              <option value="level">Level</option>
+              <option value="low">Low</option>
+              <option value="high">High</option>
+            </select>
             <button
               className={`codex-session ${sessionActive ? "active" : ""}`}
               onClick={() => onToggleSession(!sessionActive)}
@@ -131,29 +134,24 @@ const CodexSidebar = ({
             </button>
           </div>
         </div>
-        {showReview ? (
+        {showReview && changes.length > 0 ? (
           <div>
-            <div className="panel-title">Review</div>
-            {changes.length === 0 ? (
-              <div style={{ color: "var(--muted)", fontSize: 12 }}>No changes detected.</div>
-            ) : (
-              changes.map((change) => (
-                <div key={change.path} className="review-card">
-                  <strong>{change.path.split(/[\\/]/).pop()}</strong>
-                  <pre>{change.diff}</pre>
-                  <div style={{ display: "flex", gap: 8 }}>
-                    <button className="button primary" onClick={() => onAcceptChange(change.path)}>
-                      <Check size={12} />
-                      Accept
-                    </button>
-                    <button className="button" onClick={() => onRevertChange(change.path)}>
-                      <RotateCcw size={12} />
-                      Revert
-                    </button>
-                  </div>
+            {changes.map((change) => (
+              <div key={change.path} className="review-card">
+                <strong>{change.path.split(/[\\/]/).pop()}</strong>
+                <pre>{change.diff}</pre>
+                <div style={{ display: "flex", gap: 8 }}>
+                  <button className="button primary" onClick={() => onAcceptChange(change.path)}>
+                    <Check size={12} />
+                    Accept
+                  </button>
+                  <button className="button" onClick={() => onRevertChange(change.path)}>
+                    <RotateCcw size={12} />
+                    Revert
+                  </button>
                 </div>
-              ))
-            )}
+              </div>
+            ))}
           </div>
         ) : null}
       </div>
