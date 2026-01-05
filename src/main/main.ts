@@ -24,7 +24,8 @@ const isWsl =
   (Boolean(process.env.WSL_INTEROP) || Boolean(process.env.WSL_DISTRO_NAME));
 const isWindows = process.platform === "win32";
 const isDev = process.env.NODE_ENV === "development" || !app.isPackaged;
-const useNativeFrame = isWindows;
+const useTitlebarOverlay = isWindows;
+const useNativeFrame = isWindows && !useTitlebarOverlay;
 const launchedFromWsl =
   isWindows && (Boolean(process.env.WSL_INTEROP) || Boolean(process.env.WSL_DISTRO_NAME));
 
@@ -100,7 +101,7 @@ const createWindow = async () => {
   const isLinux = process.platform === "linux";
   const useTransparentWindow = isLinux && !useNativeFrame;
   const titleBarOverlayConfig =
-    isWindows && useNativeFrame
+    isWindows && useTitlebarOverlay
       ? { color: "#1f1f1f", symbolColor: "#d4d4d4", height: 34 }
       : null;
   mainWindow = new BrowserWindow({
@@ -116,7 +117,7 @@ const createWindow = async () => {
     roundedCorners: true,
     thickFrame: isWindows ? useNativeFrame : true,
     hasShadow: true,
-    titleBarOverlay: Boolean(titleBarOverlayConfig),
+    titleBarOverlay: titleBarOverlayConfig ?? false,
     ...(isWindows ? { backgroundMaterial: "mica" } : {}),
     ...(process.platform === "darwin" ? { titleBarStyle: "hiddenInset" } : {}),
     autoHideMenuBar: true,
@@ -127,8 +128,13 @@ const createWindow = async () => {
     }
   });
 
-  if (isWindows && useNativeFrame && titleBarOverlayConfig) {
-    mainWindow.setTitleBarOverlay(titleBarOverlayConfig);
+  if (isWindows && useTitlebarOverlay && titleBarOverlayConfig) {
+    try {
+      mainWindow.setTitleBarOverlay(titleBarOverlayConfig);
+      logLine("main", "titlebar overlay applied");
+    } catch (error) {
+      logLine("main", `titlebar overlay failed ${String(error)}`);
+    }
   }
 
   await registerIpc(mainWindow, settingsService);

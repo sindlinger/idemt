@@ -361,6 +361,10 @@ button {
   margin-left: 6px;
 }
 
+.app[data-titlebar-overlay="true"] .window-buttons {
+  display: none;
+}
+
 .sidebar-workspaces {
   display: flex;
   flex-wrap: wrap;

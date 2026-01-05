@@ -277,6 +277,19 @@ const App = () => {
         `titlebar overlay css height=${height} width=${width} x=${offset}`,
         "renderer:startup"
       );
+      const overlay = (window.navigator as Navigator & {
+        windowControlsOverlay?: { visible?: boolean; addEventListener?: Function };
+      }).windowControlsOverlay;
+      const visible = Boolean(overlay?.visible);
+      appEl.setAttribute("data-titlebar-overlay", visible ? "true" : "false");
+      log(`titlebar overlay api visible=${visible}`, "renderer:startup");
+      if (overlay?.addEventListener) {
+        overlay.addEventListener("geometrychange", () => {
+          const nextVisible = Boolean(overlay.visible);
+          appEl.setAttribute("data-titlebar-overlay", nextVisible ? "true" : "false");
+          log(`titlebar overlay geometrychange visible=${nextVisible}`, "renderer:startup");
+        });
+      }
     });
     if (typeof api.settingsGet !== "function") {
       log("window.api.settingsGet missing", "renderer:startup");
