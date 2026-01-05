@@ -44,9 +44,6 @@ const CodexSidebar = ({
 
   return (
     <aside className={`sidebar right codex-sidebar ${collapsed ? "collapsed" : ""}`}>
-      <div className="codex-header">
-        <div className="panel-title">Codex</div>
-      </div>
       <div className="codex-section">
         <div className="codex-view-toggles">
           <button
