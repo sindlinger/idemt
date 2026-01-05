@@ -33,9 +33,6 @@
   --line-highlight-border: #31d09a;
   --window-radius: 8px;
   --statusbar-height: 26px;
-  --frame-thickness: 6px;
-  --frame-color: #0b0c0f;
-  --frame-outline: rgba(255, 255, 255, 0.08);
 }
 
 * {
@@ -95,8 +92,8 @@ button {
   min-width: 0;
   width: 100%;
   margin: 0;
-  border: var(--frame-thickness) solid var(--frame-color);
-  box-shadow: 0 0 0 1px var(--frame-outline);
+  border: none;
+  box-shadow: none;
   border-radius: var(--window-radius);
   clip-path: inset(0 round var(--window-radius));
   overflow: hidden;
