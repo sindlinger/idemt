@@ -4,6 +4,7 @@ import { registerIpc } from "./ipc";
 import { logLine } from "./logger";
 import { SettingsService } from "./services/SettingsService";
 import type { WindowBounds } from "../shared/ipc";
+import { applyWindowsFrameTweaks } from "./windows/dwm";
 
 let mainWindow: BrowserWindow | null = null;
 let isQuitting = false;
@@ -127,6 +128,14 @@ const createWindow = async () => {
       nodeIntegration: false,
       preload: path.join(__dirname, "../preload/index.js")
     }
+  });
+
+  applyWindowsFrameTweaks(mainWindow, { corners: "round", borderColor: "#2a2a2a" });
+  mainWindow.on("focus", () => {
+    applyWindowsFrameTweaks(mainWindow as BrowserWindow, {
+      corners: "round",
+      borderColor: "#2a2a2a"
+    });
   });
 
   if (isWindows && useTitlebarOverlay && titleBarOverlayConfig) {
