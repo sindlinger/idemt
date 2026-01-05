@@ -46,13 +46,6 @@ const CodexSidebar = ({
     <aside className={`sidebar right codex-sidebar ${collapsed ? "collapsed" : ""}`}>
       <div className="codex-header">
         <div className="panel-title">Codex</div>
-        <button
-          className={`codex-toggle ${sessionActive ? "active" : ""}`}
-          onClick={() => onToggleSession(!sessionActive)}
-        >
-          <Power size={12} />
-          On
-        </button>
       </div>
       <div className="codex-section">
         <div className="codex-view-toggles">
@@ -116,6 +109,13 @@ const CodexSidebar = ({
             }}
           />
           <div className="codex-actions">
+            <button
+              className={`codex-session ${sessionActive ? "active" : ""}`}
+              onClick={() => onToggleSession(!sessionActive)}
+              title={sessionActive ? "Session on" : "Session off"}
+            >
+              <Power size={12} />
+            </button>
             <button
               className="codex-send"
               onClick={sendMessage}
