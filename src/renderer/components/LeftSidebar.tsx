@@ -145,6 +145,10 @@ const renderNode = (
 type LeftSidebarProps = {
   tree?: WorkspaceNode;
   workspaceRoot?: string;
+  workspaces: string[];
+  activeWorkspaceId?: string;
+  onSelectWorkspace: (root: string) => void;
+  onCloseWorkspace: (root: string) => void;
   expandedDirs: string[];
   onExpandedDirsChange: (dirs: string[]) => void;
   filters: Record<FileFilter, boolean>;
@@ -158,6 +162,10 @@ type LeftSidebarProps = {
 const LeftSidebar = ({
   tree,
   workspaceRoot,
+  workspaces,
+  activeWorkspaceId,
+  onSelectWorkspace,
+  onCloseWorkspace,
   expandedDirs,
   onExpandedDirsChange,
   filters,
@@ -167,8 +175,14 @@ const LeftSidebar = ({
   activeFilePath,
   collapsed
 }: LeftSidebarProps) => {
-  const rootName = workspaceRoot ?? "";
-  const expandedSet = useMemo(() => new Set(expandedDirs), [expandedDirs]);
+  const rootName = workspaceRoot?.split(/[\\/]/).pop() ?? workspaceRoot ?? "";
+  const expandedSet = useMemo(() => {
+    const next = new Set(expandedDirs);
+    if (workspaceRoot) {
+      next.add(workspaceRoot);
+    }
+    return next;
+  }, [expandedDirs, workspaceRoot]);
 
   useEffect(() => {
     if (!workspaceRoot) return;
@@ -211,12 +225,44 @@ const LeftSidebar = ({
     tree && workspaceRoot
       ? {
           ...tree,
-          name: workspaceRoot
+          name: rootName
         }
       : tree;
   const treeNodes = rootNode ? [rootNode] : [];
   return (
     <aside className={`sidebar ${collapsed ? "collapsed" : ""}`}>
+      {workspaces.length > 0 && (
+        <div className="sidebar-workspaces">
+          {workspaces.map((root) => {
+            const name = root.split(/[\\/]/).pop() ?? root;
+            const isActive = root === activeWorkspaceId;
+            return (
+              <div
+                key={root}
+                className={`workspace-chip ${isActive ? "active" : ""}`}
+                title={root}
+              >
+                <button
+                  className="workspace-chip-name"
+                  onClick={() => onSelectWorkspace(root)}
+                >
+                  {name}
+                </button>
+                <button
+                  className="workspace-chip-close"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    onCloseWorkspace(root);
+                  }}
+                  aria-label={`Close ${name}`}
+                >
+                  ×
+                </button>
+              </div>
+            );
+          })}
+        </div>
+      )}
       <div className="file-tree">
         {tree ? (
           treeNodes.flatMap((node) =>

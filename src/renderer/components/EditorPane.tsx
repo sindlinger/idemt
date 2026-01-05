@@ -1,9 +1,4 @@
 import { useEffect, useRef, useState } from "react";
-import { Plus } from "lucide-react";
-import iconMql from "../assets/icons/mql.svg";
-import iconPython from "../assets/icons/python.svg";
-import iconC from "../assets/icons/c.svg";
-import iconCpp from "../assets/icons/cpp.svg";
 import "../monaco/setup";
 import MonacoEditor from "@monaco-editor/react";
 import type * as monacoType from "monaco-editor";
@@ -31,9 +26,6 @@ export type EditorPaneProps = {
   editorRulers?: number[];
   editorShowCursorPosition?: boolean;
   onFontSizeChange?: (size: number) => void;
-  onNewFile?: () => void;
-  newFileExtension?: string;
-  onNewFileExtensionChange?: (value: string) => void;
 };
 
 const EditorPane = ({
@@ -52,16 +44,11 @@ const EditorPane = ({
   editorRulers,
   editorShowCursorPosition,
   onFontSizeChange,
-  onNewFile,
-  newFileExtension,
-  onNewFileExtensionChange
 }: EditorPaneProps) => {
   const editorRef = useRef<monacoType.editor.IStandaloneCodeEditor | null>(null);
   const monacoRef = useRef<typeof monacoType | null>(null);
   const decorationsRef = useRef<string[]>([]);
-  const extMenuRef = useRef<HTMLDivElement | null>(null);
   const [cursorPos, setCursorPos] = useState({ line: 1, column: 1 });
-  const [extMenuOpen, setExtMenuOpen] = useState(false);
 
   const activeFile = files.find((file) => file.path === activeFilePath);
 
@@ -116,95 +103,13 @@ const EditorPane = ({
     monaco.editor.setTheme(theme);
   }, [uiTheme, uiMode]);
 
-  useEffect(() => {
-    const handleClick = (event: MouseEvent) => {
-      if (!extMenuRef.current) return;
-      if (!extMenuRef.current.contains(event.target as Node)) {
-        setExtMenuOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
-  }, []);
-
   const themeName = getMqlThemeName({ uiTheme, uiMode });
   const fontFamily = getEditorFont({ uiTheme });
   const fontSize = getEditorFontSize({ uiTheme, editorFontSize });
   const rulers = editorShowRulers ? editorRulers ?? [80, 120] : [];
 
-  const extensionOptions = [
-    { id: "mq5", label: "MQL5", icon: iconMql },
-    { id: "mq4", label: "MQL4", icon: iconMql },
-    { id: "mqh", label: "MQL Header", icon: iconMql },
-    { id: "py", label: "Python", icon: iconPython },
-    { id: "c", label: "C", icon: iconC },
-    { id: "cpp", label: "C++", icon: iconCpp }
-  ];
-  const currentExt =
-    extensionOptions.find((option) => option.id === newFileExtension) ?? extensionOptions[0];
-
   return (
     <div className="editor-area">
-      <div className="tabs">
-        <div className="tab-actions">
-          <button
-            className="editor-plus"
-            onClick={() => onNewFile?.()}
-            title="New File"
-            type="button"
-          >
-            <Plus size={12} />
-          </button>
-        </div>
-        <div className="tab-list">
-          {files.map((file) => (
-            <div
-              key={file.path}
-              className={`tab ${file.path === activeFilePath ? "active" : ""}`}
-              onClick={() => onSelectTab(file.path)}
-            >
-              <span>{file.path.split(/[\\/]/).pop()}</span>
-              {file.dirty ? <span className="dirty" /> : null}
-            </div>
-          ))}
-        </div>
-        <div className="tab-right">
-          <div className="ext-dropdown" ref={extMenuRef}>
-            <button
-              className="ext-trigger"
-              onClick={() => setExtMenuOpen((open) => !open)}
-              type="button"
-              title={`New file extension: .${currentExt.id}`}
-            >
-              <span className="ext-icon">
-                <img className="ext-icon-img" src={currentExt.icon} alt={currentExt.label} />
-              </span>
-            </button>
-            {extMenuOpen ? (
-              <div className="ext-menu">
-                {extensionOptions.map((option) => (
-                  <button
-                    key={option.id}
-                    className={`ext-option ${
-                      newFileExtension === option.id ? "active" : ""
-                    }`}
-                    onClick={() => {
-                      onNewFileExtensionChange?.(option.id);
-                      setExtMenuOpen(false);
-                    }}
-                    type="button"
-                  >
-                    <span className="ext-icon">
-                      <img className="ext-icon-img" src={option.icon} alt={option.label} />
-                    </span>
-                    <span className="ext-label">{option.label}</span>
-                  </button>
-                ))}
-              </div>
-            ) : null}
-          </div>
-        </div>
-      </div>
       <div className="editor-wrapper">
         {activeFile ? (
           <MonacoEditor

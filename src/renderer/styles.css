@@ -5,8 +5,8 @@
   --panel-2: #2a2a2a;
   --text: #e7e7e7;
   --muted: #a3a3a3;
-  --accent: #4f9cff;
-  --accent-2: #7dd6ff;
+  --accent: #31d09a;
+  --accent-2: #7be3c4;
   --danger: #f28b82;
   --border: #2f2f2f;
   --shadow: 0 18px 40px rgba(0, 0, 0, 0.4);
@@ -25,12 +25,12 @@
   --sidebar-bg-right: linear-gradient(180deg, #202020, #1a1a1a 60%);
   --tabs-bg: #202020;
   --tab-bg: transparent;
-  --tab-active-bg: rgba(79, 156, 255, 0.15);
+  --tab-active-bg: rgba(49, 208, 154, 0.16);
   --editor-bg: var(--bg-soft);
   --splitter-bg: rgba(55, 55, 55, 0.9);
-  --splitter-hover: rgba(79, 156, 255, 0.18);
-  --line-highlight: rgba(79, 156, 255, 0.12);
-  --line-highlight-border: #4f9cff;
+  --splitter-hover: rgba(49, 208, 154, 0.18);
+  --line-highlight: rgba(49, 208, 154, 0.12);
+  --line-highlight-border: #31d09a;
   --window-radius: 8px;
 }
 
@@ -85,7 +85,7 @@ button {
 .app {
   display: grid;
   grid-template-columns: 1fr auto;
-  grid-template-rows: auto minmax(0, 1fr) var(--splitter-size) var(--bottom-pane);
+  grid-template-rows: var(--titlebar-height) auto minmax(0, 1fr) var(--splitter-size) var(--bottom-pane);
   height: 100%;
   min-height: 0;
   min-width: 0;
@@ -98,19 +98,34 @@ button {
   overflow: hidden;
   background: var(--bg);
   background-image: var(--app-bg);
+  --titlebar-height: env(titlebar-area-height, 34px);
+  --titlebar-x: env(titlebar-area-x, 0px);
+  --titlebar-width: env(titlebar-area-width, 100%);
 }
 
 .app[data-theme="windows11"] {
   --radius-sm: 8px;
   --radius-md: 12px;
-  --sidebar-bg: linear-gradient(180deg, rgba(24, 30, 44, 0.92), rgba(17, 23, 35, 0.98));
-  --sidebar-bg-right: linear-gradient(180deg, rgba(20, 26, 40, 0.95), rgba(15, 19, 30, 0.98));
-  --tabs-bg: rgba(20, 26, 40, 0.9);
-  --tab-bg: rgba(24, 32, 48, 0.9);
+  --bg: #1f1f1f;
+  --bg-soft: #1e1e1e;
+  --panel: #252526;
+  --panel-2: #2d2d2d;
+  --text: #d4d4d4;
+  --muted: #9aa0a6;
+  --border: #333333;
+  --topbar-bg: linear-gradient(180deg, #1f1f1f 0%, #1a1a1a 100%);
+  --topbar-border: #2a2a2a;
+  --toolbar-bg: rgba(31, 31, 31, 0.9);
+  --toolbar-border: #2a2a2a;
+  --sidebar-bg: #252526;
+  --sidebar-bg-right: #1f1f1f;
+  --tabs-bg: #1f1f1f;
+  --tab-bg: #252526;
   --tab-active-bg: rgba(49, 208, 154, 0.16);
-  --editor-bg: #0f141f;
-  --splitter-bg: rgba(31, 40, 51, 0.85);
-  --splitter-hover: rgba(49, 208, 154, 0.22);
+  --editor-bg: #1e1e1e;
+  --splitter-bg: rgba(64, 64, 64, 0.8);
+  --splitter-hover: rgba(49, 208, 154, 0.18);
+  --app-bg: linear-gradient(180deg, #1f1f1f 0%, #1a1a1a 100%);
 }
 
 .app[data-theme="windowsClassic"] {
@@ -198,8 +213,12 @@ button {
   background: var(--topbar-bg);
   border-bottom: 1px solid var(--topbar-border);
   border-top-left-radius: 12px;
-  padding: 6px 8px 4px;
+  padding: 0 6px;
   justify-content: flex-start;
+  height: var(--titlebar-height);
+  min-height: var(--titlebar-height);
+  width: var(--titlebar-width);
+  margin-left: var(--titlebar-x);
 }
 
 .app-title {
@@ -276,15 +295,30 @@ button {
   background: var(--topbar-bg);
   border-bottom: 1px solid var(--topbar-border);
   border-top-right-radius: 12px;
-  padding: 6px 8px 4px;
+  padding: 0 8px;
+  height: var(--titlebar-height);
+  min-height: var(--titlebar-height);
 }
 
-.app[data-native-frame="true"] .window-controls {
+.app[data-native-frame="true"] .window-buttons {
   display: none;
 }
 
 .toolbar-right {
   margin-right: 6px;
+}
+
+.toolbar-row {
+  grid-column: 1 / -1;
+  grid-row: 2;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  background: var(--toolbar-bg);
+  border-bottom: 1px solid var(--toolbar-border);
+  padding: 6px 8px;
+  gap: 8px;
+  -webkit-app-region: no-drag;
 }
 
 .window-btn {
@@ -319,6 +353,25 @@ button {
   border-color: rgba(245, 139, 122, 0.5);
   background: rgba(245, 139, 122, 0.2);
   color: #ffffff;
+}
+
+.window-buttons {
+  display: flex;
+  gap: 4px;
+  margin-left: 6px;
+}
+
+.sidebar-workspaces {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 8px 8px 6px;
+  border-bottom: 1px solid var(--border);
+  background: var(--sidebar-bg);
+}
+
+.sidebar-workspaces .workspace-chip {
+  background: rgba(49, 208, 154, 0.12);
 }
 
 .window-btn svg {
@@ -694,7 +747,7 @@ button {
 }
 
 .button.primary {
-  background: linear-gradient(135deg, #2e9fd6, #4dd4ff);
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
   color: #0c0f14;
   border: none;
 }
@@ -706,7 +759,7 @@ button {
   min-width: 0;
   background: var(--bg-soft);
   grid-column: 1 / -1;
-  grid-row: 2;
+  grid-row: 3;
 }
 
 .workspace-area {
@@ -746,7 +799,7 @@ button {
   height: var(--splitter-size);
   cursor: row-resize;
   grid-column: 1 / -1;
-  grid-row: 3;
+  grid-row: 4;
 }
 
 .splitter:hover {
@@ -945,7 +998,7 @@ button {
 }
 
 .file-node.dir.open {
-  color: #b8c7de;
+  color: #d0d3d8;
 }
 
 .file-node.root {
@@ -964,7 +1017,7 @@ button {
 
 .file-node.dir {
   font-weight: 600;
-  color: #9db0c9;
+  color: #c4c7cc;
 }
 
 .file-node.active {
@@ -998,9 +1051,9 @@ button {
 }
 
 .file-icon.mql {
-  background: rgba(77, 212, 255, 0.12);
+  background: rgba(49, 208, 154, 0.12);
   color: var(--accent);
-  border-color: rgba(77, 212, 255, 0.35);
+  border-color: rgba(49, 208, 154, 0.35);
 }
 
 .file-icon.python {
@@ -1048,16 +1101,19 @@ button {
 .tabs {
   display: flex;
   gap: 10px;
-  padding: 6px 8px 0;
-  border-bottom: 1px solid var(--border);
-  background: var(--tabs-bg);
+  padding: 0 8px;
+  border-bottom: none;
+  background: transparent;
   align-items: center;
+  height: var(--titlebar-height);
+  -webkit-app-region: no-drag;
 }
 
 .tab-actions {
   display: inline-flex;
   gap: 6px;
   align-items: center;
+  -webkit-app-region: no-drag;
 }
 
 .editor-plus {
@@ -1072,6 +1128,7 @@ button {
   justify-content: center;
   cursor: pointer;
   transition: background 0.2s ease, border 0.2s ease, transform 0.08s ease;
+  -webkit-app-region: no-drag;
 }
 
 .editor-plus:hover {
@@ -1091,11 +1148,13 @@ button {
   overflow-x: auto;
   padding-bottom: 0;
   scrollbar-width: thin;
+  -webkit-app-region: no-drag;
 }
 
 .tab-right {
   display: inline-flex;
   align-items: center;
+  -webkit-app-region: no-drag;
 }
 
 .tab {
@@ -1111,6 +1170,7 @@ button {
   font-size: 13px;
   color: var(--muted);
   white-space: nowrap;
+  -webkit-app-region: no-drag;
 }
 
 .tab.active {
@@ -1123,6 +1183,7 @@ button {
 .ext-dropdown {
   position: relative;
   display: inline-flex;
+  -webkit-app-region: no-drag;
 }
 
 .ext-trigger {
@@ -1137,6 +1198,7 @@ button {
   align-items: center;
   justify-content: center;
   cursor: pointer;
+  -webkit-app-region: no-drag;
 }
 
 .ext-trigger:hover {
@@ -1158,6 +1220,7 @@ button {
   gap: 4px;
   z-index: 20;
   box-shadow: 0 12px 30px rgba(0, 0, 0, 0.28);
+  -webkit-app-region: no-drag;
 }
 
 .ext-option {
@@ -1171,6 +1234,7 @@ button {
   color: var(--text);
   cursor: pointer;
   text-align: left;
+  -webkit-app-region: no-drag;
 }
 
 .ext-option .ext-icon {
@@ -1210,12 +1274,19 @@ button {
 }
 
 .app[data-theme="windows11"] .tabs {
-  border-bottom: 1px solid rgba(77, 212, 255, 0.2);
+  border-bottom: 1px solid var(--border);
 }
 
 .app[data-theme="windows11"] .tab.active {
   border-color: var(--accent);
   color: var(--accent);
+}
+
+.app[data-theme="windows11"] .file-icon.cpp,
+.app[data-theme="windows11"] .file-icon.json {
+  background: rgba(148, 163, 184, 0.12);
+  color: #cbd5e1;
+  border-color: rgba(148, 163, 184, 0.3);
 }
 
 .app[data-theme="windowsClassic"] .sidebar {
@@ -1368,7 +1439,7 @@ button {
 .codex-toggle.active {
   background: var(--accent);
   color: #0c0f14;
-  box-shadow: 0 0 12px rgba(77, 212, 255, 0.4);
+  box-shadow: 0 0 12px rgba(49, 208, 154, 0.35);
   border-color: transparent;
 }
 
@@ -1441,8 +1512,8 @@ button {
 }
 
 .codex-message.user {
-  background: rgba(77, 212, 255, 0.08);
-  border-color: rgba(77, 212, 255, 0.25);
+  background: rgba(49, 208, 154, 0.08);
+  border-color: rgba(49, 208, 154, 0.25);
 }
 
 .codex-message.codex {
@@ -1565,11 +1636,11 @@ button {
 }
 
 .app[data-theme="windows11"] .codex-chat {
-  background: rgba(20, 26, 40, 0.85);
+  background: rgba(34, 34, 34, 0.85);
 }
 
 .app[data-theme="windows11"] .codex-message {
-  background: rgba(10, 14, 22, 0.35);
+  background: rgba(12, 12, 12, 0.35);
 }
 
 .app[data-theme="windowsClassic"] .codex-chat,
@@ -1655,7 +1726,7 @@ button {
   border-radius: 0 0 12px 12px;
   overflow: hidden;
   grid-column: 1 / -1;
-  grid-row: 4;
+  grid-row: 5;
 }
 
 .bottom-panel.hidden {
@@ -1696,12 +1767,12 @@ button {
 }
 
 .app[data-theme="windows11"] .bottom-panel {
-  background: rgba(16, 20, 30, 0.98);
-  border-top: 1px solid rgba(77, 212, 255, 0.18);
+  background: rgba(26, 26, 26, 0.98);
+  border-top: 1px solid var(--border);
 }
 
 .app[data-theme="windows11"] .bottom-tab {
-  background: rgba(26, 34, 50, 0.9);
+  background: rgba(38, 38, 38, 0.9);
 }
 
 .app[data-theme="windowsClassic"] .bottom-tabs {
@@ -1881,7 +1952,7 @@ button {
   font-size: 11px;
   padding: 2px 6px;
   border-radius: 999px;
-  background: rgba(77, 212, 255, 0.15);
+  background: rgba(49, 208, 154, 0.15);
   color: var(--accent);
   margin-left: 8px;
 }

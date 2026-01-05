@@ -943,10 +943,6 @@ const App = () => {
   return (
     <>
       <TopBar
-        workspaces={workspaceOrder}
-        activeWorkspaceId={activeWorkspaceId}
-        onSelectWorkspace={handleActivateWorkspace}
-        onCloseWorkspace={handleCloseWorkspace}
         onOpenWorkspace={handleOpenWorkspace}
         onSave={handleSave}
         onCompile={handleCompile}
@@ -968,6 +964,12 @@ const App = () => {
           setSettings(next);
           api.settingsSet?.(next);
         }}
+        files={openFiles}
+        activeFilePath={activeFilePath}
+        onSelectTab={setActiveFile}
+        onNewFile={handleNewFile}
+        newFileExtension={newFileExt}
+        onNewFileExtensionChange={setNewFileExt}
         showGuides={settings.editorShowRulers ?? false}
         showCursorPos={settings.editorShowCursorPosition ?? false}
         uiMode={settings.uiMode}
@@ -980,6 +982,10 @@ const App = () => {
           <LeftSidebar
             tree={tree}
             workspaceRoot={workspaceRoot}
+            workspaces={workspaceOrder}
+            activeWorkspaceId={activeWorkspaceId}
+            onSelectWorkspace={handleActivateWorkspace}
+            onCloseWorkspace={handleCloseWorkspace}
             expandedDirs={expandedDirs}
             onExpandedDirsChange={(dirs) => {
               const workspaceId = activeWorkspaceId ?? LOCAL_WORKSPACE_ID;
@@ -1023,9 +1029,6 @@ const App = () => {
             editorRulers={settings.editorRulers}
             editorShowCursorPosition={settings.editorShowCursorPosition}
             onFontSizeChange={handleFontSizeChange}
-            onNewFile={handleNewFile}
-            newFileExtension={newFileExt}
-            onNewFileExtensionChange={setNewFileExt}
           />
           <div
             className={`splitter vertical right ${layout.rightCollapsed ? "ghost" : ""}`}
