@@ -24,8 +24,8 @@
   --sidebar-bg: #1b1b1b;
   --sidebar-bg-right: linear-gradient(180deg, #202020, #1a1a1a 60%);
   --tabs-bg: #202020;
-  --tab-bg: transparent;
-  --tab-active-bg: rgba(49, 208, 154, 0.16);
+  --tab-bg: #1f1f1f;
+  --tab-active-bg: #2b2b2b;
   --editor-bg: var(--bg-soft);
   --splitter-bg: rgba(55, 55, 55, 0.9);
   --splitter-hover: rgba(49, 208, 154, 0.18);
@@ -121,7 +121,7 @@ button {
   --sidebar-bg-right: #1f1f1f;
   --tabs-bg: #1f1f1f;
   --tab-bg: #252526;
-  --tab-active-bg: rgba(49, 208, 154, 0.16);
+  --tab-active-bg: #2d2d2d;
   --editor-bg: #1e1e1e;
   --splitter-bg: rgba(64, 64, 64, 0.8);
   --splitter-hover: rgba(49, 208, 154, 0.18);
@@ -164,8 +164,8 @@ button {
   --sidebar-bg: rgba(22, 24, 32, 0.9);
   --sidebar-bg-right: rgba(18, 22, 30, 0.95);
   --tabs-bg: rgba(18, 22, 32, 0.9);
-  --tab-bg: rgba(27, 31, 42, 0.8);
-  --tab-active-bg: rgba(49, 208, 154, 0.18);
+  --tab-bg: rgba(27, 31, 42, 0.85);
+  --tab-active-bg: rgba(34, 40, 52, 0.95);
   --editor-bg: #11151f;
   --splitter-bg: rgba(255, 255, 255, 0.08);
   --splitter-hover: rgba(255, 255, 255, 0.18);
@@ -191,7 +191,7 @@ button {
   --sidebar-bg-right: linear-gradient(180deg, #151d28, #111823 60%);
   --tabs-bg: #141b24;
   --tab-bg: #1a2332;
-  --tab-active-bg: rgba(43, 189, 126, 0.18);
+  --tab-active-bg: #202a3a;
   --editor-bg: #0f141c;
   --splitter-bg: rgba(38, 50, 67, 0.85);
   --splitter-hover: rgba(43, 189, 126, 0.2);
@@ -651,7 +651,7 @@ button {
   --sidebar-bg-right: #f1f3f8;
   --tabs-bg: #ffffff;
   --tab-bg: #f3f5f9;
-  --tab-active-bg: rgba(47, 143, 115, 0.18);
+  --tab-active-bg: #ffffff;
   --editor-bg: #f4f6f9;
   --splitter-bg: #e1e6ee;
   --splitter-hover: rgba(47, 143, 115, 0.25);
@@ -1131,8 +1131,8 @@ button {
   display: flex;
   gap: 10px;
   padding: 0 8px;
-  border-bottom: none;
-  background: transparent;
+  border-bottom: 1px solid var(--border);
+  background: var(--tabs-bg);
   align-items: center;
   height: var(--titlebar-height);
   -webkit-app-region: no-drag;
@@ -1188,10 +1188,10 @@ button {
 
 .tab {
   padding: 6px 12px;
-  border-radius: 6px 6px 0 0;
+  border-radius: 8px 8px 0 0;
   background: var(--tab-bg);
-  border: 1px solid transparent;
-  border-bottom: none;
+  border: 1px solid var(--border);
+  border-bottom-color: transparent;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -1205,8 +1205,13 @@ button {
 .tab.active {
   color: var(--text);
   border-color: var(--border);
-  border-top: 2px solid var(--accent);
+  border-bottom-color: var(--tabs-bg);
   background: var(--tab-active-bg);
+}
+
+.tab:hover {
+  background: var(--panel-2);
+  color: var(--text);
 }
 
 .ext-dropdown {
@@ -1307,8 +1312,8 @@ button {
 }
 
 .app[data-theme="windows11"] .tab.active {
-  border-color: var(--accent);
-  color: var(--accent);
+  border-color: var(--border);
+  color: var(--text);
 }
 
 .app[data-theme="windows11"] .file-icon.cpp,
@@ -1381,11 +1386,6 @@ button {
 
 .app[data-mode="light"] .tab {
   color: var(--text);
-}
-
-.tab.active {
-  border-color: var(--accent);
-  color: var(--accent);
 }
 
 .tab .dirty {
