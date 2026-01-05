@@ -306,7 +306,12 @@ button {
 }
 
 .toolbar-right {
-  margin-right: 6px;
+  margin-right: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  width: 100%;
 }
 
 .toolbar-row {
@@ -314,12 +319,18 @@ button {
   grid-row: 2;
   display: flex;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: flex-start;
   background: var(--toolbar-bg);
   border-bottom: 1px solid var(--toolbar-border);
   padding: 6px 8px;
   gap: 8px;
   -webkit-app-region: no-drag;
+}
+
+.toolbar-ext {
+  display: inline-flex;
+  align-items: center;
+  margin-right: 6px;
 }
 
 .window-btn {
@@ -1053,6 +1064,19 @@ button {
   color: var(--muted);
   border: 1px solid var(--border);
   flex-shrink: 0;
+}
+
+.file-icon-img {
+  width: 14px;
+  height: 14px;
+  display: block;
+}
+
+.file-icon.mt4,
+.file-icon.mt5 {
+  padding: 2px;
+  background: transparent;
+  border: none;
 }
 
 .file-icon.mql {

@@ -20,7 +20,8 @@ import {
   X,
   Play
 } from "lucide-react";
-import iconMql from "../assets/icons/mql.svg";
+import iconMt4 from "../assets/icons/mt4.svg";
+import iconMt5 from "../assets/icons/mt5.svg";
 import iconPython from "../assets/icons/python.svg";
 import iconC from "../assets/icons/c.svg";
 import iconCpp from "../assets/icons/cpp.svg";
@@ -107,9 +108,9 @@ const TopBar = ({
   }, []);
 
   const extensionOptions = [
-    { id: "mq5", label: "MQL5", icon: iconMql },
-    { id: "mq4", label: "MQL4", icon: iconMql },
-    { id: "mqh", label: "MQL Header", icon: iconMql },
+    { id: "mq5", label: "MQL5", icon: iconMt5 },
+    { id: "mq4", label: "MQL4", icon: iconMt4 },
+    { id: "mqh", label: "MQL Header" },
     { id: "py", label: "Python", icon: iconPython },
     { id: "c", label: "C", icon: iconC },
     { id: "cpp", label: "C++", icon: iconCpp }
@@ -145,42 +146,7 @@ const TopBar = ({
               </div>
             ))}
           </div>
-          <div className="tab-right">
-            <div className="ext-dropdown" ref={extMenuRef}>
-              <button
-                className="ext-trigger"
-                onClick={() => setExtMenuOpen((open) => !open)}
-                type="button"
-                title={`New file extension: .${currentExt.id}`}
-              >
-                <span className="ext-icon">
-                  <img className="ext-icon-img" src={currentExt.icon} alt={currentExt.label} />
-                </span>
-              </button>
-              {extMenuOpen ? (
-                <div className="ext-menu">
-                  {extensionOptions.map((option) => (
-                    <button
-                      key={option.id}
-                      className={`ext-option ${
-                        newFileExtension === option.id ? "active" : ""
-                      }`}
-                      onClick={() => {
-                        onNewFileExtensionChange?.(option.id);
-                        setExtMenuOpen(false);
-                      }}
-                      type="button"
-                    >
-                      <span className="ext-icon">
-                        <img className="ext-icon-img" src={option.icon} alt={option.label} />
-                      </span>
-                      <span className="ext-label">{option.label}</span>
-                    </button>
-                  ))}
-                </div>
-              ) : null}
-            </div>
-          </div>
+          <div className="tab-right" />
         </div>
       </div>
       <div className="window-controls">
@@ -204,6 +170,44 @@ const TopBar = ({
       </div>
       <div className="toolbar-row">
         <div className="toolbar-right">
+          <div className="toolbar-ext" ref={extMenuRef}>
+            <button
+              className="ext-trigger"
+              onClick={() => setExtMenuOpen((open) => !open)}
+              type="button"
+              title={`New file extension: .${currentExt.id}`}
+            >
+              {currentExt.icon ? (
+                <span className="ext-icon">
+                  <img className="ext-icon-img" src={currentExt.icon} alt={currentExt.label} />
+                </span>
+              ) : (
+                <span className="ext-label">{currentExt.label}</span>
+              )}
+            </button>
+            {extMenuOpen ? (
+              <div className="ext-menu">
+                {extensionOptions.map((option) => (
+                  <button
+                    key={option.id}
+                    className={`ext-option ${newFileExtension === option.id ? "active" : ""}`}
+                    onClick={() => {
+                      onNewFileExtensionChange?.(option.id);
+                      setExtMenuOpen(false);
+                    }}
+                    type="button"
+                  >
+                    {option.icon ? (
+                      <span className="ext-icon">
+                        <img className="ext-icon-img" src={option.icon} alt={option.label} />
+                      </span>
+                    ) : null}
+                    <span className="ext-label">{option.label}</span>
+                  </button>
+                ))}
+              </div>
+            ) : null}
+          </div>
           <div className="toolbar-actions">
             <button
               className="toolbar-btn"

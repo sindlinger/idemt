@@ -1,5 +1,7 @@
 import { useEffect, useMemo } from "react";
 import type { WorkspaceNode } from "@shared/ipc";
+import iconMt4 from "../assets/icons/mt4.svg";
+import iconMt5 from "../assets/icons/mt5.svg";
 
 type FileFilter = "mql" | "python" | "cpp";
 
@@ -12,9 +14,9 @@ const getIcon = (node: WorkspaceNode) => {
     return { label: "", className: "folder" };
   }
   const ext = node.name.split(".").pop()?.toLowerCase() ?? "";
-  if (ext === "mq5") return { label: "M5", className: "mql" };
-  if (ext === "mq4") return { label: "M4", className: "mql" };
-  if (ext === "mqh") return { label: "H", className: "mql" };
+  if (ext === "mq5") return { image: iconMt5, alt: "MT5", className: "mt5" };
+  if (ext === "mq4") return { image: iconMt4, alt: "MT4", className: "mt4" };
+  if (ext === "mqh") return { label: "", className: "none" };
   if (ext === "ex5") return { label: "EX5", className: "mql" };
   if (ext === "ex4") return { label: "EX4", className: "mql" };
   if (ext === "dll") return { label: "DLL", className: "mql" };
@@ -134,7 +136,13 @@ const renderNode = (
         }
         onDoubleClick={() => onOpenFile(node.path)}
       >
-        <span className={`file-icon ${icon.className}`}>{icon.label}</span>
+        {icon.image ? (
+          <span className={`file-icon ${icon.className}`}>
+            <img className="file-icon-img" src={icon.image} alt={icon.alt ?? ""} />
+          </span>
+        ) : icon.label ? (
+          <span className={`file-icon ${icon.className}`}>{icon.label}</span>
+        ) : null}
         <span className="file-name">{node.name}</span>
       </div>
     );
