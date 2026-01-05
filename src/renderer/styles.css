@@ -1500,19 +1500,12 @@ button {
   min-width: 0;
 }
 
-.codex-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 6px;
-}
-
 .codex-session {
-  width: 26px;
-  height: 26px;
-  border-radius: 8px;
-  border: 1px solid var(--border);
-  background: var(--panel-2);
+  width: 22px;
+  height: 22px;
+  border-radius: 7px;
+  border: 1px solid transparent;
+  background: transparent;
   color: var(--muted);
   cursor: pointer;
   display: inline-flex;
@@ -1522,14 +1515,15 @@ button {
 }
 
 .codex-session.active {
-  border-color: rgba(49, 208, 154, 0.6);
-  color: #eafff7;
-  background: rgba(49, 208, 154, 0.18);
+  border-color: var(--border);
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.06);
 }
 
 .codex-session:hover {
-  border-color: var(--accent);
+  border-color: var(--border);
   color: var(--text);
+  background: rgba(255, 255, 255, 0.04);
 }
 
 .codex-session:active {
@@ -1539,29 +1533,75 @@ button {
 .codex-section {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
   flex: 1;
   min-height: 0;
   background: var(--panel);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
-  padding: 2px;
+  padding: 6px;
   overflow: hidden;
 }
 
-.codex-controls {
+.codex-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.codex-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 11px;
+  letter-spacing: 0.2px;
+}
+
+.codex-status-text {
+  color: var(--muted);
+}
+
+.codex-status-time {
+  color: rgba(160, 160, 160, 0.8);
+}
+
+.codex-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: rgba(160, 160, 160, 0.6);
+}
+
+.codex-dot.running {
+  background: #f0b45d;
+  box-shadow: 0 0 0 3px rgba(240, 180, 93, 0.12);
+}
+
+.codex-dot.ok {
+  background: #8ccf8a;
+  box-shadow: 0 0 0 3px rgba(140, 207, 138, 0.12);
+}
+
+.codex-dot.error {
+  background: #d67979;
+  box-shadow: 0 0 0 3px rgba(214, 121, 121, 0.16);
+}
+
+.codex-top-actions {
   display: flex;
   justify-content: flex-end;
   gap: 6px;
 }
 
 .codex-view-toggle {
-  width: 24px;
-  height: 24px;
+  width: 22px;
+  height: 22px;
   padding: 0;
-  border-radius: 8px;
-  border: 1px solid var(--border);
-  background: var(--panel-2);
+  border-radius: 7px;
+  border: 1px solid transparent;
+  background: transparent;
   color: var(--muted);
   cursor: pointer;
   display: inline-flex;
@@ -1572,13 +1612,14 @@ button {
 
 .codex-view-toggle.active {
   color: var(--text);
-  border-color: var(--accent);
+  border-color: var(--border);
+  background: rgba(255, 255, 255, 0.06);
 }
 
 .codex-view-toggle:hover {
-  border-color: rgba(49, 208, 154, 0.5);
+  border-color: var(--border);
   color: var(--text);
-  background: rgba(49, 208, 154, 0.08);
+  background: rgba(255, 255, 255, 0.04);
 }
 
 .codex-chat {
@@ -1592,64 +1633,69 @@ button {
   scrollbar-gutter: stable;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
 }
 
 .codex-message {
-  background: rgba(0, 0, 0, 0.15);
-  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.02);
+  border-left: 2px solid rgba(255, 255, 255, 0.12);
   border-radius: var(--radius-sm);
-  padding: 8px 10px;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.codex-message.user {
-  background: rgba(49, 208, 154, 0.08);
-  border-color: rgba(49, 208, 154, 0.25);
-}
-
-.codex-message.codex {
-  background: rgba(245, 215, 110, 0.08);
-  border-color: rgba(245, 215, 110, 0.25);
-}
-
-.codex-meta {
-  font-size: 10px;
-  letter-spacing: 1px;
-  color: var(--muted);
-}
-
-.codex-text {
-  font-size: 12px;
-  line-height: 1.4;
-  white-space: pre-wrap;
-}
-
-.codex-history {
-  background: rgba(0, 0, 0, 0.2);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 8px;
-  max-height: 160px;
-  overflow: auto;
-  scrollbar-gutter: stable;
+  padding: 6px 10px;
   display: flex;
   flex-direction: column;
   gap: 6px;
 }
 
-.codex-history-line {
+.codex-text {
+  font-size: 12px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+}
+
+.codex-panels {
   display: flex;
+  flex-direction: column;
   gap: 8px;
+}
+
+.codex-panel {
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 8px;
+  max-height: 180px;
+  overflow: auto;
+  scrollbar-gutter: stable;
+}
+
+.codex-review {
+  max-height: 220px;
+}
+
+.codex-history-line {
+  position: relative;
+  display: flex;
+  gap: 10px;
   font-size: 11px;
+  line-height: 1.45;
   color: var(--muted);
+  padding-left: 14px;
+}
+
+.codex-history-line::before {
+  content: "";
+  position: absolute;
+  left: 4px;
+  top: 6px;
+  width: 4px;
+  height: 4px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.35);
 }
 
 .codex-history-time {
   flex-shrink: 0;
-  color: var(--accent);
+  color: rgba(200, 200, 200, 0.9);
 }
 
 .codex-history-text {
@@ -1668,38 +1714,51 @@ button {
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   padding: 10px;
-  min-height: 70px;
+  min-height: 64px;
+  resize: vertical;
 }
 
 .codex-combo {
-  height: 24px;
-  padding: 0 8px;
-  border-radius: 8px;
+  height: 22px;
+  padding: 0 6px;
+  border-radius: 6px;
   border: 1px solid transparent;
-  background: var(--panel-2);
-  color: var(--text);
+  background: transparent;
+  color: var(--muted);
   font-size: 11px;
   appearance: none;
   cursor: pointer;
 }
 
 .codex-combo:hover {
-  border-color: var(--border);
+  border-color: rgba(255, 255, 255, 0.1);
+  color: var(--text);
 }
 
 .codex-actions {
   display: flex;
-  gap: 6px;
   align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.codex-action-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.codex-action-group.right {
   justify-content: flex-end;
+  align-items: center;
 }
 
 .codex-send {
-  width: 28px;
-  height: 24px;
-  background: var(--accent);
-  color: #0c0f14;
-  border: none;
+  width: 26px;
+  height: 22px;
+  background: var(--panel-2);
+  color: var(--text);
+  border: 1px solid var(--border);
   padding: 0;
   border-radius: 6px;
   font-size: 0;
@@ -1712,7 +1771,7 @@ button {
 }
 
 .codex-send:hover {
-  filter: brightness(1.05);
+  background: rgba(255, 255, 255, 0.06);
 }
 
 .codex-send:disabled {
@@ -1722,8 +1781,8 @@ button {
 }
 
 .codex-stop {
-  width: 28px;
-  height: 24px;
+  width: 26px;
+  height: 22px;
   border-radius: 6px;
   border: 1px solid var(--border);
   background: transparent;
@@ -1736,13 +1795,84 @@ button {
 }
 
 .codex-stop:hover {
-  border-color: var(--danger);
-  color: var(--danger);
+  border-color: rgba(255, 255, 255, 0.2);
+  color: var(--text);
 }
 
 .codex-send:active,
 .codex-stop:active {
   transform: translateY(1px);
+}
+
+.codex-review-item {
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 6px;
+  margin-bottom: 6px;
+}
+
+.codex-review-item:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+  margin-bottom: 0;
+}
+
+.codex-review-toggle {
+  width: 100%;
+  background: transparent;
+  border: none;
+  color: var(--text);
+  padding: 2px 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.codex-review-name {
+  flex: 1;
+  text-align: left;
+}
+
+.codex-review-body {
+  padding: 6px 0 0 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.codex-review-diff {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.4;
+  max-height: 140px;
+  overflow: auto;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 6px;
+  padding: 6px;
+}
+
+.codex-review-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.codex-review-action {
+  width: 24px;
+  height: 22px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--muted);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.codex-review-action:hover {
+  color: var(--text);
+  border-color: rgba(255, 255, 255, 0.2);
 }
 
 .app[data-theme="windows11"] .codex-chat {
@@ -1754,7 +1884,7 @@ button {
 }
 
 .app[data-theme="windowsClassic"] .codex-chat,
-.app[data-theme="windowsClassic"] .codex-history,
+.app[data-theme="windowsClassic"] .codex-panel,
 .app[data-theme="windowsClassic"] .codex-input textarea {
   background: var(--panel);
   color: var(--text);
@@ -1765,10 +1895,6 @@ button {
   background: var(--panel-2);
   border: 1px solid var(--border);
   box-shadow: inset 1px 1px 0 #f3f3f3, inset -1px -1px 0 #9a9a9a;
-}
-
-.app[data-theme="windowsClassic"] .codex-meta {
-  color: var(--muted);
 }
 
 .app[data-theme="windowsClassic"] .codex-send {
@@ -1796,7 +1922,7 @@ button {
 }
 
 .app[data-mode="light"] .codex-chat,
-.app[data-mode="light"] .codex-history {
+.app[data-mode="light"] .codex-panel {
   background: #ffffff;
   border-color: #d6dbe6;
 }
@@ -1810,20 +1936,6 @@ button {
   background: #ffffff;
   border-color: #d6dbe6;
   color: #1e2431;
-}
-
-.review-card {
-  background: var(--panel-2);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  padding: 10px;
-}
-
-.review-card pre {
-  white-space: pre-wrap;
-  font-size: 11px;
-  max-height: 160px;
-  overflow: auto;
 }
 
 .bottom-panel {
