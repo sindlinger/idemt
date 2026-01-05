@@ -8,6 +8,7 @@ import type { WindowBounds } from "../shared/ipc";
 let mainWindow: BrowserWindow | null = null;
 let isQuitting = false;
 let saveBoundsTimer: NodeJS.Timeout | null = null;
+let devReloadTimer: NodeJS.Timeout | null = null;
 
 const settingsService = new SettingsService();
 let settingsReady = false;
@@ -161,9 +162,17 @@ const createWindow = async () => {
 
   mainWindow.webContents.on("did-fail-load", (_event, code, desc, validatedURL) => {
     logLine("main", `did-fail-load code=${code} desc=${desc} url=${validatedURL}`);
+    if (isDev) {
+      void showLoadingPage(`Falha ao carregar (${code}). Tentando novamente...`);
+      scheduleDevReload(0, 1200);
+    }
   });
   mainWindow.webContents.on("render-process-gone", (_event, details) => {
     logLine("main", `render-process-gone reason=${details.reason} exitCode=${details.exitCode}`);
+    if (isDev) {
+      void showLoadingPage(`Renderer caiu (${details.reason}). Reconectando...`);
+      scheduleDevReload(0, 1200);
+    }
   });
   mainWindow.webContents.on("did-finish-load", () => {
     logLine("main", "did-finish-load");
@@ -202,7 +211,34 @@ const loadDevUrl = async (attempt: number) => {
     console.error(`Failed to load dev URL: ${url}`, error);
     logLine("main", `loadURL failed ${url} err=${String(error)}`);
     const delay = Math.min(1000 + attempt * 500, 5000);
-    setTimeout(() => void loadDevUrl(attempt + 1), delay);
+    scheduleDevReload(attempt + 1, delay);
+  }
+};
+
+const scheduleDevReload = (attempt = 0, delay = 1500) => {
+  if (!mainWindow || !isDev) return;
+  if (devReloadTimer) clearTimeout(devReloadTimer);
+  devReloadTimer = setTimeout(() => void loadDevUrl(attempt), delay);
+};
+
+const showLoadingPage = async (reason: string) => {
+  if (!mainWindow) return;
+  const html = `<!doctype html>
+  <html><head><meta charset="utf-8" />
+  <style>
+    html,body{margin:0;height:100%;background:#111;color:#ddd;font-family:Segoe UI,system-ui,sans-serif;}
+    .wrap{height:100%;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:8px;text-align:center;}
+    .title{font-size:16px;font-weight:600;}
+    .muted{font-size:12px;color:#9aa0a6;}
+  </style></head>
+  <body><div class="wrap">
+    <div class="title">Conectando ao renderer...</div>
+    <div class="muted">${reason}</div>
+  </div></body></html>`;
+  try {
+    await mainWindow.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(html)}`);
+  } catch {
+    // ignore
   }
 };
 
