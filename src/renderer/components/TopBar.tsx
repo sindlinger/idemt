@@ -20,7 +20,7 @@ import {
   X,
   Play
 } from "lucide-react";
-import iconMt4 from "../assets/icons/mt4.svg";
+import iconMt4 from "../assets/icons/mt4.png";
 import iconMt5 from "../assets/icons/mt5.svg";
 import iconPython from "../assets/icons/python.svg";
 import iconC from "../assets/icons/c.svg";

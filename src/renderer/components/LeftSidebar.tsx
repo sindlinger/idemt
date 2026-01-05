@@ -1,6 +1,6 @@
 import { useEffect, useMemo } from "react";
 import type { WorkspaceNode } from "@shared/ipc";
-import iconMt4 from "../assets/icons/mt4.svg";
+import iconMt4 from "../assets/icons/mt4.png";
 import iconMt5 from "../assets/icons/mt5.svg";
 
 type FileFilter = "mql" | "python" | "cpp";

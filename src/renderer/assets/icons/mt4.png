@@ -1,0 +1,250 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <title>Page not found</title>
+    <meta name="format-detection" content="telephone=no">
+    <meta http-equiv="x-dns-prefetch-control" content="on" />
+    <link rel="shortcut icon" href="/favicon.ico">
+    
+    <meta name="msapplication-config" content="none"/>
+    <link href="/styles/all.dt137ac4a7675.css" type="text/css" rel="stylesheet" media="all">
+    
+    <!--[if lte IE 9]>
+    <style type="text/css">
+        html[lang="ja"] .header .menu>li>a{
+            letter-spacing: -1.5px;
+        }
+    </style>
+    <![endif]-->
+    
+    
+    <script type="text/javascript">
+        var mqGlobal = {};
+        mqGlobal.AddOnLoad = function(callback) {if (!this._onload) this._onload = [];this._onload[this._onload.length] = callback;};
+        mqGlobal.AddOnReady = function (callback) { if (!this._onready) this._onready = []; this._onready[this._onready.length] = callback; };
+        //---
+        var replaceMt4DownloadLink = "https://download.mql5.com/cdn/web/metaquotes.software.corp/mt4/mt4setup.exe?utm_source=www.metatrader4.com&amp;amp;utm_campaign=download";
+        var replaceMt4DownloadLinkUtmSource = "www.metatrader4.com";
+        var replaceMt4DownloadLinkUtmCampaign = "download";
+        //---
+        
+        (function(a,e,f,g,b,c,d){a[b]||(a.FintezaCoreObject=b,a[b]=a[b]||function(){(a[b].q=a[b].q||[]).push(arguments)},a[b].l=1*new Date,c=e.createElement(f),d=e.getElementsByTagName(f)[0],c.async=!0,c.defer=!0,c.src=g,d&&d.parentNode&&d.parentNode.insertBefore(c,d))})
+          (window,document,"script","/fz/core.js","fz");
+        fz("register","website",{id:"qnlhlnetfifwnnfroedbtvafkmshgcbepu",trackLinks:true});
+        
+    </script>
+    
+    <script src="/js/all.dt13811caec15.js" defer="defer" type="text/javascript"></script>
+    
+  
+
+  
+
+
+</head>
+
+<body itemscope="itemscope" itemtype="https://schema.org/WebPage">
+
+
+<div class="cover ">
+    
+
+    <div class="header ">
+        <a href="/en" class="logo"><img srcset="/i/metatrader-4-logo_2x.png 2x" src="/i/metatrader-4-logo.png" width="175" height="47" title="MetaTrader 4" alt="MetaTrader 4"></a>
+
+        <ul class="menu" id="menu" itemscope itemtype="https://schema.org/SiteNavigationElement">
+        <li class="menu__item menu__item_main">
+            <a href="/en/trading-platform" itemprop="url">Trading Platform</a>
+            <ul class="menu__dropdown">
+                <li><a href="/en/trading-platform">MetaTrader 4</a></li>
+                <li><a href="/en/download" itemprop="url">Download</a></li>
+                <li class="splitted"><a href="/en/trading-platform/forex" itemprop="url">Forex</a></li>
+                <li><a href="/en/trading-platform/orders" itemprop="url">Trading and Orders</a></li>
+                <li><a href="/en/trading-platform/technical-analysis" itemprop="url">Technical Analysis</a></li>
+                <li><a href="/en/trading-platform/alerts-news" itemprop="url">Alerts and News</a></li>
+                <li><a href="/en/trading-platform/vps" itemprop="url">Virtual Hosting (VPS)</a></li>
+                <li><a href="/en/trading-platform/web-trading" itemprop="url">Web Trading</a></li>
+
+                <li class="menu__item menu__item_sub">
+                    <a href="/en/automated-trading" itemprop="url">Automated Trading</a>
+                    <ul class="menu__dropdown menu__dropdown_sub">
+                        <li><a href="/en/automated-trading">Expert Advisors and Indicators</a></li>
+                        <li><a href="/en/automated-trading/robots-indicators" itemprop="url">Where to Get a Robot or Indicator</a></li>
+                        <li><a href="/en/automated-trading/mql4-ide" itemprop="url">MQL4 IDE</a></li>
+                        <li><a href="/en/automated-trading/mql4-programming" itemprop="url">MQL4 Programming</a></li>
+                        <li><a href="/en/automated-trading/metaeditor" itemprop="url">MetaEditor</a></li>
+                        <li><a href="/en/automated-trading/strategy-tester" itemprop="url">Strategy Tester</a></li>
+                        <li class="splitted"><a href="https://www.mql4.com/en" target="_blank">MQL4.community</a></li>
+                    </ul>
+                </li>
+
+                <li class="menu__item menu__item_sub">
+                    <a href="/en/mobile-trading" itemprop="url">Mobile Trading</a>
+                    <ul class="menu__dropdown menu__dropdown_sub">
+                        <li><a href="/en/mobile-trading">MetaTrader 4 Mobile Technology</a></li>
+                        <li class="splitted"><a href="/en/mobile-trading/iphone-ipad" itemprop="url">MetaTrader 4 iPhone/iPad</a></li>
+                        <li><a href="/en/mobile-trading/android" itemprop="url">MetaTrader 4 Android OS</a></li>
+                        <li class="splitted"><a href="/en/download" itemprop="url">Download</a></li>
+                    </ul>
+                </li>
+
+                <li class=""><a href="/en/trading-platform/open-demo" itemprop="url">Open a Demo Account</a></li>
+                <li class="splitted"><a href="/en/trading-platform/help" itemprop="url">MetaTrader 4 Help</a></li>
+                <li><a href="/en/releasenotes" itemprop="url">Release Notes</a></li>
+            </ul>
+        </li><!--
+
+
+        --><li class="menu__item menu__item_main">
+            <a href="/en/market" itemprop="url">Trading Services</a>
+            <ul class="menu__dropdown">
+                <li class="menu__item menu__item_sub">
+                    <a href="/en/market" itemprop="url">Market</a>
+                    <ul class="menu__dropdown menu__dropdown_sub">
+                        <li><a href="/en/market">MetaTrader Market</a></li>
+                        <li><a href="/en/market/robots-indicators" itemprop="url">How to Buy Robots and Indicators</a></li>
+                    </ul>
+                </li>
+
+                <li class="menu__item menu__item_sub">
+                    <a href="/en/signals" itemprop="url">Signals</a>
+                    <ul class="menu__dropdown menu__dropdown_sub">
+                        <li><a href="/en/signals">Forex Signals and Copy Trading</a></li>
+                        <li><a href="/en/signals/overview" itemprop="url">Find Signal</a></li>
+                        <li><a href="/en/signals/subscribe" itemprop="url">How to Subscribe to a Signal</a></li>
+                        <li><a href="/en/signals/providers" itemprop="url">How to Become a Signal Provider</a></li>
+                    </ul>
+                </li>
+            </ul>
+        </li><!--
+
+        --><li class="menu__item menu__item_main menu__item menu__item_singled">
+               <a href="/en/download" itemprop="url">Download</a>
+           </li><!--
+
+        --><li class="menu__item menu__item_main">
+            <a href="/en/brokers" itemprop="url">For Brokers</a>
+            <ul  class="menu__dropdown menu__dropdown_right">
+                <li><a href="/en/brokers">MetaTrader 4 for Brokers</a></li>
+                <li><a href="/en/brokers/api" itemprop="url">MetaTrader 4 API</a></li>
+                <li><a href="/en/brokers/integration-plugins-feeds" itemprop="url">Integration, Plugins and Feeds</a></li>
+            </ul>
+        </li><!--
+
+
+        --><li class="menu__item menu__item_main menu__item menu__item_singled">
+               <a href="/en/find-broker" itemprop="url" id="menu-item-find-broker">Find Broker</a>
+           </li><!--
+
+        --><li class="menu__item menu__item_main">
+            <a href="/en/company" itemprop="url">Company</a>
+            <ul class="menu__dropdown menu__dropdown_right">
+                <li><a href="/en/company">MetaQuotes Ltd</a></li>
+                <li><a href="/en/company/contacts" itemprop="url">Contacts</a></li>
+                <li><a href="https://www.metaquotes.net/en/legal" target="_blank">Legal</a></li>
+            </ul>
+        </li>
+
+
+        <li class="menu__item menu__item_main menu__item_right menu__item_no-borders menu__item_singled">
+            <a href="javascript:void(0)" id="chatBotBtn" class="chatbot-button" role="button" data-fz-event="Site Broker Form Header Request"><span class="button__get-trial">For Business</span></a><script type ="text/javascript">mqGlobal.AddOnReady(function () {chatBot.init('chatBotBtn');});</script>
+            
+        </li>
+
+        </ul>
+
+        <div class="sidebarToggleButton" id="sidebarToggleButton" onclick="Sidebar.Toggle();"><div></div></div>
+
+        <ul class="langmenu" id="langmenu" onmousedown="LangMenu.Show(event);">
+        <li class='selected'><a href='/en/mt4-logo.png'>English <abbr>EN</abbr></a></li><li><a href='/es/mt4-logo.png'>Español <abbr>ES</abbr></a></li><li><a href='/fr/mt4-logo.png'>Français <abbr>FR</abbr></a></li><li><a href='/ja/mt4-logo.png'>日本語 <abbr>JA</abbr></a></li><li><a href='/pt/mt4-logo.png'>Português <abbr>PT</abbr></a></li><li><a href='/ru/mt4-logo.png'>Русский <abbr>RU</abbr></a></li><li><a href='/zh/mt4-logo.png'>中文 <abbr>ZH</abbr></a></li>
+        </ul>
+    </div>
+
+    
+
+    
+    <div class="line top"></div>
+    
+    <div class="container" style="text-align: center">
+        <h1>404</h1>
+        <h2>Page not found</h2>
+        <div class="entry"><p>Check the URL and try again</p></div>
+        <img src="/i/nofound.png" alt="404" title="404" width="149" height="150">
+    </div>
+
+    <div class="line"></div>
+
+
+    <div class="footer container">
+        <ul class="links">
+        
+        <li><a href="/en/trading-platform">Trading Platform</a></li>
+        <li><a href="/en/mobile-trading">Mobile Trading</a></li>
+        <li><a href="/en/market">Market</a></li>
+        <li><a href="/en/signals">Signals</a></li>
+        <li><a href="/en/automated-trading">Automated Trading</a></li>
+        <li><a href="/en/download">Download</a></li>
+        <li><a href="/en/brokers">For Brokers</a></li>
+        <li><a href="/en/company">Company</a></li>
+        <li><a target="_blank" href="https://www.metaquotes.net/en/legal">Legal</a></li>
+            
+        </ul>
+
+
+        <div class="disclaimer">
+            MetaQuotes is a software development company and does not provide investment or brokerage services
+        </div>
+
+        <div class="copyright">
+            Copyright 2000-2026, <a href="https://www.metaquotes.net" target="_blank">MetaQuotes Ltd</a>
+        </div>
+
+
+        <script type="text/javascript">
+            mqGlobal.AddOnReady(function ()
+            {
+                window.MqCookies = new MqCookie;
+                MqCookies.init('www.metatrader4.com', null, null);
+                
+                if (/Trident|MSIE/.test(window.navigator.userAgent) === false)
+                    FloatVerticalPanel('This website uses cookies. Learn more about our <a href="https://www.metaquotes.net/en/legal/cookies" target="_blank">Cookies Policy</a>.', 'cookie_accept');
+                    
+            });
+        </script>
+    </div>
+</div>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  "name": "MetaTrader 4",
+  "parentOrganization": "MetaQuotes Ltd",
+  "legalName":"MetaTrader 4",
+  "alternateName": "MT4",
+  "brand": "MetaTrader 4",
+  "url": "https://www.metatrader4.com",
+  "logo": "https://www.metatrader4.com/i/metatrader-4-logo-og.png",
+  "description": "MetaTrader 4 is a free-of-charge Forex trading platform. It offers wide technical analysis options, flexible trading system, algorithmic and mobile trading, Market, Virtual Hosting and Signals.",
+  "contactPoint": {
+    "@type": "ContactPoint",
+    "url":"https://www.metatrader4.com/en/company/contacts",
+    "contactType": "customer service",
+    "contactOption": "Chat",
+    "areaServed": "Worldwide",
+    "availableLanguage":["en","zh","es","fr","ja","pt","de"]}
+  },
+  "sameAs": [
+    "https://www.youtube.com/user/MetaQuotesOfficial",
+    "https://www.facebook.com/metatrader/"
+   ]
+}
+</script>
+    
+
+</body>
+</html>
+<!-- Generated in 0.2978 ms -->
