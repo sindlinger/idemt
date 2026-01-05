@@ -239,7 +239,7 @@ const LeftSidebar = ({
   const treeNodes = rootNode ? [rootNode] : [];
   return (
     <aside className={`sidebar ${collapsed ? "collapsed" : ""}`}>
-      {workspaces.length > 0 && (
+      {workspaces.length > 1 && (
         <div className="sidebar-workspaces">
           {workspaces.map((root) => {
             const name = root.split(/[\\/]/).pop() ?? root;

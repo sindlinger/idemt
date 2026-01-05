@@ -302,7 +302,7 @@ button {
 }
 
 .app[data-native-frame="true"] .window-buttons {
-  display: none;
+  display: flex;
 }
 
 .toolbar-right {
@@ -374,7 +374,7 @@ button {
 }
 
 .app[data-titlebar-overlay="true"] .window-buttons {
-  display: none;
+  display: flex;
 }
 
 .sidebar-workspaces {
@@ -1183,6 +1183,7 @@ button {
 .tab-right {
   display: inline-flex;
   align-items: center;
+  margin-left: auto;
   -webkit-app-region: no-drag;
 }
 
@@ -1212,6 +1213,32 @@ button {
 .tab:hover {
   background: var(--panel-2);
   color: var(--text);
+}
+
+.tab-close {
+  margin-left: 6px;
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.tab:hover .tab-close,
+.tab.active .tab-close {
+  opacity: 0.75;
+}
+
+.tab-close:hover {
+  background: var(--panel-2);
+  color: var(--text);
+  opacity: 1;
 }
 
 .ext-dropdown {

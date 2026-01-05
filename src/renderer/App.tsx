@@ -189,6 +189,7 @@ const App = () => {
     setExpandedDirs,
     setActiveFile,
     openFile,
+    closeOpenFile,
     updateFileContent,
     markSaved,
     renameOpenFile,
@@ -662,6 +663,11 @@ const App = () => {
     openFile(file, workspaceId);
   };
 
+  const handleCloseFile = (path: string) => {
+    const workspaceId = activeWorkspaceId ?? LOCAL_WORKSPACE_ID;
+    closeOpenFile(path, workspaceId);
+  };
+
   const handleLoadDir = async (dirPath: string) => {
     const children = await api.listDirectory?.(dirPath, fileFilters);
     if (!children) return;
@@ -992,6 +998,7 @@ const App = () => {
         files={openFiles}
         activeFilePath={activeFilePath}
         onSelectTab={setActiveFile}
+        onCloseTab={handleCloseFile}
         onNewFile={handleNewFile}
         newFileExtension={newFileExt}
         onNewFileExtensionChange={setNewFileExt}

@@ -40,6 +40,7 @@ const TopBar = ({
   files,
   activeFilePath,
   onSelectTab,
+  onCloseTab,
   onNewFile,
   newFileExtension,
   onNewFileExtensionChange,
@@ -63,6 +64,7 @@ const TopBar = ({
   files: OpenFileState[];
   activeFilePath?: string;
   onSelectTab: (path: string) => void;
+  onCloseTab: (path: string) => void;
   onNewFile?: () => void;
   newFileExtension?: string;
   onNewFileExtensionChange?: (value: string) => void;
@@ -124,16 +126,6 @@ const TopBar = ({
       <div className="title-left">
         <span className="app-title">MT5 IDE</span>
         <div className="tabs">
-          <div className="tab-actions">
-            <button
-              className="editor-plus"
-              onClick={() => onNewFile?.()}
-              title="New File"
-              type="button"
-            >
-              <Plus size={12} />
-            </button>
-          </div>
           <div className="tab-list">
             {files.map((file) => (
               <div
@@ -143,10 +135,30 @@ const TopBar = ({
               >
                 <span>{file.path.split(/[\\/]/).pop()}</span>
                 {file.dirty ? <span className="dirty" /> : null}
+                <button
+                  className="tab-close"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    onCloseTab(file.path);
+                  }}
+                  title="Close"
+                  type="button"
+                >
+                  <X size={12} />
+                </button>
               </div>
             ))}
           </div>
-          <div className="tab-right" />
+          <div className="tab-right">
+            <button
+              className="editor-plus"
+              onClick={() => onNewFile?.()}
+              title="New File"
+              type="button"
+            >
+              <Plus size={12} />
+            </button>
+          </div>
         </div>
       </div>
       <div className="window-controls">
@@ -170,44 +182,6 @@ const TopBar = ({
       </div>
       <div className="toolbar-row">
         <div className="toolbar-right">
-          <div className="toolbar-ext" ref={extMenuRef}>
-            <button
-              className="ext-trigger"
-              onClick={() => setExtMenuOpen((open) => !open)}
-              type="button"
-              title={`New file extension: .${currentExt.id}`}
-            >
-              {currentExt.icon ? (
-                <span className="ext-icon">
-                  <img className="ext-icon-img" src={currentExt.icon} alt={currentExt.label} />
-                </span>
-              ) : (
-                <span className="ext-label">{currentExt.label}</span>
-              )}
-            </button>
-            {extMenuOpen ? (
-              <div className="ext-menu">
-                {extensionOptions.map((option) => (
-                  <button
-                    key={option.id}
-                    className={`ext-option ${newFileExtension === option.id ? "active" : ""}`}
-                    onClick={() => {
-                      onNewFileExtensionChange?.(option.id);
-                      setExtMenuOpen(false);
-                    }}
-                    type="button"
-                  >
-                    {option.icon ? (
-                      <span className="ext-icon">
-                        <img className="ext-icon-img" src={option.icon} alt={option.label} />
-                      </span>
-                    ) : null}
-                    <span className="ext-label">{option.label}</span>
-                  </button>
-                ))}
-              </div>
-            ) : null}
-          </div>
           <div className="toolbar-actions">
             <button
               className="toolbar-btn"
@@ -283,6 +257,44 @@ const TopBar = ({
           <button className="toolbar-btn" onClick={onToggleTheme} title="Tema claro/escuro">
             {isDark ? <Sun size={14} /> : <Moon size={14} />}
           </button>
+          <div className="toolbar-ext" ref={extMenuRef}>
+            <button
+              className="ext-trigger"
+              onClick={() => setExtMenuOpen((open) => !open)}
+              type="button"
+              title={`New file extension: .${currentExt.id}`}
+            >
+              {currentExt.icon ? (
+                <span className="ext-icon">
+                  <img className="ext-icon-img" src={currentExt.icon} alt={currentExt.label} />
+                </span>
+              ) : (
+                <span className="ext-label">{currentExt.label}</span>
+              )}
+            </button>
+            {extMenuOpen ? (
+              <div className="ext-menu">
+                {extensionOptions.map((option) => (
+                  <button
+                    key={option.id}
+                    className={`ext-option ${newFileExtension === option.id ? "active" : ""}`}
+                    onClick={() => {
+                      onNewFileExtensionChange?.(option.id);
+                      setExtMenuOpen(false);
+                    }}
+                    type="button"
+                  >
+                    {option.icon ? (
+                      <span className="ext-icon">
+                        <img className="ext-icon-img" src={option.icon} alt={option.label} />
+                      </span>
+                    ) : null}
+                    <span className="ext-label">{option.label}</span>
+                  </button>
+                ))}
+              </div>
+            ) : null}
+          </div>
         </div>
       </div>
     </>

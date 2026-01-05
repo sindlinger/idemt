@@ -86,6 +86,7 @@ type AppState = {
   setExpandedDirs: (dirs: string[], workspaceId?: string) => void;
   openFile: (file: OpenFile, workspaceId?: string) => void;
   setActiveFile: (path: string, workspaceId?: string) => void;
+  closeOpenFile: (path: string, workspaceId?: string) => void;
   updateFileContent: (
     path: string,
     content: string,
@@ -239,6 +240,21 @@ export const useAppStore = create<AppState>((set, get) => ({
     set((state) => {
       const id = resolveWorkspaceId(state, workspaceId);
       return updateWorkspace(state, id, (workspace) => ({ ...workspace, activeFilePath: path }));
+    }),
+  closeOpenFile: (path, workspaceId) =>
+    set((state) => {
+      const id = resolveWorkspaceId(state, workspaceId);
+      return updateWorkspace(state, id, (workspace) => {
+        if (!workspace.openFiles.some((open) => open.path === path)) {
+          return workspace;
+        }
+        const openFiles = workspace.openFiles.filter((open) => open.path !== path);
+        const activeFilePath =
+          workspace.activeFilePath === path
+            ? openFiles[openFiles.length - 1]?.path
+            : workspace.activeFilePath;
+        return { ...workspace, openFiles, activeFilePath };
+      });
     }),
   updateFileContent: (path, content, savedContent, workspaceId) =>
     set((state) => {
