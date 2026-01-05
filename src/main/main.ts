@@ -127,6 +127,10 @@ const createWindow = async () => {
     }
   });
 
+  if (isWindows && useNativeFrame && titleBarOverlay) {
+    mainWindow.setTitleBarOverlay(titleBarOverlay);
+  }
+
   await registerIpc(mainWindow, settingsService);
   mainWindow.setMenuBarVisibility(false);
   logLine("main", "ipc registered + menu hidden");
