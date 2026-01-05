@@ -9,7 +9,7 @@ type CodexSidebarProps = {
   codexStatus: CodexRunStatus;
   sessionActive: boolean;
   reviewChanges: Record<string, ReviewChange>;
-  onRun: (message: string) => void;
+  onRun: (message: string, options?: { model?: string; level?: string }) => void;
   onCancel: () => void;
   onToggleSession: (active: boolean) => void;
   onAcceptChange: (path: string) => void;
@@ -33,12 +33,14 @@ const CodexSidebar = ({
   const [message, setMessage] = useState("");
   const [showHistory, setShowHistory] = useState(true);
   const [showReview, setShowReview] = useState(true);
+  const [model, setModel] = useState("default");
+  const [level, setLevel] = useState("default");
   const historyEntries = useMemo(() => codexEvents.slice().reverse(), [codexEvents]);
 
   const changes = Object.values(reviewChanges);
   const sendMessage = () => {
     if (!message.trim()) return;
-    onRun(message.trim());
+    onRun(message.trim(), { model, level });
     setMessage("");
   };
 
@@ -62,20 +64,14 @@ const CodexSidebar = ({
           </button>
         </div>
         <div className="codex-chat">
-          {codexMessages.length === 0 ? (
-            <div className="muted" style={{ fontSize: 12 }}>
-              No messages yet. Toggle On to keep context between runs.
+          {codexMessages.map((entry) => (
+            <div key={`${entry.timestamp}-${entry.role}`} className={`codex-message ${entry.role}`}>
+              <div className="codex-meta">{entry.role.toUpperCase()}</div>
+              <div className="codex-text">{entry.text}</div>
             </div>
-          ) : (
-            codexMessages.map((entry) => (
-              <div key={`${entry.timestamp}-${entry.role}`} className={`codex-message ${entry.role}`}>
-                <div className="codex-meta">{entry.role.toUpperCase()}</div>
-                <div className="codex-text">{entry.text}</div>
-              </div>
-            ))
-          )}
+          ))}
         </div>
-        {showHistory ? (
+        {showHistory && historyEntries.length > 0 ? (
           <div className="codex-history">
             {historyEntries.map((entry) => (
               <div key={`${entry.timestamp}-${entry.type}`} className="codex-history-line">
@@ -100,12 +96,23 @@ const CodexSidebar = ({
             }}
           />
           <div className="codex-actions">
-            <select className="codex-combo" defaultValue="model" aria-label="Model">
-              <option value="model">Model</option>
-              <option value="default">Default</option>
+            <select
+              className="codex-combo"
+              value={model}
+              onChange={(event) => setModel(event.target.value)}
+              aria-label="Model"
+            >
+              <option value="default">Model</option>
+              <option value="o3">o3</option>
+              <option value="o4-mini">o4-mini</option>
             </select>
-            <select className="codex-combo" defaultValue="level" aria-label="Level">
-              <option value="level">Level</option>
+            <select
+              className="codex-combo"
+              value={level}
+              onChange={(event) => setLevel(event.target.value)}
+              aria-label="Level"
+            >
+              <option value="default">Level</option>
               <option value="low">Low</option>
               <option value="high">High</option>
             </select>

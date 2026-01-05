@@ -57,7 +57,16 @@ export class CodexService {
 
     const codexPath = settings.codexPath || "codex";
     const extraArgs = parseArgs(settings.codexArgs);
-    const args = ["--skip-git-repo-check", "exec", ...extraArgs, "-"];
+    const model = request.model && request.model !== "default" ? request.model : undefined;
+    const level = request.level && request.level !== "default" ? request.level : undefined;
+    const args = [
+      "exec",
+      "--skip-git-repo-check",
+      ...(model ? ["--model", model] : []),
+      ...(level ? ["-c", `reasoning.level="${level}"`] : []),
+      ...extraArgs,
+      "-"
+    ];
     this.logs.append("system", `Codex exec: ${codexPath} ${args.join(" ")}`);
     const child = spawn(codexPath, args, {
       cwd: this.workspace.getRoot() ?? process.cwd(),

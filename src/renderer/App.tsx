@@ -867,7 +867,10 @@ const App = () => {
     openBottomPanel();
   };
 
-  const handleCodexRun = async (message: string) => {
+  const handleCodexRun = async (
+    message: string,
+    options?: { model?: string; level?: string }
+  ) => {
     const workspaceId = activeWorkspaceId ?? LOCAL_WORKSPACE_ID;
     addCodexMessage({ role: "user", text: message, timestamp: Date.now() }, workspaceId);
     codexWorkspaceRef.current = workspaceId;
@@ -877,7 +880,9 @@ const App = () => {
       userMessage: message,
       activeFilePath,
       selection,
-      contextBundle: codexSessionActive ? buildCodexContextBundle(codexMessages) : undefined
+      contextBundle: codexSessionActive ? buildCodexContextBundle(codexMessages) : undefined,
+      model: options?.model,
+      level: options?.level
     });
     setCodexStatus(status, workspaceId);
   };

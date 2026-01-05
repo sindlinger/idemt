@@ -32,6 +32,8 @@ export type CodexRunRequest = {
   activeFilePath?: string;
   selection?: string;
   contextBundle?: string;
+  model?: string;
+  level?: string;
 };
 
 export type CodexEvent = {
