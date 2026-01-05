@@ -8,5 +8,5 @@
     "outDir": "dist",
     "noEmit": false
   },
-  "include": ["src/main/**/*.ts", "src/main/**/*.d.ts", "src/shared/**/*.ts"]
+  "include": ["src/main/**/*.ts", "src/shared/**/*.ts"]
 }

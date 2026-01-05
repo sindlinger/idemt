@@ -1,4 +1,5 @@
 import { BrowserWindow } from "electron";
+import { execFile } from "node:child_process";
 import { logLine } from "../logger";
 
 const DWMWA_WINDOW_CORNER_PREFERENCE = 33;
@@ -35,49 +36,62 @@ const colorRefFromHex = (hex?: string) => {
   return (b << 16) | (g << 8) | r;
 };
 
+const readHwnd = (win: BrowserWindow) => {
+  const handle = win.getNativeWindowHandle();
+  if (handle.length >= 8) {
+    try {
+      return handle.readBigUInt64LE(0).toString();
+    } catch {
+      return Number(handle.readUInt32LE(0)).toString();
+    }
+  }
+  return Number(handle.readUInt32LE(0)).toString();
+};
+
+const buildDwmScript = (hwnd: string, corner: number, borderColor?: number) => {
+  const borderLine =
+    borderColor !== undefined
+      ? `$border = ${borderColor}; [void][Dwm]::DwmSetWindowAttribute($h, ${DWMWA_BORDER_COLOR}, [ref]$border, 4);`
+      : "";
+  return `
+Add-Type -TypeDefinition @"
+using System;
+using System.Runtime.InteropServices;
+public static class Dwm {
+  [DllImport("dwmapi.dll")]
+  public static extern int DwmSetWindowAttribute(IntPtr hwnd, int attr, ref int attrValue, int attrSize);
+}
+"@;
+$h = [IntPtr]::new(${hwnd});
+$corner = ${corner};
+[void][Dwm]::DwmSetWindowAttribute($h, ${DWMWA_WINDOW_CORNER_PREFERENCE}, [ref]$corner, 4);
+${borderLine}
+`;
+};
+
 export const applyWindowsFrameTweaks = (
   win: BrowserWindow,
   options?: { corners?: CornerPreference; borderColor?: string }
 ) => {
   if (process.platform !== "win32") return;
   try {
-    // Lazy require so non-Windows builds don't break.
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const ffi = require("ffi-napi");
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const ref = require("ref-napi");
-
-    const dwm = ffi.Library("dwmapi", {
-      DwmSetWindowAttribute: ["int", ["pointer", "uint", "pointer", "uint"]]
-    });
-
-    const hwnd = win.getNativeWindowHandle();
-    const hwndPtr = ref.readPointer(hwnd, 0);
+    const hwnd = readHwnd(win);
     const cornerValue = cornerToValue(options?.corners ?? "round");
-    const cornerPref = ref.alloc("int", cornerValue);
-    const cornerResult = dwm.DwmSetWindowAttribute(
-      hwndPtr,
-      DWMWA_WINDOW_CORNER_PREFERENCE,
-      cornerPref,
-      ref.sizeof.int
-    );
-    if (cornerResult !== 0) {
-      logLine("main", `dwm corner set failed ${cornerResult}`);
-    }
-
     const borderColor = colorRefFromHex(options?.borderColor);
-    if (borderColor !== undefined) {
-      const borderRef = ref.alloc("int", borderColor);
-      const borderResult = dwm.DwmSetWindowAttribute(
-        hwndPtr,
-        DWMWA_BORDER_COLOR,
-        borderRef,
-        ref.sizeof.int
-      );
-      if (borderResult !== 0) {
-        logLine("main", `dwm border set failed ${borderResult}`);
+    const script = buildDwmScript(hwnd, cornerValue, borderColor);
+    execFile(
+      "powershell.exe",
+      ["-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", script],
+      (error, stdout, stderr) => {
+        if (error) {
+          logLine("main", `dwm powershell failed ${String(error)} ${stderr ?? ""}`);
+        } else if (stderr) {
+          logLine("main", `dwm powershell stderr ${stderr}`);
+        } else if (stdout) {
+          logLine("main", `dwm powershell ${stdout}`);
+        }
       }
-    }
+    );
   } catch (error) {
     logLine("main", `dwm apply failed ${String(error)}`);
   }
