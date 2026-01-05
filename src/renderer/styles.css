@@ -84,6 +84,7 @@ button {
 }
 
 .app {
+  position: relative;
   display: grid;
   grid-template-columns: 1fr auto;
   grid-template-rows: var(--titlebar-height) auto minmax(0, 1fr) var(--statusbar-height) var(--splitter-size) var(--bottom-pane);
@@ -102,6 +103,16 @@ button {
   --titlebar-height: env(titlebar-area-height, 34px);
   --titlebar-x: env(titlebar-area-x, 0px);
   --titlebar-width: env(titlebar-area-width, 100%);
+}
+
+.app::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: var(--window-radius);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  pointer-events: none;
+  z-index: 6;
 }
 
 .app[data-theme="windows11"] {
