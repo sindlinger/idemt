@@ -121,6 +121,7 @@ const TopBar = ({
   return (
     <>
       <div className="title-left">
+        <span className="app-title">MT5 IDE</span>
         <div className="tabs">
           <div className="tab-actions">
             <button

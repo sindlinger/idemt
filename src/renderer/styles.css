@@ -227,6 +227,7 @@ button {
   font-weight: 600;
   text-transform: uppercase;
   color: var(--muted);
+  margin-right: 8px;
 }
 
 .workspace-chip {
