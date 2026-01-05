@@ -99,10 +99,10 @@ const createWindow = async () => {
   const savedBounds = resolveWindowBounds(settingsService.get().windowBounds);
   const isLinux = process.platform === "linux";
   const useTransparentWindow = isLinux && !useNativeFrame;
-  const titleBarOverlay =
+  const titleBarOverlayConfig =
     isWindows && useNativeFrame
       ? { color: "#1f1f1f", symbolColor: "#d4d4d4", height: 34 }
-      : false;
+      : null;
   mainWindow = new BrowserWindow({
     width: savedBounds?.width ?? WINDOW_DEFAULTS.width,
     height: savedBounds?.height ?? WINDOW_DEFAULTS.height,
@@ -116,7 +116,7 @@ const createWindow = async () => {
     roundedCorners: true,
     thickFrame: isWindows ? useNativeFrame : true,
     hasShadow: true,
-    titleBarOverlay,
+    titleBarOverlay: Boolean(titleBarOverlayConfig),
     ...(isWindows ? { backgroundMaterial: "mica" } : {}),
     ...(process.platform === "darwin" ? { titleBarStyle: "hiddenInset" } : {}),
     autoHideMenuBar: true,
@@ -127,8 +127,8 @@ const createWindow = async () => {
     }
   });
 
-  if (isWindows && useNativeFrame && titleBarOverlay) {
-    mainWindow.setTitleBarOverlay(titleBarOverlay);
+  if (isWindows && useNativeFrame && titleBarOverlayConfig) {
+    mainWindow.setTitleBarOverlay(titleBarOverlayConfig);
   }
 
   await registerIpc(mainWindow, settingsService);
