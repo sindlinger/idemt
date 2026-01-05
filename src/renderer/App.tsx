@@ -266,6 +266,18 @@ const App = () => {
 
   useEffect(() => {
     log("App mounted", "renderer:startup");
+    requestAnimationFrame(() => {
+      const appEl = document.querySelector(".app");
+      if (!appEl) return;
+      const styles = getComputedStyle(appEl);
+      const height = styles.getPropertyValue("--titlebar-height").trim();
+      const width = styles.getPropertyValue("--titlebar-width").trim();
+      const offset = styles.getPropertyValue("--titlebar-x").trim();
+      log(
+        `titlebar overlay css height=${height} width=${width} x=${offset}`,
+        "renderer:startup"
+      );
+    });
     if (typeof api.settingsGet !== "function") {
       log("window.api.settingsGet missing", "renderer:startup");
       return;
