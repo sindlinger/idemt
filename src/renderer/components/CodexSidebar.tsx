@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   Check,
   ChevronDown,
@@ -52,6 +52,7 @@ const CodexSidebar = ({
   const [model, setModel] = useState(defaultModel ?? "default");
   const [level, setLevel] = useState(defaultLevel ?? "default");
   const [expandedReview, setExpandedReview] = useState<Set<string>>(() => new Set());
+  const chatRef = useRef<HTMLDivElement | null>(null);
   const streamItems = useMemo(() => {
     const messageItems = codexMessages.map((entry) => {
       if (entry.role === "user") {
@@ -120,6 +121,12 @@ const CodexSidebar = ({
     if (!defaultLevel) return;
     setLevel((prev) => (prev === "default" ? defaultLevel : prev));
   }, [defaultLevel]);
+  useEffect(() => {
+    if (!showHistory) return;
+    const el = chatRef.current;
+    if (!el) return;
+    el.scrollTop = el.scrollHeight;
+  }, [showHistory, streamItems.length]);
   const toggleReviewItem = (path: string) => {
     setExpandedReview((prev) => {
       const next = new Set(prev);
@@ -169,7 +176,7 @@ const CodexSidebar = ({
           </div>
         </div>
         {showHistory ? (
-          <div className="codex-chat">
+          <div className="codex-chat" ref={chatRef}>
             {streamItems.map((entry) => {
               if (entry.kind === "user") {
                 return (

@@ -1679,7 +1679,7 @@ button {
 .codex-log-line {
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
   font-size: 11px;
-  line-height: 1.45;
+  line-height: 1.3;
   color: var(--text);
   white-space: pre-wrap;
 }
