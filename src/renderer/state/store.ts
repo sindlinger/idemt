@@ -16,6 +16,13 @@ export type CodexMessage = {
   timestamp: number;
 };
 
+export type CodexHistoryItem = {
+  id: string;
+  title: string;
+  timestamp: number;
+  messages: CodexMessage[];
+};
+
 export type OpenFileState = OpenFile & {
   savedContent: string;
   dirty: boolean;
@@ -43,6 +50,7 @@ export type WorkspaceSession = {
   outputLogs: LogsAppendPayload[];
   codexEvents: CodexEvent[];
   codexMessages: CodexMessage[];
+  codexHistory: CodexHistoryItem[];
   codexStatus: CodexRunStatus;
   codexSessionActive: boolean;
   reviewChanges: Record<string, ReviewChange>;
@@ -66,6 +74,7 @@ const createWorkspaceSession = (root: string): WorkspaceSession => ({
   codexStatus: { running: false, startedAt: 0 },
   codexSessionActive: true,
   reviewChanges: {},
+  codexHistory: [],
   testStatus: undefined,
   reportHtml: undefined
 });
@@ -97,8 +106,11 @@ type AppState = {
   setDiagnostics: (diagnostics: Diagnostic[], workspaceId?: string) => void;
   addOutputLog: (log: LogsAppendPayload, workspaceId?: string) => void;
   addCodexEvent: (event: CodexEvent, workspaceId?: string) => void;
+  setCodexEvents: (events: CodexEvent[], workspaceId?: string) => void;
   addCodexMessage: (message: CodexMessage, workspaceId?: string) => void;
   setCodexMessages: (messages: CodexMessage[], workspaceId?: string) => void;
+  setCodexHistory: (items: CodexHistoryItem[], workspaceId?: string) => void;
+  addCodexHistoryItem: (item: CodexHistoryItem, workspaceId?: string) => void;
   setCodexStatus: (status: CodexRunStatus, workspaceId?: string) => void;
   setCodexSessionActive: (active: boolean, workspaceId?: string) => void;
   clearCodexSession: (workspaceId?: string) => void;
@@ -311,6 +323,11 @@ export const useAppStore = create<AppState>((set, get) => ({
         codexEvents: [...workspace.codexEvents, event]
       }));
     }),
+  setCodexEvents: (events, workspaceId) =>
+    set((state) => {
+      const id = resolveWorkspaceId(state, workspaceId);
+      return updateWorkspace(state, id, (workspace) => ({ ...workspace, codexEvents: events }));
+    }),
   addCodexMessage: (message, workspaceId) =>
     set((state) => {
       const id = resolveWorkspaceId(state, workspaceId);
@@ -323,6 +340,19 @@ export const useAppStore = create<AppState>((set, get) => ({
     set((state) => {
       const id = resolveWorkspaceId(state, workspaceId);
       return updateWorkspace(state, id, (workspace) => ({ ...workspace, codexMessages: messages }));
+    }),
+  setCodexHistory: (items, workspaceId) =>
+    set((state) => {
+      const id = resolveWorkspaceId(state, workspaceId);
+      return updateWorkspace(state, id, (workspace) => ({ ...workspace, codexHistory: items }));
+    }),
+  addCodexHistoryItem: (item, workspaceId) =>
+    set((state) => {
+      const id = resolveWorkspaceId(state, workspaceId);
+      return updateWorkspace(state, id, (workspace) => {
+        const next = [...workspace.codexHistory, item].slice(-20);
+        return { ...workspace, codexHistory: next };
+      });
     }),
   setCodexStatus: (status, workspaceId) =>
     set((state) => {

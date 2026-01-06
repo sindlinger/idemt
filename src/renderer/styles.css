@@ -1730,6 +1730,44 @@ button {
   max-height: 220px;
 }
 
+.codex-history {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.codex-history-item {
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text);
+  border-radius: var(--radius-sm);
+  padding: 6px 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  cursor: pointer;
+  text-align: left;
+}
+
+.codex-history-item:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.codex-history-title {
+  font-size: 12px;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.codex-history-time {
+  font-size: 10px;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
 
 .codex-input {
   display: flex;
@@ -1993,6 +2031,10 @@ button {
 .app[data-mode="light"] .codex-message.user {
   background: #f3f5f9;
   border-color: #d6dbe6;
+}
+
+.app[data-mode="light"] .codex-history-item:hover {
+  background: rgba(0, 0, 0, 0.04);
 }
 
 .app[data-mode="light"] .codex-input textarea {

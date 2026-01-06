@@ -10,6 +10,7 @@ import type {
   WorkspaceNode
 } from "@shared/ipc";
 import { useAppStore } from "@state/store";
+import type { CodexHistoryItem } from "@state/store";
 import { calculateChangedLines, createUnifiedDiff } from "@state/diff";
 import TopBar from "./components/TopBar";
 import LeftSidebar from "./components/LeftSidebar";
@@ -56,8 +57,10 @@ const getLanguageForExtension = (ext: string) => {
 };
 
 const CODEX_STORAGE_KEY = "mt5ide.codex.session";
+const CODEX_HISTORY_STORAGE_KEY = "mt5ide.codex.history";
 const LOCAL_WORKSPACE_ID = "__local__";
 const getCodexStorageKey = (workspaceId: string) => `${CODEX_STORAGE_KEY}:${workspaceId}`;
+const getCodexHistoryKey = (workspaceId: string) => `${CODEX_HISTORY_STORAGE_KEY}:${workspaceId}`;
 const WORKSPACE_STATE_STORAGE_KEY = "mt5ide.workspace.state";
 const LAYOUT_STORAGE_KEY = "mt5ide.layout.state";
 const SPLITTER_SIZE = 4;
@@ -84,6 +87,8 @@ type WorkspaceStateCache = Record<
   { openFiles: string[]; activeFilePath?: string; expandedDirs?: string[] }
 >;
 
+type CodexHistoryCache = Record<string, CodexHistoryItem[]>;
+
 const readWorkspaceState = () => {
   try {
     const raw = window.localStorage.getItem(WORKSPACE_STATE_STORAGE_KEY);
@@ -97,6 +102,24 @@ const readWorkspaceState = () => {
 const writeWorkspaceState = (state: WorkspaceStateCache) => {
   try {
     window.localStorage.setItem(WORKSPACE_STATE_STORAGE_KEY, JSON.stringify(state));
+  } catch {
+    return;
+  }
+};
+
+const readCodexHistory = (workspaceId: string) => {
+  try {
+    const raw = window.localStorage.getItem(getCodexHistoryKey(workspaceId));
+    if (!raw) return [];
+    return JSON.parse(raw) as CodexHistoryCache[string];
+  } catch {
+    return [];
+  }
+};
+
+const writeCodexHistory = (workspaceId: string, items: CodexHistoryCache[string]) => {
+  try {
+    window.localStorage.setItem(getCodexHistoryKey(workspaceId), JSON.stringify(items));
   } catch {
     return;
   }
@@ -199,6 +222,9 @@ const App = () => {
     addCodexEvent,
     addCodexMessage,
     setCodexMessages,
+    setCodexEvents,
+    setCodexHistory,
+    addCodexHistoryItem,
     setCodexStatus,
     setCodexSessionActive,
     clearCodexSession,
@@ -226,6 +252,7 @@ const App = () => {
   const outputLogs = activeWorkspace?.outputLogs ?? [];
   const codexEvents = activeWorkspace?.codexEvents ?? [];
   const codexMessages = activeWorkspace?.codexMessages ?? [];
+  const codexHistory = activeWorkspace?.codexHistory ?? [];
   const codexStatus = activeWorkspace?.codexStatus ?? { running: false, startedAt: 0 };
   const codexSessionActive = activeWorkspace?.codexSessionActive ?? false;
   const reviewChanges = activeWorkspace?.reviewChanges ?? {};
@@ -256,6 +283,7 @@ const App = () => {
   } | null>(null);
   const [testConfig, setTestConfig] = useState<TestRequest>(defaultTestConfig);
   const codexRunStartIndexRef = useRef<Record<string, number>>({});
+  const codexRunMessageIndexRef = useRef<Record<string, number>>({});
   const codexWorkspaceRef = useRef<string | null>(null);
   const untitledCounterRef = useRef(1);
 
@@ -403,6 +431,14 @@ const App = () => {
 
   useEffect(() => {
     const workspaceId = activeWorkspaceId ?? LOCAL_WORKSPACE_ID;
+    const stored = readCodexHistory(workspaceId);
+    if (stored.length) {
+      setCodexHistory(stored, workspaceId);
+    }
+  }, [activeWorkspaceId, setCodexHistory]);
+
+  useEffect(() => {
+    const workspaceId = activeWorkspaceId ?? LOCAL_WORKSPACE_ID;
     try {
       window.localStorage.setItem(
         getCodexStorageKey(workspaceId),
@@ -412,6 +448,11 @@ const App = () => {
       return;
     }
   }, [activeWorkspaceId, codexMessages, codexSessionActive]);
+
+  useEffect(() => {
+    const workspaceId = activeWorkspaceId ?? LOCAL_WORKSPACE_ID;
+    writeCodexHistory(workspaceId, codexHistory);
+  }, [activeWorkspaceId, codexHistory]);
 
   useEffect(() => {
     const handleCodexDone = (status: CodexRunStatus) => {
@@ -433,6 +474,26 @@ const App = () => {
         .trim();
       const finalText = response ? trimCodexMessage(response) : "Codex finished.";
       addCodexMessage({ role: "codex", text: finalText, timestamp: Date.now() }, workspaceId);
+
+      const messageStartIndex = codexRunMessageIndexRef.current[workspaceId] ?? 0;
+      delete codexRunMessageIndexRef.current[workspaceId];
+      const updatedState = useAppStore.getState();
+      const messages = updatedState.workspaces[workspaceId]?.codexMessages ?? [];
+      const sessionMessages = messages.slice(messageStartIndex);
+      if (sessionMessages.length > 0) {
+        const title =
+          sessionMessages.find((msg) => msg.role === "user")?.text.slice(0, 60) ??
+          "Conversation";
+        addCodexHistoryItem(
+          {
+            id: crypto.randomUUID(),
+            title,
+            timestamp: Date.now(),
+            messages: sessionMessages
+          },
+          workspaceId
+        );
+      }
     };
 
     const handleAppCloseRequest = ({ requestId }: { requestId: number }) => {
@@ -893,6 +954,7 @@ const App = () => {
     options?: { model?: string; level?: string }
   ) => {
     const workspaceId = activeWorkspaceId ?? LOCAL_WORKSPACE_ID;
+    codexRunMessageIndexRef.current[workspaceId] = codexMessages.length;
     addCodexMessage({ role: "user", text: message, timestamp: Date.now() }, workspaceId);
     codexWorkspaceRef.current = workspaceId;
     codexRunStartIndexRef.current[workspaceId] = codexEvents.length;
@@ -906,6 +968,13 @@ const App = () => {
       level: options?.level
     });
     setCodexStatus(status, workspaceId);
+  };
+
+  const handleResumeHistory = (item: CodexHistoryItem) => {
+    const workspaceId = activeWorkspaceId ?? LOCAL_WORKSPACE_ID;
+    setCodexMessages(item.messages, workspaceId);
+    setCodexEvents([], workspaceId);
+    setCodexSessionActive(true, workspaceId);
   };
 
   const resolveWorkspaceForPath = (filePath: string) => {
@@ -1128,6 +1197,7 @@ const App = () => {
             codexStatus={codexStatus}
             sessionActive={codexSessionActive}
             reviewChanges={reviewChanges}
+            historyItems={codexHistory}
             models={codexModelsInfo.models}
             defaultModel={codexModelsInfo.defaultModel}
             defaultLevel={codexModelsInfo.defaultLevel}
@@ -1138,6 +1208,7 @@ const App = () => {
               setCodexSessionActive(active, workspaceId);
               if (!active) clearCodexSession(workspaceId);
             }}
+            onResumeHistory={handleResumeHistory}
             onAcceptChange={handleAcceptChange}
             onRevertChange={handleRevertChange}
             collapsed={layout.rightCollapsed}
