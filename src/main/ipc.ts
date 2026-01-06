@@ -3,6 +3,7 @@ import type { BrowserWindow } from "electron";
 import type { BuildRequest, CodexRunRequest, FileFilters, Settings, TestRequest } from "../shared/ipc";
 import { BuildService } from "./services/BuildService";
 import { CodexService } from "./services/CodexService";
+import { CodexSessionService } from "./services/CodexSessionService";
 import { getCodexModelsInfo } from "./services/CodexModelsService";
 import { resolveCodexConfigPath } from "./services/CodexConfigService";
 import { LogsService } from "./services/LogsService";
@@ -24,6 +25,13 @@ export const registerIpc = async (window: BrowserWindow, settingsService: Settin
   const buildService = new BuildService(window, logsService);
   const reviewStore = new ReviewStoreService(logsService);
   const codexService = new CodexService(
+    window,
+    logsService,
+    workspaceService,
+    buildService,
+    reviewStore
+  );
+  const codexSessionService = new CodexSessionService(
     window,
     logsService,
     workspaceService,
@@ -149,6 +157,16 @@ export const registerIpc = async (window: BrowserWindow, settingsService: Settin
   ipcMain.handle("codex:run:start", async (_event, request: CodexRunRequest) => {
     logLine("ipc", "codex:run:start");
     return codexService.run(request, settingsService.get());
+  });
+
+  ipcMain.handle("codex:session:send", async (_event, request: CodexRunRequest) => {
+    logLine("ipc", "codex:session:send");
+    return codexSessionService.sendMessage(request, settingsService.get());
+  });
+
+  ipcMain.on("codex:session:stop", () => {
+    logLine("ipc", "codex:session:stop");
+    codexSessionService.stopSession();
   });
 
   ipcMain.on("codex:run:cancel", () => {

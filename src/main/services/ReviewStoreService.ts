@@ -180,6 +180,9 @@ const getAccessToken = async (credentials: GoogleCredentials): Promise<string | 
   const signer = createSign("RSA-SHA256");
   signer.update(unsigned);
   signer.end();
+  if (!credentials.private_key) {
+    return null;
+  }
   const privateKey = credentials.private_key.replace(/\\n/g, "\n");
   const signature = signer.sign(privateKey);
   const jwt = `${unsigned}.${base64UrlEncode(signature)}`;

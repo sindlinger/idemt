@@ -978,6 +978,19 @@ const App = () => {
     addCodexMessage({ role: "user", text: message, timestamp: Date.now() }, workspaceId);
     codexWorkspaceRef.current = workspaceId;
     codexRunStartIndexRef.current[workspaceId] = codexEvents.length;
+    if (codexSessionActive && typeof api.codexSessionSend === "function") {
+      const status = await api.codexSessionSend({
+        userMessage: message,
+        activeFilePath,
+        selection,
+        contextBundle: buildCodexContextBundle(codexMessages),
+        model: options?.model,
+        level: options?.level,
+        sessionActive: true
+      });
+      setCodexStatus(status, workspaceId);
+      return;
+    }
     if (typeof api.runCodex !== "function") return;
     const status = await api.runCodex({
       userMessage: message,
@@ -1222,6 +1235,7 @@ const App = () => {
               const workspaceId = activeWorkspaceId ?? LOCAL_WORKSPACE_ID;
               setCodexSessionActive(active, workspaceId);
               if (!active) clearCodexSession(workspaceId);
+              if (!active) api.codexSessionStop?.();
             }}
             onAcceptChange={handleAcceptChange}
             onRevertChange={handleRevertChange}

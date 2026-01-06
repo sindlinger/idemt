@@ -41,6 +41,8 @@ declare global {
       onWorkspaceDirUpdate: (handler: (payload: WorkspaceDirUpdate) => void) => () => void;
       onFileChanged: (handler: (payload: FileChangePayload) => void) => () => void;
       runCodex: (request: CodexRunRequest) => Promise<CodexRunStatus>;
+      codexSessionSend: (request: CodexRunRequest) => Promise<CodexRunStatus>;
+      codexSessionStop: () => void;
       codexModelsGet: () => Promise<CodexModelsInfo>;
       codexConfigPathGet: () => Promise<string | null>;
       cancelCodex: () => void;

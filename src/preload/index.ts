@@ -53,6 +53,9 @@ contextBridge.exposeInMainWorld("api", {
   onFileChanged: (handler: (payload: FileChangePayload) => void) => on("file:changed", handler),
   runCodex: (request: CodexRunRequest): Promise<CodexRunStatus> =>
     ipcRenderer.invoke("codex:run:start", request),
+  codexSessionSend: (request: CodexRunRequest): Promise<CodexRunStatus> =>
+    ipcRenderer.invoke("codex:session:send", request),
+  codexSessionStop: (): void => ipcRenderer.send("codex:session:stop"),
   codexModelsGet: (): Promise<CodexModelsInfo> => ipcRenderer.invoke("codex:models:get"),
   codexConfigPathGet: (): Promise<string | null> => ipcRenderer.invoke("codex:config:path"),
   cancelCodex: (): void => ipcRenderer.send("codex:run:cancel"),

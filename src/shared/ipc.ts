@@ -144,6 +144,8 @@ export const IPC_CHANNELS = {
   fileSave: "file:save",
   fileChanged: "file:changed",
   codexRunStart: "codex:run:start",
+  codexSessionSend: "codex:session:send",
+  codexSessionStop: "codex:session:stop",
   codexRunEvent: "codex:run:event",
   codexRunDone: "codex:run:done",
   codexRunCancel: "codex:run:cancel",
