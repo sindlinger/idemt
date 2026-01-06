@@ -1058,14 +1058,14 @@ const App = () => {
             }}
           >
             <button
-              className={`split-pin ${layout.leftCollapsed ? "" : "active"}`}
+              className={`split-pin left ${layout.leftCollapsed ? "collapsed" : "expanded"}`}
               title={layout.leftCollapsed ? "Expand sidebar" : "Collapse sidebar"}
               onClick={(event) => {
                 event.stopPropagation();
                 setLayout((prev) => ({ ...prev, leftCollapsed: !prev.leftCollapsed }));
               }}
             >
-              <span className="split-grip" />
+              <span className="split-arrow" />
             </button>
           </div>
           <EditorPane
@@ -1098,14 +1098,14 @@ const App = () => {
             }}
           >
             <button
-              className={`split-pin ${layout.rightCollapsed ? "" : "active"}`}
+              className={`split-pin right ${layout.rightCollapsed ? "collapsed" : "expanded"}`}
               title={layout.rightCollapsed ? "Expand Codex" : "Collapse Codex"}
               onClick={(event) => {
                 event.stopPropagation();
                 setLayout((prev) => ({ ...prev, rightCollapsed: !prev.rightCollapsed }));
               }}
             >
-              <span className="split-grip" />
+              <span className="split-arrow" />
             </button>
           </div>
           <CodexSidebar
@@ -1152,14 +1152,14 @@ const App = () => {
           onMouseDown={(event) => startResize("bottom", event)}
         >
           <button
-            className={`split-pin ${bottomPanelOpen ? "active" : ""}`}
+            className={`split-pin bottom ${bottomPanelOpen ? "expanded" : "collapsed"}`}
             title={bottomPanelOpen ? "Collapse panel" : "Expand panel"}
             onClick={(event) => {
               event.stopPropagation();
               toggleBottomPanelOpen();
             }}
           >
-            <span className="split-grip" />
+            <span className="split-arrow" />
           </button>
         </div>
       <BottomPanel
