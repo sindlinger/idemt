@@ -1067,6 +1067,8 @@ const App = () => {
             files={openFiles}
             activeFilePath={activeFilePath}
             reviewChange={activeReviewChange}
+            onAcceptChange={handleAcceptChange}
+            onRevertChange={handleRevertChange}
             onSelectTab={setActiveFile}
             onChangeContent={updateFileContent}
             onSelectionChange={setSelection}

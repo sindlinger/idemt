@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { Check, RotateCcw } from "lucide-react";
 import "../monaco/setup";
 import MonacoEditor from "@monaco-editor/react";
 import type * as monacoType from "monaco-editor";
@@ -14,6 +15,8 @@ export type EditorPaneProps = {
   files: OpenFileState[];
   activeFilePath?: string;
   reviewChange?: ReviewChange;
+  onAcceptChange?: (path: string) => void;
+  onRevertChange?: (path: string) => void;
   onSelectTab: (path: string) => void;
   onChangeContent: (path: string, value: string) => void;
   onSelectionChange?: (selection: string) => void;
@@ -32,6 +35,8 @@ const EditorPane = ({
   files,
   activeFilePath,
   reviewChange,
+  onAcceptChange,
+  onRevertChange,
   onSelectTab,
   onChangeContent,
   onSelectionChange,
@@ -110,6 +115,30 @@ const EditorPane = ({
   return (
     <div className="editor-area">
       <div className="editor-wrapper">
+        {reviewChange ? (
+          <div className="editor-inline-review">
+            <span className="editor-inline-label">
+              {reviewChange.source === "codex" ? "Codex update" : "External update"}
+            </span>
+            <span className="editor-inline-count">{reviewChange.changedLines.length} lines</span>
+            <div className="editor-inline-actions">
+              <button
+                className="editor-inline-btn"
+                onClick={() => onAcceptChange?.(reviewChange.path)}
+                title="Accept changes"
+              >
+                <Check size={12} />
+              </button>
+              <button
+                className="editor-inline-btn"
+                onClick={() => onRevertChange?.(reviewChange.path)}
+                title="Revert changes"
+              >
+                <RotateCcw size={12} />
+              </button>
+            </div>
+          </div>
+        ) : null}
         {activeFile ? (
           <MonacoEditor
             path={activeFile.path}

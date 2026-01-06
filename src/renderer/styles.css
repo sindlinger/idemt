@@ -1453,6 +1453,62 @@ button {
   flex: 1;
   min-height: 0;
   background: var(--editor-bg);
+  position: relative;
+}
+
+.editor-inline-review {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 5;
+  background: rgba(20, 20, 20, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+  padding: 4px 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  color: var(--muted);
+  backdrop-filter: blur(6px);
+}
+
+.editor-inline-label {
+  color: var(--text);
+}
+
+.editor-inline-actions {
+  display: inline-flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.editor-inline-btn {
+  width: 22px;
+  height: 20px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--muted);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.editor-inline-btn:hover {
+  color: var(--text);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.app[data-mode="light"] .editor-inline-review {
+  background: rgba(255, 255, 255, 0.95);
+  border-color: #d6dbe6;
+  color: #5b6475;
+}
+
+.app[data-mode="light"] .editor-inline-label {
+  color: #1e2431;
 }
 
 .app-statusbar {
@@ -2238,4 +2294,26 @@ button {
 
 .line-highlight-margin {
   border-left: 3px solid var(--line-highlight-border);
+}
+
+.monaco-scrollable-element > .scrollbar {
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.monaco-scrollable-element > .scrollbar.vertical {
+  border-left: none !important;
+}
+
+.monaco-scrollable-element > .scrollbar.horizontal {
+  border-top: none !important;
+}
+
+.monaco-scrollable-element > .scrollbar .slider {
+  background: rgba(160, 160, 160, 0.28) !important;
+  border-radius: 999px;
+}
+
+.monaco-scrollable-element > .scrollbar:hover .slider {
+  background: rgba(180, 180, 180, 0.5) !important;
 }
