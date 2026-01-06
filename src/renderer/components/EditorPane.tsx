@@ -125,6 +125,8 @@ const EditorPane = ({
               lineNumbersMinChars: 3,
               lineDecorationsWidth: 6,
               glyphMargin: false,
+              overviewRulerBorder: false,
+              overviewRulerLanes: 0,
               scrollbar: {
                 verticalScrollbarSize: 6,
                 horizontalScrollbarSize: 6,
