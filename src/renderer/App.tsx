@@ -33,6 +33,18 @@ const joinPath = (base: string, file: string) => {
   return `${base.replace(/[\\/]+$/, "")}${slash}${file}`;
 };
 
+const safeRandomUUID = () => {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return crypto.randomUUID();
+  }
+  const template = "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx";
+  return template.replace(/[xy]/g, (char) => {
+    const rand = Math.random() * 16;
+    const value = char === "x" ? rand : (rand % 4) + 8;
+    return Math.floor(value).toString(16);
+  });
+};
+
 const getLanguageForExtension = (ext: string) => {
   switch (ext.toLowerCase()) {
     case "mq4":
@@ -487,7 +499,7 @@ const App = () => {
           "Conversation";
         addCodexHistoryItem(
           {
-            id: crypto.randomUUID(),
+            id: safeRandomUUID(),
             title,
             timestamp: Date.now(),
             messages: sessionMessages
