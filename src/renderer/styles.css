@@ -1762,14 +1762,6 @@ button {
   max-height: 220px;
 }
 
-.codex-resume-inline {
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  background: var(--panel);
-  min-height: 180px;
-  margin-top: 8px;
-  padding: 6px;
-}
 
 .codex-history-item {
   border: 1px solid var(--border);

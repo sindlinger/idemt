@@ -270,8 +270,6 @@ const App = () => {
   const platform = api.platform ?? "unknown";
   const isWindows = platform === "win32";
   const codexRunTarget = isWindows ? (settings.codexRunTarget ?? "windows") : "windows";
-  const codexResumeCommand =
-    codexRunTarget === "wsl" ? settings.codexPathWsl || "codex" : settings.codexPath || "codex";
   const [newFileExt, setNewFileExt] = useState("mq5");
   const [layout, setLayout] = useState<LayoutState>(() => readLayoutState());
   const [viewport, setViewport] = useState(() => ({
@@ -1201,8 +1199,6 @@ const App = () => {
             codexStatus={codexStatus}
             sessionActive={codexSessionActive}
             reviewChanges={reviewChanges}
-            resumeCommand={codexResumeCommand}
-            resumeCwd={workspaceRoot ?? undefined}
             runTarget={isWindows ? codexRunTarget : undefined}
             onRunTargetChange={isWindows ? handleCodexRunTargetChange : undefined}
             models={codexModelsInfo.models}
