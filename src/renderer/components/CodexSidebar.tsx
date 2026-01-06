@@ -4,6 +4,7 @@ import {
   ChevronDown,
   ChevronRight,
   GitCompare,
+  History,
   Power,
   RotateCcw,
   Send,
@@ -11,6 +12,7 @@ import {
 } from "lucide-react";
 import type { CodexEvent, CodexRunStatus } from "@shared/ipc";
 import type { CodexMessage, ReviewChange } from "@state/store";
+import CodexResumeInline from "./CodexResumeInline";
 
 type CodexSidebarProps = {
   codexEvents: CodexEvent[];
@@ -18,6 +20,8 @@ type CodexSidebarProps = {
   codexStatus: CodexRunStatus;
   sessionActive: boolean;
   reviewChanges: Record<string, ReviewChange>;
+  resumeCommand: string;
+  resumeCwd?: string;
   runTarget?: "windows" | "wsl";
   onRunTargetChange?: (target: "windows" | "wsl") => void;
   models: string[];
@@ -37,6 +41,8 @@ const CodexSidebar = ({
   codexStatus,
   sessionActive,
   reviewChanges,
+  resumeCommand,
+  resumeCwd,
   runTarget,
   onRunTargetChange,
   models,
@@ -51,6 +57,7 @@ const CodexSidebar = ({
 }: CodexSidebarProps) => {
   const [message, setMessage] = useState("");
   const [showReview, setShowReview] = useState(true);
+  const [showResume, setShowResume] = useState(false);
   const [model, setModel] = useState(defaultModel ?? "default");
   const [level, setLevel] = useState(defaultLevel ?? "default");
   const [expandedReview, setExpandedReview] = useState<Set<string>>(() => new Set());
@@ -169,6 +176,14 @@ const CodexSidebar = ({
               </div>
             ) : null}
             <button
+              className={`codex-view-toggle ${showResume ? "active" : ""}`}
+              onClick={() => setShowResume((value) => !value)}
+              title="Resume sessions"
+              aria-pressed={showResume}
+            >
+              <History size={12} />
+            </button>
+            <button
               className={`codex-view-toggle ${showReview ? "active" : ""}`}
               onClick={() => setShowReview((value) => !value)}
               title="Review"
@@ -206,6 +221,18 @@ const CodexSidebar = ({
                 </div>
               ));
             })}
+          {showResume ? (
+            <CodexResumeInline
+              command={resumeCommand}
+              cwd={resumeCwd}
+              runTarget={runTarget}
+              onReady={() => {
+                if (chatRef.current) {
+                  chatRef.current.scrollTop = chatRef.current.scrollHeight;
+                }
+              }}
+            />
+          ) : null}
         </div>
         {showReview && changes.length > 0 ? (
           <div className="codex-panels">
