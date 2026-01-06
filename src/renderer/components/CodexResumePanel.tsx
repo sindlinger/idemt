@@ -97,7 +97,6 @@ const CodexResumePanel = ({
             }
           });
           setReady(true);
-          runPicker();
         })
         .catch((err) => {
           const message = err ? String(err) : "resume spawn failed";
