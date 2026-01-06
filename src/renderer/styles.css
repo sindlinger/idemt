@@ -29,8 +29,8 @@
   --editor-bg: var(--bg-soft);
   --splitter-bg: rgba(55, 55, 55, 0.9);
   --splitter-hover: rgba(49, 208, 154, 0.18);
-  --split-grip: rgba(230, 230, 230, 0.35);
-  --split-grip-hover: rgba(230, 230, 230, 0.9);
+  --split-grip: rgba(230, 230, 230, 0.85);
+  --split-grip-hover: rgba(230, 230, 230, 1);
   --line-highlight: rgba(49, 208, 154, 0.12);
   --line-highlight-border: #31d09a;
   --window-radius: 8px;
@@ -675,8 +675,8 @@ button {
   --editor-bg: #f4f6f9;
   --splitter-bg: #e1e6ee;
   --splitter-hover: rgba(47, 143, 115, 0.25);
-  --split-grip: rgba(60, 70, 85, 0.35);
-  --split-grip-hover: rgba(60, 70, 85, 0.85);
+  --split-grip: rgba(60, 70, 85, 0.75);
+  --split-grip-hover: rgba(60, 70, 85, 0.95);
   --app-bg: #f1f4f8;
   --line-highlight: rgba(47, 143, 115, 0.16);
   --line-highlight-border: #2f8f73;
@@ -859,8 +859,8 @@ button {
 }
 
 .split-pin {
-  width: 14px;
-  height: 22px;
+  width: 18px;
+  height: 28px;
   border-radius: 6px;
   border: none;
   background: transparent;
@@ -878,8 +878,8 @@ button {
 }
 
 .splitter.horizontal .split-pin {
-  width: 22px;
-  height: 14px;
+  width: 28px;
+  height: 18px;
 }
 
 .splitter:hover .split-pin,
@@ -898,40 +898,41 @@ button {
 }
 
 .split-grip {
-  width: 10px;
-  height: 18px;
-  opacity: 0.6;
+  width: 12px;
+  height: 22px;
+  opacity: 1;
   background-image: repeating-linear-gradient(
     90deg,
     var(--split-grip),
-    var(--split-grip) 1px,
-    transparent 1px,
-    transparent 3px
+    var(--split-grip) 2px,
+    transparent 2px,
+    transparent 4px
   );
+  box-shadow: 0 0 2px rgba(0, 0, 0, 0.35);
 }
 
 .splitter.horizontal .split-grip {
-  width: 18px;
-  height: 10px;
+  width: 22px;
+  height: 12px;
   background-image: repeating-linear-gradient(
     0deg,
     var(--split-grip),
-    var(--split-grip) 1px,
-    transparent 1px,
-    transparent 3px
+    var(--split-grip) 2px,
+    transparent 2px,
+    transparent 4px
   );
 }
 
 .splitter:hover .split-grip,
 .split-pin:focus-visible .split-grip,
 .split-pin.active .split-grip {
-  opacity: 0.95;
+  opacity: 1;
   background-image: repeating-linear-gradient(
     90deg,
     var(--split-grip-hover),
-    var(--split-grip-hover) 1px,
-    transparent 1px,
-    transparent 3px
+    var(--split-grip-hover) 2px,
+    transparent 2px,
+    transparent 4px
   );
 }
 
@@ -941,9 +942,9 @@ button {
   background-image: repeating-linear-gradient(
     0deg,
     var(--split-grip-hover),
-    var(--split-grip-hover) 1px,
-    transparent 1px,
-    transparent 3px
+    var(--split-grip-hover) 2px,
+    transparent 2px,
+    transparent 4px
   );
 }
 
