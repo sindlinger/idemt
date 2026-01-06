@@ -65,10 +65,9 @@ const CodexSidebar = ({
         };
       }
       return {
-        kind: "event" as const,
+        kind: "codex" as const,
         timestamp: entry.timestamp,
-        text: entry.text,
-        eventType: "status" as const
+        text: entry.text
       };
     });
     const eventItems = codexEvents.map((entry) => ({
@@ -190,22 +189,29 @@ const CodexSidebar = ({
           {streamItems.map((entry) => {
             if (entry.kind === "user") {
               return (
-                  <div key={`user-${entry.timestamp}`} className="codex-message user">
-                    <div className="codex-text">{entry.text}</div>
-                  </div>
-                );
-              }
-              const lines = entry.text.split(/\r?\n/).filter((line) => line.length > 0);
-              if (lines.length === 0) return null;
-              return lines.map((line, idx) => (
-                <div
-                  key={`event-${entry.timestamp}-${idx}`}
-                  className={`codex-log-line ${entry.eventType}`}
-                >
-                  {line}
+                <div key={`user-${entry.timestamp}`} className="codex-message user">
+                  <div className="codex-text">{entry.text}</div>
                 </div>
-              ));
-            })}
+              );
+            }
+            if (entry.kind === "codex") {
+              return (
+                <div key={`codex-${entry.timestamp}`} className="codex-message codex">
+                  <div className="codex-text">{entry.text}</div>
+                </div>
+              );
+            }
+            const lines = entry.text.split(/\r?\n/).filter((line) => line.length > 0);
+            if (lines.length === 0) return null;
+            return lines.map((line, idx) => (
+              <div
+                key={`event-${entry.timestamp}-${idx}`}
+                className={`codex-log-line ${entry.eventType}`}
+              >
+                {line}
+              </div>
+            ));
+          })}
         </div>
         {showReview && changes.length > 0 ? (
           <div className="codex-panels">

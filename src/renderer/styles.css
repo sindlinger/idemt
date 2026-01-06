@@ -1736,6 +1736,18 @@ button {
   gap: 6px;
 }
 
+.codex-message.codex {
+  align-self: flex-start;
+  max-width: 96%;
+  background: rgba(16, 18, 24, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-sm);
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
 .codex-text {
   font-size: 12px;
   line-height: 1.5;
