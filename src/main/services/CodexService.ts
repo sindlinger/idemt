@@ -76,14 +76,23 @@ export class CodexService {
     const extraArgs = [...baseArgs, ...targetArgs];
     const model = request.model && request.model !== "default" ? request.model : undefined;
     const level = request.level && request.level !== "default" ? request.level : undefined;
-    const args = [
-      "exec",
-      "--skip-git-repo-check",
-      ...(model ? ["--model", model] : []),
-      ...(level ? ["-c", `reasoning.level="${level}"`] : []),
-      ...extraArgs,
-      "-"
-    ];
+    const useResume = Boolean(request.sessionActive);
+    if (useResume && (model || level || extraArgs.length > 0)) {
+      this.logs.append(
+        "codex",
+        "Resume mode ignores model/level/extra args (Codex CLI resume does not accept those flags)."
+      );
+    }
+    const args = useResume
+      ? ["exec", "resume", "--last", "-"]
+      : [
+          "exec",
+          "--skip-git-repo-check",
+          ...(model ? ["--model", model] : []),
+          ...(level ? ["-c", `reasoning.level=\"${level}\"`] : []),
+          ...extraArgs,
+          "-"
+        ];
     const command = useWsl ? "wsl.exe" : codexPath;
     const commandArgs = useWsl ? ["--", codexPath, ...args] : args;
     this.logs.append("system", `Codex exec: ${command} ${commandArgs.join(" ")}`);
