@@ -61,6 +61,7 @@ const getCodexStorageKey = (workspaceId: string) => `${CODEX_STORAGE_KEY}:${work
 const WORKSPACE_STATE_STORAGE_KEY = "mt5ide.workspace.state";
 const LAYOUT_STORAGE_KEY = "mt5ide.layout.state";
 const SPLITTER_SIZE = 4;
+const COLLAPSED_SPLITTER_SIZE = 10;
 
 type LayoutState = {
   leftWidth: number;
@@ -723,6 +724,9 @@ const App = () => {
   const bottomPaneHeight = bottomPanelOpen
     ? clamp(layout.bottomHeight, MIN_BOTTOM, Math.max(MIN_BOTTOM, viewport.height - 220))
     : 0;
+  const leftSplitterSize = layout.leftCollapsed ? COLLAPSED_SPLITTER_SIZE : SPLITTER_SIZE;
+  const rightSplitterSize = layout.rightCollapsed ? COLLAPSED_SPLITTER_SIZE : SPLITTER_SIZE;
+  const bottomSplitterSize = bottomPanelOpen ? SPLITTER_SIZE : COLLAPSED_SPLITTER_SIZE;
 
   useEffect(() => {
     const root = document.documentElement;
@@ -731,13 +735,19 @@ const App = () => {
     root.dataset.mode = settings.uiMode ?? "dark";
     root.dataset.nativeFrame = window.api?.nativeFrame ? "true" : "false";
     root.style.setProperty("--splitter-size", `${SPLITTER_SIZE}px`);
+    root.style.setProperty("--splitter-left-size", `${leftSplitterSize}px`);
+    root.style.setProperty("--splitter-right-size", `${rightSplitterSize}px`);
+    root.style.setProperty("--splitter-bottom-size", `${bottomSplitterSize}px`);
     root.style.setProperty("--left-pane", `${leftPaneWidth}px`);
     root.style.setProperty("--right-pane", `${rightPaneWidth}px`);
     root.style.setProperty("--bottom-pane", `${bottomPaneHeight}px`);
   }, [
     bottomPaneHeight,
+    bottomSplitterSize,
     leftPaneWidth,
+    leftSplitterSize,
     rightPaneWidth,
+    rightSplitterSize,
     settings.uiMode,
     settings.uiTheme
   ]);

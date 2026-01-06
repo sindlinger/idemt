@@ -788,7 +788,7 @@ button {
 
 .main-layout {
   display: grid;
-  grid-template-columns: var(--left-pane) var(--splitter-size) minmax(0, 1fr) var(--splitter-size) var(--right-pane);
+  grid-template-columns: var(--left-pane) var(--splitter-left-size) minmax(0, 1fr) var(--splitter-right-size) var(--right-pane);
   min-height: 0;
   min-width: 0;
   background: var(--bg-soft);
@@ -798,7 +798,7 @@ button {
 
 .workspace-area {
   display: grid;
-  grid-template-rows: minmax(0, 1fr) var(--splitter-size) var(--bottom-pane);
+  grid-template-rows: minmax(0, 1fr) var(--splitter-bottom-size) var(--bottom-pane);
   flex: 1;
   min-height: 0;
   min-width: 0;
@@ -825,8 +825,7 @@ button {
   margin: auto;
   width: 2px;
   height: 100%;
-  background: rgba(255, 255, 255, 0.55);
-  box-shadow: 0 0 6px rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.45);
 }
 
 .splitter.horizontal.ghost::before {
@@ -837,15 +836,16 @@ button {
 .splitter.left {
   justify-content: flex-start;
   padding-left: 2px;
+  width: var(--splitter-left-size);
 }
 
 .splitter.right {
   justify-content: flex-end;
   padding-right: 2px;
+  width: var(--splitter-right-size);
 }
 
 .splitter.vertical {
-  width: var(--splitter-size);
   cursor: col-resize;
   background: transparent;
 }
@@ -855,7 +855,7 @@ button {
 }
 
 .splitter.horizontal {
-  height: var(--splitter-size);
+  height: var(--splitter-bottom-size);
   cursor: row-resize;
   grid-column: 1 / -1;
   grid-row: 4;
