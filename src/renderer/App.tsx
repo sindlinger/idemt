@@ -1062,15 +1062,13 @@ const App = () => {
             }}
           >
             <button
-              className={`split-pin ${layout.leftCollapsed ? "collapsed" : "expanded"}`}
+              className="split-pin"
               title={layout.leftCollapsed ? "Expand sidebar" : "Collapse sidebar"}
               onClick={(event) => {
                 event.stopPropagation();
                 setLayout((prev) => ({ ...prev, leftCollapsed: !prev.leftCollapsed }));
               }}
-            >
-              <span className="split-grip" />
-            </button>
+            />
           </div>
           <EditorPane
             files={openFiles}
@@ -1106,15 +1104,13 @@ const App = () => {
             }}
           >
             <button
-              className={`split-pin ${layout.rightCollapsed ? "collapsed" : "expanded"}`}
+              className="split-pin"
               title={layout.rightCollapsed ? "Expand Codex" : "Collapse Codex"}
               onClick={(event) => {
                 event.stopPropagation();
                 setLayout((prev) => ({ ...prev, rightCollapsed: !prev.rightCollapsed }));
               }}
-            >
-              <span className="split-grip" />
-            </button>
+            />
           </div>
           <CodexSidebar
             codexEvents={codexEvents}
@@ -1164,15 +1160,13 @@ const App = () => {
           }}
         >
           <button
-            className={`split-pin ${bottomPanelOpen ? "expanded" : "collapsed"}`}
+            className="split-pin"
             title={bottomPanelOpen ? "Collapse panel" : "Expand panel"}
             onClick={(event) => {
               event.stopPropagation();
               toggleBottomPanelOpen();
             }}
-          >
-            <span className="split-grip" />
-          </button>
+          />
         </div>
       <BottomPanel
         open={bottomPanelOpen}

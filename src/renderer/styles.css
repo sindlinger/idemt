@@ -29,8 +29,6 @@
   --editor-bg: var(--bg-soft);
   --splitter-bg: rgba(55, 55, 55, 0.9);
   --splitter-hover: rgba(49, 208, 154, 0.18);
-  --split-grip: rgba(230, 230, 230, 0.65);
-  --split-grip-hover: rgba(230, 230, 230, 1);
   --line-highlight: rgba(49, 208, 154, 0.12);
   --line-highlight-border: #31d09a;
   --window-radius: 8px;
@@ -675,8 +673,6 @@ button {
   --editor-bg: #f4f6f9;
   --splitter-bg: #e1e6ee;
   --splitter-hover: rgba(47, 143, 115, 0.25);
-  --split-grip: rgba(60, 70, 85, 0.55);
-  --split-grip-hover: rgba(60, 70, 85, 0.95);
   --app-bg: #f1f4f8;
   --line-highlight: rgba(47, 143, 115, 0.16);
   --line-highlight-border: #2f8f73;
@@ -829,7 +825,7 @@ button {
   margin: auto;
   width: 1px;
   height: 100%;
-  background: rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.28);
 }
 
 .splitter.horizontal.ghost::before {
@@ -873,92 +869,7 @@ button {
 }
 
 .split-pin {
-  width: 22px;
-  height: 28px;
-  border-radius: 6px;
-  border: none;
-  background: transparent;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-  cursor: pointer;
-  opacity: 1;
-  transition: border 0.2s ease, color 0.2s ease, background 0.2s ease, opacity 0.2s ease,
-    transform 0.2s ease;
-}
-
-.splitter.vertical .split-pin {
-  transform: none;
-}
-
-.splitter.horizontal .split-pin {
-  width: 28px;
-  height: 22px;
-}
-
-.splitter:hover .split-pin,
-.split-pin:focus-visible {
-  opacity: 1;
-}
-
-.split-pin:hover {
-  background: transparent;
-  opacity: 1;
-}
-
-.split-pin.active {
-  background: transparent;
-  opacity: 1;
-}
-
-.split-grip {
-  width: 12px;
-  height: 20px;
-  opacity: 1;
-  background-image: repeating-linear-gradient(
-    90deg,
-    var(--split-grip),
-    var(--split-grip) 2px,
-    transparent 2px,
-    transparent 4px
-  );
-}
-
-.splitter.horizontal .split-grip {
-  width: 20px;
-  height: 12px;
-  background-image: repeating-linear-gradient(
-    0deg,
-    var(--split-grip),
-    var(--split-grip) 2px,
-    transparent 2px,
-    transparent 4px
-  );
-}
-
-.splitter:hover .split-grip,
-.split-pin:focus-visible .split-grip,
-.split-pin.active .split-grip {
-  background-image: repeating-linear-gradient(
-    90deg,
-    var(--split-grip-hover),
-    var(--split-grip-hover) 2px,
-    transparent 2px,
-    transparent 4px
-  );
-}
-
-.splitter.horizontal:hover .split-grip,
-.splitter.horizontal .split-pin:focus-visible .split-grip,
-.splitter.horizontal .split-pin.active .split-grip {
-  background-image: repeating-linear-gradient(
-    0deg,
-    var(--split-grip-hover),
-    var(--split-grip-hover) 2px,
-    transparent 2px,
-    transparent 4px
-  );
+  display: none;
 }
 
 .sidebar {
