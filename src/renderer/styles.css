@@ -1676,9 +1676,27 @@ button {
   height: 0;
 }
 
-.codex-message {
-  background: rgba(255, 255, 255, 0.02);
-  border-left: 2px solid rgba(255, 255, 255, 0.12);
+.codex-log-line {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  font-size: 11px;
+  line-height: 1.45;
+  color: var(--text);
+  white-space: pre-wrap;
+}
+
+.codex-log-line.stderr {
+  color: var(--danger);
+}
+
+.codex-log-line.status {
+  color: var(--muted);
+}
+
+.codex-message.user {
+  align-self: flex-end;
+  max-width: 90%;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.14);
   border-radius: var(--radius-sm);
   padding: 6px 10px;
   display: flex;
@@ -1712,35 +1730,6 @@ button {
   max-height: 220px;
 }
 
-.codex-history-line {
-  position: relative;
-  display: flex;
-  gap: 10px;
-  font-size: 11px;
-  line-height: 1.45;
-  color: var(--muted);
-  padding-left: 14px;
-}
-
-.codex-history-line::before {
-  content: "";
-  position: absolute;
-  left: 4px;
-  top: 6px;
-  width: 4px;
-  height: 4px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.35);
-}
-
-.codex-history-time {
-  flex-shrink: 0;
-  color: rgba(200, 200, 200, 0.9);
-}
-
-.codex-history-text {
-  white-space: pre-wrap;
-}
 
 .codex-input {
   display: flex;
@@ -1945,7 +1934,7 @@ button {
   background: rgba(34, 34, 34, 0.85);
 }
 
-.app[data-theme="windows11"] .codex-message {
+.app[data-theme="windows11"] .codex-message.user {
   background: rgba(12, 12, 12, 0.35);
 }
 
@@ -1957,7 +1946,7 @@ button {
   border: 1px solid var(--border);
 }
 
-.app[data-theme="windowsClassic"] .codex-message {
+.app[data-theme="windowsClassic"] .codex-message.user {
   background: var(--panel-2);
   border: 1px solid var(--border);
   box-shadow: inset 1px 1px 0 #f3f3f3, inset -1px -1px 0 #9a9a9a;
@@ -1979,7 +1968,7 @@ button {
   border-color: rgba(255, 255, 255, 0.08);
 }
 
-.app[data-theme="macos"] .codex-message {
+.app[data-theme="macos"] .codex-message.user {
   border-radius: var(--radius-md);
 }
 
@@ -1993,7 +1982,15 @@ button {
   border-color: #d6dbe6;
 }
 
-.app[data-mode="light"] .codex-message {
+.app[data-mode="light"] .codex-log-line {
+  color: #1e2431;
+}
+
+.app[data-mode="light"] .codex-log-line.status {
+  color: #6d7483;
+}
+
+.app[data-mode="light"] .codex-message.user {
   background: #f3f5f9;
   border-color: #d6dbe6;
 }

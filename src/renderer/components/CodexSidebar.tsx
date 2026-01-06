@@ -52,7 +52,30 @@ const CodexSidebar = ({
   const [model, setModel] = useState(defaultModel ?? "default");
   const [level, setLevel] = useState(defaultLevel ?? "default");
   const [expandedReview, setExpandedReview] = useState<Set<string>>(() => new Set());
-  const historyEntries = useMemo(() => codexEvents.slice().reverse(), [codexEvents]);
+  const streamItems = useMemo(() => {
+    const messageItems = codexMessages.map((entry) => {
+      if (entry.role === "user") {
+        return {
+          kind: "user" as const,
+          timestamp: entry.timestamp,
+          text: entry.text
+        };
+      }
+      return {
+        kind: "event" as const,
+        timestamp: entry.timestamp,
+        text: entry.text,
+        eventType: "status" as const
+      };
+    });
+    const eventItems = codexEvents.map((entry) => ({
+      kind: "event" as const,
+      timestamp: entry.timestamp,
+      text: entry.data,
+      eventType: entry.type
+    }));
+    return [...messageItems, ...eventItems].sort((a, b) => a.timestamp - b.timestamp);
+  }, [codexEvents, codexMessages]);
 
   const changes = Object.values(reviewChanges);
   const modelOptions = useMemo(() => models.filter(Boolean), [models]);
@@ -145,27 +168,31 @@ const CodexSidebar = ({
             </button>
           </div>
         </div>
-        <div className="codex-chat">
-          {codexMessages.map((entry) => (
-            <div key={`${entry.timestamp}-${entry.role}`} className={`codex-message ${entry.role}`}>
-              <div className="codex-text">{entry.text}</div>
-            </div>
-          ))}
-        </div>
-        {(showHistory && historyEntries.length > 0) || (showReview && changes.length > 0) ? (
-          <div className="codex-panels">
-            {showHistory && historyEntries.length > 0 ? (
-              <div className="codex-panel codex-history">
-                {historyEntries.map((entry) => (
-                  <div key={`${entry.timestamp}-${entry.type}`} className="codex-history-line">
-                    <span className="codex-history-time">
-                      {new Date(entry.timestamp).toLocaleTimeString()}
-                    </span>
-                    <span className="codex-history-text">{entry.data.trim()}</span>
+        {showHistory ? (
+          <div className="codex-chat">
+            {streamItems.map((entry) => {
+              if (entry.kind === "user") {
+                return (
+                  <div key={`user-${entry.timestamp}`} className="codex-message user">
+                    <div className="codex-text">{entry.text}</div>
                   </div>
-                ))}
-              </div>
-            ) : null}
+                );
+              }
+              const lines = entry.text.split(/\r?\n/).filter((line) => line.length > 0);
+              if (lines.length === 0) return null;
+              return lines.map((line, idx) => (
+                <div
+                  key={`event-${entry.timestamp}-${idx}`}
+                  className={`codex-log-line ${entry.eventType}`}
+                >
+                  {line}
+                </div>
+              ));
+            })}
+          </div>
+        ) : null}
+        {showReview && changes.length > 0 ? (
+          <div className="codex-panels">
             {showReview && changes.length > 0 ? (
               <div className="codex-panel codex-review">
                 {changes.map((change) => {
