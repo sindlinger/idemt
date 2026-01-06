@@ -13,8 +13,6 @@ import type {
 } from "../../shared/ipc";
 import { LogsService } from "./LogsService";
 import { WorkspaceService } from "./WorkspaceService";
-import { BuildService } from "./BuildService";
-import { buildContext } from "./ContextBuilder";
 import type { ReviewStoreService } from "./ReviewStoreService";
 import { resolveCodexConfigPath } from "./CodexConfigService";
 
@@ -39,7 +37,6 @@ export class CodexSessionService {
   private window: BrowserWindow;
   private logs: LogsService;
   private workspace: WorkspaceService;
-  private build: BuildService;
   private reviewStore?: ReviewStoreService;
   private session: SessionState | null = null;
 
@@ -47,13 +44,11 @@ export class CodexSessionService {
     window: BrowserWindow,
     logs: LogsService,
     workspace: WorkspaceService,
-    build: BuildService,
     reviewStore?: ReviewStoreService
   ) {
     this.window = window;
     this.logs = logs;
     this.workspace = workspace;
-    this.build = build;
     this.reviewStore = reviewStore;
   }
 
@@ -67,18 +62,10 @@ export class CodexSessionService {
       return session.status;
     }
 
-    const useWsl = session.runTarget === "wsl";
-    const pathMapper = useWsl ? toWslPath : undefined;
-    const prompt = await buildContext({
-      requestMessage: request.userMessage,
-      activeFilePath: request.activeFilePath,
-      selection: request.selection,
-      diagnostics: this.build.getLastDiagnostics(),
-      logs: this.logs,
-      workspace: this.workspace,
-      settings,
-      pathMapper
-    });
+    const selection = request.selection?.trim();
+    const prompt = selection
+      ? `${request.userMessage}\n\n${selection}`
+      : request.userMessage;
 
     session.snapshots = await snapshotWorkspace(this.workspace);
     session.runId = randomUUID();

@@ -35,7 +35,6 @@ export const registerIpc = async (window: BrowserWindow, settingsService: Settin
     window,
     logsService,
     workspaceService,
-    buildService,
     reviewStore
   );
   const testService = new TestService(window, logsService);
