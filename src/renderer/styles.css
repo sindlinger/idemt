@@ -29,6 +29,8 @@
   --editor-bg: var(--bg-soft);
   --splitter-bg: rgba(55, 55, 55, 0.9);
   --splitter-hover: rgba(49, 208, 154, 0.18);
+  --split-dot: rgba(230, 230, 230, 0.65);
+  --split-dot-active: rgba(230, 230, 230, 0.9);
   --line-highlight: rgba(49, 208, 154, 0.12);
   --line-highlight-border: #31d09a;
   --window-radius: 8px;
@@ -673,6 +675,8 @@ button {
   --editor-bg: #f4f6f9;
   --splitter-bg: #e1e6ee;
   --splitter-hover: rgba(47, 143, 115, 0.25);
+  --split-dot: rgba(60, 70, 85, 0.55);
+  --split-dot-active: rgba(60, 70, 85, 0.9);
   --app-bg: #f1f4f8;
   --line-highlight: rgba(47, 143, 115, 0.16);
   --line-highlight-border: #2f8f73;
@@ -860,7 +864,6 @@ button {
   border-radius: 6px;
   border: none;
   background: transparent;
-  color: rgba(255, 255, 255, 0.75);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -889,19 +892,16 @@ button {
   opacity: 1;
 }
 
-.split-pin svg {
-  display: block;
-  opacity: 1;
-  filter: drop-shadow(0 0 2px rgba(0, 0, 0, 0.5));
+.split-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--split-dot);
+  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.15);
 }
 
-.splitter:hover .split-pin svg,
-.split-pin:focus-visible svg {
-  opacity: 1;
-}
-
-.split-pin.active svg {
-  opacity: 1;
+.split-pin.active .split-dot {
+  background: var(--split-dot-active);
 }
 
 .sidebar {
