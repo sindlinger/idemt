@@ -109,6 +109,8 @@ export type Settings = {
   codexPath?: string;
   codexPathWsl?: string;
   codexArgs?: string;
+  codexArgsWindows?: string;
+  codexArgsWsl?: string;
   codexRunTarget?: "windows" | "wsl";
   mtDataDir?: string;
   reportsDir?: string;

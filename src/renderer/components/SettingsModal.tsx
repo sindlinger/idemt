@@ -308,6 +308,24 @@ const SettingsModal = ({
                   Example: --model gpt-5 --max-tokens 2048
                 </span>
               </div>
+              {isWindows ? (
+                <>
+                  <div className="settings-field">
+                    <label>Extra Codex Args (Windows)</label>
+                    <input
+                      value={local.codexArgsWindows ?? ""}
+                      onChange={(event) => updateField("codexArgsWindows", event.target.value)}
+                    />
+                  </div>
+                  <div className="settings-field">
+                    <label>Extra Codex Args (WSL)</label>
+                    <input
+                      value={local.codexArgsWsl ?? ""}
+                      onChange={(event) => updateField("codexArgsWsl", event.target.value)}
+                    />
+                  </div>
+                </>
+              ) : null}
               {local.codexReviewProvider === "googleDrive" ? (
                 <>
                   <div className="settings-field">

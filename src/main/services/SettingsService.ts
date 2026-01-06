@@ -11,6 +11,8 @@ const DEFAULTS: Settings = {
   codexPath: "codex",
   codexPathWsl: "",
   codexArgs: "",
+  codexArgsWindows: "",
+  codexArgsWsl: "",
   codexRunTarget: "windows",
   mtDataDir: "",
   reportsDir: "",

@@ -65,9 +65,10 @@ const CodexSidebar = ({
         };
       }
       return {
-        kind: "codex" as const,
+        kind: "event" as const,
         timestamp: entry.timestamp,
-        text: entry.text
+        text: entry.text,
+        eventType: "codex" as const
       };
     });
     const eventItems = codexEvents.map((entry) => ({
@@ -190,13 +191,6 @@ const CodexSidebar = ({
             if (entry.kind === "user") {
               return (
                 <div key={`user-${entry.timestamp}`} className="codex-message user">
-                  <div className="codex-text">{entry.text}</div>
-                </div>
-              );
-            }
-            if (entry.kind === "codex") {
-              return (
-                <div key={`codex-${entry.timestamp}`} className="codex-message codex">
                   <div className="codex-text">{entry.text}</div>
                 </div>
               );

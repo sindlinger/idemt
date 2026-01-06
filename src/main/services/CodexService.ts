@@ -71,7 +71,9 @@ export class CodexService {
     const snapshots = await snapshotWorkspace(this.workspace);
 
     const codexPath = useWsl ? settings.codexPathWsl || "codex" : settings.codexPath || "codex";
-    const extraArgs = parseArgs(settings.codexArgs);
+    const baseArgs = parseArgs(settings.codexArgs);
+    const targetArgs = parseArgs(useWsl ? settings.codexArgsWsl : settings.codexArgsWindows);
+    const extraArgs = [...baseArgs, ...targetArgs];
     const model = request.model && request.model !== "default" ? request.model : undefined;
     const level = request.level && request.level !== "default" ? request.level : undefined;
     const args = [
