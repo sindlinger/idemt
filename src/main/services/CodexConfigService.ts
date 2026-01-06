@@ -45,6 +45,12 @@ export const resolveCodexConfigPath = async (logs?: LogsService): Promise<string
     if (changed) {
       const outPath = path.join(app.getPath("userData"), "codex-config.toml");
       await fs.writeFile(outPath, sanitized, "utf-8");
+      try {
+        await fs.writeFile(configPath, sanitized, "utf-8");
+        logs?.append("codex", "Codex config patched in place.");
+      } catch (error) {
+        logs?.append("codex", `Codex config patch failed: ${String(error)}`);
+      }
       return outPath;
     }
     return configPath;
