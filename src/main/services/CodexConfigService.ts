@@ -15,7 +15,13 @@ const getConfigPath = () => {
   return path.join(codexHome, "config.toml");
 };
 
-export const resolveCodexConfigPath = async (logs?: LogsService): Promise<string | null> => {
+export const resolveCodexConfigPath = async (
+  logs?: LogsService,
+  options?: { target?: "windows" | "wsl" }
+): Promise<string | null> => {
+  if (options?.target === "wsl" && process.platform === "win32") {
+    return null;
+  }
   const configPath = getConfigPath();
   try {
     const raw = await fs.readFile(configPath, "utf-8");

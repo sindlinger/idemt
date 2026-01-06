@@ -17,14 +17,26 @@ const buildCommand = (raw: string, platform: string) => {
   return `${raw} resume`;
 };
 
-const CodexResumePanel = ({ command, cwd }: { command: string; cwd?: string }) => {
+const CodexResumePanel = ({
+  command,
+  cwd,
+  runTarget
+}: {
+  command: string;
+  cwd?: string;
+  runTarget?: "windows" | "wsl";
+}) => {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const terminalRef = useRef<Terminal | null>(null);
   const fitAddonRef = useRef<FitAddon | null>(null);
   const sessionRef = useRef<string | null>(null);
   const [ready, setReady] = useState(false);
   const platform = window.api?.platform ?? "unknown";
-  const resumeCommand = useMemo(() => buildCommand(command || "codex", platform), [command, platform]);
+  const effectivePlatform = runTarget === "wsl" ? "linux" : platform;
+  const resumeCommand = useMemo(
+    () => buildCommand(command || "codex", effectivePlatform),
+    [command, effectivePlatform]
+  );
   const terminalTheme = useMemo(() => {
     const app = document.querySelector(".app");
     const mode = app?.getAttribute("data-mode") ?? "dark";
@@ -42,9 +54,13 @@ const CodexResumePanel = ({ command, cwd }: { command: string; cwd?: string }) =
   const [configPath, setConfigPath] = useState<string | null>(null);
 
   useEffect(() => {
+    if (runTarget === "wsl") {
+      setConfigPath(null);
+      return;
+    }
     if (typeof window.api?.codexConfigPathGet !== "function") return;
     window.api.codexConfigPathGet().then((path) => setConfigPath(path)).catch(() => setConfigPath(null));
-  }, []);
+  }, [runTarget]);
 
   useEffect(() => {
     const terminal = new Terminal({
@@ -65,7 +81,11 @@ const CodexResumePanel = ({ command, cwd }: { command: string; cwd?: string }) =
 
     if (typeof window.api?.terminalSpawn === "function") {
       window.api
-        .terminalSpawn({ cwd, env: configPath ? { CODEX_CONFIG: configPath } : undefined })
+        .terminalSpawn({
+          cwd,
+          shell: runTarget === "wsl" ? "wsl.exe" : undefined,
+          env: configPath ? { CODEX_CONFIG: configPath } : undefined
+        })
         .then(({ id }) => {
           if (!id) return;
           sessionRef.current = id;

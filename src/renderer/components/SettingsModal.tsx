@@ -19,6 +19,7 @@ const SettingsModal = ({
     "ui"
   );
   const [position, setPosition] = useState({ x: 0, y: 0 });
+  const isWindows = window.api?.platform === "win32";
   const dragRef = useRef<{ startX: number; startY: number; originX: number; originY: number } | null>(
     null
   );
@@ -242,6 +243,31 @@ const SettingsModal = ({
           ) : null}
           {activeTab === "codex" ? (
             <>
+              {isWindows ? (
+                <div className="settings-field">
+                  <label>Codex Runtime</label>
+                  <select
+                    value={local.codexRunTarget ?? "windows"}
+                    onChange={(event) => updateField("codexRunTarget", event.target.value)}
+                  >
+                    <option value="windows">Windows</option>
+                    <option value="wsl">WSL</option>
+                  </select>
+                </div>
+              ) : null}
+              {isWindows ? (
+                <div className="settings-field">
+                  <label>Codex Path (WSL)</label>
+                  <input
+                    value={local.codexPathWsl ?? ""}
+                    onChange={(event) => updateField("codexPathWsl", event.target.value)}
+                    placeholder="codex"
+                  />
+                  <span style={{ color: "var(--muted)", fontSize: 11 }}>
+                    Leave empty to use Codex from WSL PATH.
+                  </span>
+                </div>
+              ) : null}
               <div className="settings-field">
                 <label>Review Storage Provider</label>
                 <select

@@ -50,6 +50,10 @@ export class CodexService {
     const runId = randomUUID();
     const logPath = path.join(CODEX_LOG_DIR, `codex-${Date.now()}-${runId}.log`);
 
+    const runTarget = settings.codexRunTarget ?? "windows";
+    const useWsl = runTarget === "wsl" && process.platform === "win32";
+    const pathMapper = useWsl ? toWslPath : undefined;
+
     const promptBase = await buildContext({
       requestMessage: request.userMessage,
       activeFilePath: request.activeFilePath,
@@ -57,7 +61,8 @@ export class CodexService {
       diagnostics: this.build.getLastDiagnostics(),
       logs: this.logs,
       workspace: this.workspace,
-      settings
+      settings,
+      pathMapper
     });
     const gitStatus = await getGitStatus(this.workspace.getRoot() ?? process.cwd());
     const contextBundle = request.contextBundle ? `\n\n# Context Bundle\n${request.contextBundle}` : "";
@@ -65,7 +70,7 @@ export class CodexService {
 
     const snapshots = await snapshotWorkspace(this.workspace);
 
-    const codexPath = settings.codexPath || "codex";
+    const codexPath = useWsl ? settings.codexPathWsl || "codex" : settings.codexPath || "codex";
     const extraArgs = parseArgs(settings.codexArgs);
     const model = request.model && request.model !== "default" ? request.model : undefined;
     const level = request.level && request.level !== "default" ? request.level : undefined;
@@ -79,9 +84,11 @@ export class CodexService {
       ...extraArgs,
       "-"
     ];
-    this.logs.append("system", `Codex exec: ${codexPath} ${args.join(" ")}`);
-    const codexConfigPath = await resolveCodexConfigPath(this.logs);
-    const child = spawn(codexPath, args, {
+    const command = useWsl ? "wsl.exe" : codexPath;
+    const commandArgs = useWsl ? ["--", codexPath, ...args] : args;
+    this.logs.append("system", `Codex exec: ${command} ${commandArgs.join(" ")}`);
+    const codexConfigPath = await resolveCodexConfigPath(this.logs, { target: runTarget });
+    const child = spawn(command, commandArgs, {
       cwd: this.workspace.getRoot() ?? process.cwd(),
       env: {
         ...process.env,
@@ -181,6 +188,18 @@ export class CodexService {
     }
   }
 }
+
+const toWslPath = (value: string) => {
+  if (!value) return value;
+  if (value.startsWith("/mnt/")) return value.replace(/\\/g, "/");
+  const match = value.match(/^([A-Za-z]):[\\/](.*)$/);
+  if (match) {
+    const drive = match[1].toLowerCase();
+    const rest = match[2].replace(/\\/g, "/");
+    return `/mnt/${drive}/${rest}`;
+  }
+  return value.replace(/\\/g, "/");
+};
 
 const snapshotWorkspace = async (workspace: WorkspaceService) => {
   const files = await workspace.listWorkspaceFiles([

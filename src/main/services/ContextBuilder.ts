@@ -16,15 +16,25 @@ export type ContextInputs = {
   logs: LogsService;
   workspace: WorkspaceService;
   settings: Settings;
+  pathMapper?: (value: string) => string;
 };
 
 export const buildContext = async (inputs: ContextInputs) => {
-  const { requestMessage, activeFilePath, selection, diagnostics, logs, workspace } = inputs;
+  const {
+    requestMessage,
+    activeFilePath,
+    selection,
+    diagnostics,
+    logs,
+    workspace,
+    pathMapper
+  } = inputs;
+  const mapPath = pathMapper ?? ((value: string) => value);
   const buffer: string[] = [];
 
   buffer.push("# Codex Request");
   buffer.push(`UserMessage: ${requestMessage}`);
-  if (activeFilePath) buffer.push(`ActiveFile: ${activeFilePath}`);
+  if (activeFilePath) buffer.push(`ActiveFile: ${mapPath(activeFilePath)}`);
   if (selection) {
     buffer.push("\n# Selection\n" + truncate(selection));
   }
@@ -34,7 +44,9 @@ export const buildContext = async (inputs: ContextInputs) => {
     buffer.push("(no diagnostics)");
   } else {
     diagnostics.slice(0, 120).forEach((diag) => {
-      buffer.push(`${diag.filePath}:${diag.line}:${diag.column} ${diag.severity} ${diag.message}`);
+      buffer.push(
+        `${mapPath(diag.filePath)}:${diag.line}:${diag.column} ${diag.severity} ${diag.message}`
+      );
     });
   }
 
@@ -67,10 +79,10 @@ export const buildContext = async (inputs: ContextInputs) => {
   for (const file of relevantFiles) {
     try {
       const content = await fs.readFile(file, "utf-8");
-      buffer.push(`\n## ${file}`);
+      buffer.push(`\n## ${mapPath(file)}`);
       buffer.push(truncate(content));
     } catch {
-      buffer.push(`\n## ${file}\n(unreadable)`);
+      buffer.push(`\n## ${mapPath(file)}\n(unreadable)`);
     }
   }
 

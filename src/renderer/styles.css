@@ -1622,6 +1622,38 @@ button {
   gap: 6px;
 }
 
+.codex-target-toggle {
+  display: inline-flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.codex-target {
+  height: 22px;
+  min-width: 34px;
+  padding: 0 6px;
+  border-radius: 7px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--muted);
+  font-size: 10px;
+  letter-spacing: 0.3px;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease, border 0.2s ease;
+}
+
+.codex-target.active {
+  color: var(--text);
+  border-color: var(--border);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.codex-target:hover {
+  color: var(--text);
+  border-color: var(--border);
+  background: rgba(255, 255, 255, 0.04);
+}
+
 .codex-view-toggle {
   width: 22px;
   height: 22px;

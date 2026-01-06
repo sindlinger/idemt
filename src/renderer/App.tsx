@@ -267,7 +267,11 @@ const App = () => {
     models: [],
     source: "empty"
   });
-  const codexResumeCommand = settings.codexPath || "codex";
+  const platform = api.platform ?? "unknown";
+  const isWindows = platform === "win32";
+  const codexRunTarget = isWindows ? (settings.codexRunTarget ?? "windows") : "windows";
+  const codexResumeCommand =
+    codexRunTarget === "wsl" ? settings.codexPathWsl || "codex" : settings.codexPath || "codex";
   const [newFileExt, setNewFileExt] = useState("mq5");
   const [layout, setLayout] = useState<LayoutState>(() => readLayoutState());
   const [viewport, setViewport] = useState(() => ({
@@ -363,7 +367,7 @@ const App = () => {
     api.codexModelsGet()
       .then((info) => setCodexModelsInfo(info))
       .catch(() => setCodexModelsInfo({ models: [], source: "empty" }));
-  }, [api]);
+  }, [api, codexRunTarget]);
 
   useEffect(() => {
     api.setWorkspaceFilters?.(fileFilters);
@@ -913,6 +917,13 @@ const App = () => {
     api.settingsSet?.(next);
   };
 
+  const handleCodexRunTargetChange = (target: "windows" | "wsl") => {
+    if (settings.codexRunTarget === target) return;
+    const next = { ...settings, codexRunTarget: target };
+    setSettings(next);
+    api.settingsSet?.(next);
+  };
+
   const handleFontSizeChange = (size: number) => {
     const normalized = clamp(Math.round(size), 10, 24);
     if (settings.editorFontSize === normalized) return;
@@ -1192,6 +1203,8 @@ const App = () => {
             reviewChanges={reviewChanges}
             resumeCommand={codexResumeCommand}
             resumeCwd={workspaceRoot ?? undefined}
+            runTarget={isWindows ? codexRunTarget : undefined}
+            onRunTargetChange={isWindows ? handleCodexRunTargetChange : undefined}
             models={codexModelsInfo.models}
             defaultModel={codexModelsInfo.defaultModel}
             defaultLevel={codexModelsInfo.defaultLevel}

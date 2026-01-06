@@ -22,6 +22,8 @@ type CodexSidebarProps = {
   reviewChanges: Record<string, ReviewChange>;
   resumeCommand: string;
   resumeCwd?: string;
+  runTarget?: "windows" | "wsl";
+  onRunTargetChange?: (target: "windows" | "wsl") => void;
   models: string[];
   defaultModel?: string;
   defaultLevel?: string;
@@ -41,6 +43,8 @@ const CodexSidebar = ({
   reviewChanges,
   resumeCommand,
   resumeCwd,
+  runTarget,
+  onRunTargetChange,
   models,
   defaultModel,
   defaultLevel,
@@ -154,6 +158,24 @@ const CodexSidebar = ({
             <span className="codex-status-time">{lastRunTime}</span>
           </div>
           <div className="codex-top-actions">
+            {onRunTargetChange && runTarget ? (
+              <div className="codex-target-toggle" role="group" aria-label="Codex runtime">
+                <button
+                  className={`codex-target ${runTarget === "windows" ? "active" : ""}`}
+                  onClick={() => onRunTargetChange("windows")}
+                  title="Run Codex on Windows"
+                >
+                  Win
+                </button>
+                <button
+                  className={`codex-target ${runTarget === "wsl" ? "active" : ""}`}
+                  onClick={() => onRunTargetChange("wsl")}
+                  title="Run Codex on WSL"
+                >
+                  WSL
+                </button>
+              </div>
+            ) : null}
             <button
               className={`codex-view-toggle ${showHistory ? "active" : ""}`}
               onClick={() => setShowHistory((value) => !value)}
@@ -205,7 +227,11 @@ const CodexSidebar = ({
           <div className="codex-panels">
             {showHistory ? (
               <div className="codex-panel codex-history">
-                <CodexResumePanel command={resumeCommand} cwd={resumeCwd} />
+                <CodexResumePanel
+                  command={resumeCommand}
+                  cwd={resumeCwd}
+                  runTarget={runTarget}
+                />
               </div>
             ) : null}
             {showReview && changes.length > 0 ? (

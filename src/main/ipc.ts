@@ -163,7 +163,7 @@ export const registerIpc = async (window: BrowserWindow, settingsService: Settin
 
   ipcMain.handle("codex:config:path", async () => {
     logLine("ipc", "codex:config:path");
-    return resolveCodexConfigPath(logsService);
+    return resolveCodexConfigPath(logsService, { target: settingsService.get().codexRunTarget });
   });
 
   ipcMain.handle("build:start", async (_event, request: BuildRequest) =>

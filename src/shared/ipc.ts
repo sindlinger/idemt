@@ -107,7 +107,9 @@ export type Settings = {
   metaeditorPath?: string;
   terminalPath?: string;
   codexPath?: string;
+  codexPathWsl?: string;
   codexArgs?: string;
+  codexRunTarget?: "windows" | "wsl";
   mtDataDir?: string;
   reportsDir?: string;
   uiTheme?: "windows11" | "windowsClassic" | "macos" | "metatrader";

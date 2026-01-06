@@ -1,6 +1,7 @@
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
+import { spawn } from "node:child_process";
 import type { CodexModelsInfo, Settings } from "../../shared/ipc";
 import { resolveCodexConfigPath } from "./CodexConfigService";
 
@@ -40,8 +41,45 @@ const getConfigPath = () => {
   return path.join(codexHome, "config.toml");
 };
 
-export const getCodexModelsInfo = async (_settings: Settings): Promise<CodexModelsInfo> => {
-  const configPath = (await resolveCodexConfigPath()) ?? getConfigPath();
+const readConfigFromWsl = async (): Promise<string | null> => {
+  if (process.platform !== "win32") return null;
+  return new Promise((resolve) => {
+    const child = spawn("wsl.exe", ["--", "bash", "-lc", "cat ~/.codex/config.toml"], {
+      stdio: ["ignore", "pipe", "pipe"]
+    });
+    let output = "";
+    child.stdout.on("data", (chunk) => {
+      output += chunk.toString();
+    });
+    child.on("close", (code) => {
+      if (code === 0 && output.trim().length > 0) {
+        resolve(output);
+      } else {
+        resolve(null);
+      }
+    });
+  });
+};
+
+export const getCodexModelsInfo = async (settings: Settings): Promise<CodexModelsInfo> => {
+  const runTarget = settings.codexRunTarget ?? "windows";
+  if (runTarget === "wsl" && process.platform === "win32") {
+    const raw = await readConfigFromWsl();
+    if (raw) {
+      const parsed = extractModelsFromToml(raw);
+      if (parsed.models.length > 0) {
+        return {
+          models: parsed.models,
+          defaultModel: parsed.defaultModel,
+          defaultLevel: parsed.defaultLevel,
+          source: "config"
+        };
+      }
+    }
+    return { models: [], source: "empty" };
+  }
+
+  const configPath = (await resolveCodexConfigPath(undefined, { target: runTarget })) ?? getConfigPath();
   try {
     const raw = await fs.readFile(configPath, "utf-8");
     const parsed = extractModelsFromToml(raw);
