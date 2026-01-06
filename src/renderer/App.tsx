@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronDown, ChevronLeft, ChevronRight, ChevronUp } from "lucide-react";
 import type {
   CodexModelsInfo,
   CodexRunStatus,
@@ -1160,7 +1160,7 @@ const App = () => {
               toggleBottomPanelOpen();
             }}
           >
-            {bottomPanelOpen ? <Pin size={12} /> : <PinOff size={12} />}
+            {bottomPanelOpen ? <ChevronDown size={10} /> : <ChevronUp size={10} />}
           </button>
         </div>
       <BottomPanel
