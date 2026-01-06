@@ -29,6 +29,7 @@
   --editor-bg: var(--bg-soft);
   --splitter-bg: rgba(55, 55, 55, 0.9);
   --splitter-hover: rgba(49, 208, 154, 0.18);
+  --combo-arrow: rgba(200, 205, 214, 0.9);
   --line-highlight: rgba(49, 208, 154, 0.12);
   --line-highlight-border: #31d09a;
   --window-radius: 8px;
@@ -673,6 +674,7 @@ button {
   --editor-bg: #f4f6f9;
   --splitter-bg: #e1e6ee;
   --splitter-hover: rgba(47, 143, 115, 0.25);
+  --combo-arrow: rgba(80, 90, 104, 0.85);
   --app-bg: #f1f4f8;
   --line-highlight: rgba(47, 143, 115, 0.16);
   --line-highlight-border: #2f8f73;
@@ -1765,11 +1767,9 @@ button {
   color: var(--text);
   font-size: 11px;
   appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
   cursor: pointer;
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23b5b5b5' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='m6 9 6 6 6-6'/></svg>");
-  background-repeat: no-repeat;
-  background-position: right 6px center;
-  background-size: 12px 12px;
 }
 
 .codex-combo:hover {
@@ -1779,6 +1779,26 @@ button {
 .codex-combo:focus-visible {
   outline: 1px solid rgba(255, 255, 255, 0.3);
   outline-offset: 1px;
+}
+
+.codex-combo-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.codex-combo-wrap::after {
+  content: "";
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  width: 0;
+  height: 0;
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  border-top: 5px solid var(--combo-arrow);
+  transform: translateY(-30%);
+  pointer-events: none;
 }
 
 .codex-actions {
@@ -1988,7 +2008,6 @@ button {
   background: #ffffff;
   color: #1e2431;
   border-color: #d6dbe6;
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2360616a' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='m6 9 6 6 6-6'/></svg>");
 }
 
 .bottom-panel {

@@ -224,34 +224,38 @@ const CodexSidebar = ({
           />
           <div className="codex-actions">
             <div className="codex-action-group">
-              <select
-                className="codex-combo"
-                value={model}
-                onChange={(event) => setModel(event.target.value)}
-                aria-label="Model"
-              >
-                {modelOptions.length === 0 ? (
-                  <option value="default">Model</option>
-                ) : (
-                  modelOptions.map((option) => (
+              <div className="codex-combo-wrap">
+                <select
+                  className="codex-combo"
+                  value={model}
+                  onChange={(event) => setModel(event.target.value)}
+                  aria-label="Model"
+                >
+                  {modelOptions.length === 0 ? (
+                    <option value="default">Model</option>
+                  ) : (
+                    modelOptions.map((option) => (
+                      <option key={option} value={option}>
+                        {option}
+                      </option>
+                    ))
+                  )}
+                </select>
+              </div>
+              <div className="codex-combo-wrap">
+                <select
+                  className="codex-combo"
+                  value={level}
+                  onChange={(event) => setLevel(event.target.value)}
+                  aria-label="Level"
+                >
+                  {levelOptions.map((option) => (
                     <option key={option} value={option}>
-                      {option}
+                      {option === "default" ? "Level" : option}
                     </option>
-                  ))
-                )}
-              </select>
-              <select
-                className="codex-combo"
-                value={level}
-                onChange={(event) => setLevel(event.target.value)}
-                aria-label="Level"
-              >
-                {levelOptions.map((option) => (
-                  <option key={option} value={option}>
-                    {option === "default" ? "Level" : option}
-                  </option>
-                ))}
-              </select>
+                  ))}
+                </select>
+              </div>
             </div>
             <div className="codex-action-group right">
               <button
