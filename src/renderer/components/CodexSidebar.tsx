@@ -80,34 +80,6 @@ const CodexSidebar = ({
     return [...messageItems, ...eventItems].sort((a, b) => a.timestamp - b.timestamp);
   }, [codexEvents, codexMessages]);
 
-  const isNoiseLine = (line: string) => {
-    const trimmed = line.trim();
-    if (!trimmed) return false;
-    const prefixes = [
-      "mcp:",
-      "OpenAI Codex",
-      "tokens used",
-      "workdir:",
-      "model:",
-      "provider:",
-      "approval:",
-      "sandbox:",
-      "reasoning effort:",
-      "reasoning summaries:",
-      "session id:",
-      "--------",
-      "thinking",
-      "# Codex Request",
-      "UserMessage:",
-      "ActiveFile:",
-      "# Diagnostics",
-      "# Recent Logs",
-      "# Relevant Files",
-      "## "
-    ];
-    return prefixes.some((prefix) => trimmed.startsWith(prefix));
-  };
-
   const changes = Object.values(reviewChanges);
   const modelOptions = useMemo(() => models.filter(Boolean), [models]);
   const levelOptions = useMemo(() => {
@@ -223,9 +195,7 @@ const CodexSidebar = ({
                 </div>
               );
             }
-            const lines = entry.text
-              .split(/\r?\n/)
-              .filter((line) => line.length > 0 && !isNoiseLine(line));
+            const lines = entry.text.split(/\r?\n/).filter((line) => line.length > 0);
             if (lines.length === 0) return null;
             return lines.map((line, idx) => (
               <div
