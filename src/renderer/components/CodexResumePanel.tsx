@@ -39,6 +39,13 @@ const CodexResumePanel = ({ command, cwd }: { command: string; cwd?: string }) =
     window.api?.terminalWrite?.(sessionRef.current, `${resumeCommand}\r`);
   };
 
+  const [configPath, setConfigPath] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (typeof window.api?.codexConfigPathGet !== "function") return;
+    window.api.codexConfigPathGet().then((path) => setConfigPath(path)).catch(() => setConfigPath(null));
+  }, []);
+
   useEffect(() => {
     const terminal = new Terminal({
       fontSize: 11,
@@ -58,7 +65,7 @@ const CodexResumePanel = ({ command, cwd }: { command: string; cwd?: string }) =
 
     if (typeof window.api?.terminalSpawn === "function") {
       window.api
-        .terminalSpawn({ cwd })
+        .terminalSpawn({ cwd, env: configPath ? { CODEX_CONFIG: configPath } : undefined })
         .then(({ id }) => {
           if (!id) return;
           sessionRef.current = id;
@@ -106,7 +113,7 @@ const CodexResumePanel = ({ command, cwd }: { command: string; cwd?: string }) =
       if (sessionRef.current) window.api?.terminalClose?.(sessionRef.current);
       terminal.dispose();
     };
-  }, [cwd, resumeCommand]);
+  }, [cwd, resumeCommand, configPath]);
 
   return (
     <div className="codex-resume">

@@ -42,6 +42,7 @@ declare global {
       onFileChanged: (handler: (payload: FileChangePayload) => void) => () => void;
       runCodex: (request: CodexRunRequest) => Promise<CodexRunStatus>;
       codexModelsGet: () => Promise<CodexModelsInfo>;
+      codexConfigPathGet: () => Promise<string | null>;
       cancelCodex: () => void;
       onCodexEvent: (handler: (event: CodexEvent) => void) => () => void;
       onCodexDone: (handler: (status: CodexRunStatus) => void) => () => void;
@@ -51,7 +52,7 @@ declare global {
       onTestStatus: (handler: (status: TestStatus) => void) => () => void;
       onTestDone: (handler: (status: TestStatus) => void) => () => void;
       logsAppend: (handler: (payload: LogsAppendPayload) => void) => () => void;
-      terminalSpawn: (options: { cwd?: string; shell?: string }) => Promise<{ id: string }>;
+      terminalSpawn: (options: { cwd?: string; shell?: string; env?: Record<string, string> }) => Promise<{ id: string }>;
       terminalWrite: (id: string, data: string) => void;
       terminalResize: (id: string, cols: number, rows: number) => void;
       terminalClose: (id: string) => void;

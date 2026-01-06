@@ -95,6 +95,12 @@ export type TestStatus = {
   reportPath?: string;
 };
 
+export type TerminalSpawnOptions = {
+  cwd?: string;
+  shell?: string;
+  env?: Record<string, string>;
+};
+
 export type Settings = {
   workspaceRoot?: string;
   recentWorkspaces?: string[];

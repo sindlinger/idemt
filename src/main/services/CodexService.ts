@@ -9,6 +9,7 @@ import { WorkspaceService } from "./WorkspaceService";
 import { BuildService } from "./BuildService";
 import { buildContext } from "./ContextBuilder";
 import type { ReviewStoreService } from "./ReviewStoreService";
+import { resolveCodexConfigPath } from "./CodexConfigService";
 
 const CODEX_LOG_DIR = path.join(process.cwd(), "logs", "codex");
 const parseArgs = (value?: string): string[] => {
@@ -79,9 +80,13 @@ export class CodexService {
       "-"
     ];
     this.logs.append("system", `Codex exec: ${codexPath} ${args.join(" ")}`);
+    const codexConfigPath = await resolveCodexConfigPath(this.logs);
     const child = spawn(codexPath, args, {
       cwd: this.workspace.getRoot() ?? process.cwd(),
-      env: { ...process.env }
+      env: {
+        ...process.env,
+        ...(codexConfigPath ? { CODEX_CONFIG: codexConfigPath } : {})
+      }
     });
 
     this.currentProcess = child;

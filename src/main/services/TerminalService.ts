@@ -14,14 +14,14 @@ export class TerminalService {
     this.window = window;
   }
 
-  spawnSession(options: { cwd?: string; shell?: string }) {
+  spawnSession(options: { cwd?: string; shell?: string; env?: Record<string, string> }) {
     try {
       const id = randomUUID();
       const shell = options.shell || this.defaultShell();
       const pty = spawn(shell, [], {
         name: "xterm-color",
         cwd: options.cwd || process.cwd(),
-        env: { ...process.env }
+        env: { ...process.env, ...(options.env ?? {}) }
       });
 
       this.sessions.set(id, pty);

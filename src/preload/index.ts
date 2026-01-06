@@ -54,6 +54,7 @@ contextBridge.exposeInMainWorld("api", {
   runCodex: (request: CodexRunRequest): Promise<CodexRunStatus> =>
     ipcRenderer.invoke("codex:run:start", request),
   codexModelsGet: (): Promise<CodexModelsInfo> => ipcRenderer.invoke("codex:models:get"),
+  codexConfigPathGet: (): Promise<string | null> => ipcRenderer.invoke("codex:config:path"),
   cancelCodex: (): void => ipcRenderer.send("codex:run:cancel"),
   onCodexEvent: (handler: (event: CodexEvent) => void) => on("codex:run:event", handler),
   onCodexDone: (handler: (status: CodexRunStatus) => void) => on("codex:run:done", handler),
@@ -63,7 +64,7 @@ contextBridge.exposeInMainWorld("api", {
   onTestStatus: (handler: (status: TestStatus) => void) => on("test:status", handler),
   onTestDone: (handler: (status: TestStatus) => void) => on("test:done", handler),
   logsAppend: (handler: (payload: LogsAppendPayload) => void) => on("logs:append", handler),
-  terminalSpawn: (options: { cwd?: string; shell?: string }) =>
+  terminalSpawn: (options: { cwd?: string; shell?: string; env?: Record<string, string> }) =>
     ipcRenderer.invoke("terminal:spawn", options),
   terminalWrite: (id: string, data: string) => ipcRenderer.send("terminal:write", { id, data }),
   terminalResize: (id: string, cols: number, rows: number) =>

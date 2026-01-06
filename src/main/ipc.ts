@@ -4,6 +4,7 @@ import type { BuildRequest, CodexRunRequest, FileFilters, Settings, TestRequest 
 import { BuildService } from "./services/BuildService";
 import { CodexService } from "./services/CodexService";
 import { getCodexModelsInfo } from "./services/CodexModelsService";
+import { resolveCodexConfigPath } from "./services/CodexConfigService";
 import { LogsService } from "./services/LogsService";
 import type { SettingsService } from "./services/SettingsService";
 import { TerminalService } from "./services/TerminalService";
@@ -160,6 +161,11 @@ export const registerIpc = async (window: BrowserWindow, settingsService: Settin
     return getCodexModelsInfo(settingsService.get());
   });
 
+  ipcMain.handle("codex:config:path", async () => {
+    logLine("ipc", "codex:config:path");
+    return resolveCodexConfigPath(logsService);
+  });
+
   ipcMain.handle("build:start", async (_event, request: BuildRequest) =>
     (logLine("ipc", `build:start ${request.filePath}`),
     buildService.compile(request.filePath, settingsService.get()))
@@ -169,10 +175,13 @@ export const registerIpc = async (window: BrowserWindow, settingsService: Settin
     (logLine("ipc", "test:start"), testService.run(request, settingsService.get()))
   );
 
-  ipcMain.handle("terminal:spawn", (_event, options: { cwd?: string; shell?: string }) => {
-    logLine("ipc", `terminal:spawn cwd=${options.cwd ?? ""} shell=${options.shell ?? ""}`);
-    return terminalService.spawnSession(options);
-  });
+  ipcMain.handle(
+    "terminal:spawn",
+    (_event, options: { cwd?: string; shell?: string; env?: Record<string, string> }) => {
+      logLine("ipc", `terminal:spawn cwd=${options.cwd ?? ""} shell=${options.shell ?? ""}`);
+      return terminalService.spawnSession(options);
+    }
+  );
 
   ipcMain.on("window:minimize", () => window.minimize());
   ipcMain.on("window:close", () => window.close());
