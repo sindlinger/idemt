@@ -860,7 +860,7 @@ button {
   border-radius: 6px;
   border: none;
   background: transparent;
-  color: var(--muted);
+  color: rgba(255, 255, 255, 0.75);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -891,7 +891,8 @@ button {
 
 .split-pin svg {
   display: block;
-  opacity: 0.7;
+  opacity: 1;
+  filter: drop-shadow(0 0 2px rgba(0, 0, 0, 0.5));
 }
 
 .splitter:hover .split-pin svg,
@@ -900,7 +901,7 @@ button {
 }
 
 .split-pin.active svg {
-  opacity: 0.85;
+  opacity: 1;
 }
 
 .sidebar {
