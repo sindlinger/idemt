@@ -243,6 +243,36 @@ const SettingsModal = ({
           {activeTab === "codex" ? (
             <>
               <div className="settings-field">
+                <label>Review Storage Provider</label>
+                <select
+                  value={local.codexReviewProvider ?? "local"}
+                  onChange={(event) => updateField("codexReviewProvider", event.target.value)}
+                >
+                  <option value="local">Local (userData)</option>
+                  <option value="googleDrive">Google Drive</option>
+                </select>
+              </div>
+              <div className="settings-field">
+                <label>Review Max Size (MB)</label>
+                <input
+                  type="number"
+                  min={10}
+                  max={2048}
+                  value={local.codexReviewMaxMb ?? 200}
+                  onChange={(event) => updateNumberField("codexReviewMaxMb", event.target.value)}
+                />
+              </div>
+              <div className="settings-field">
+                <label>Review Retention (days)</label>
+                <input
+                  type="number"
+                  min={1}
+                  max={90}
+                  value={local.codexReviewKeepDays ?? 14}
+                  onChange={(event) => updateNumberField("codexReviewKeepDays", event.target.value)}
+                />
+              </div>
+              <div className="settings-field">
                 <label>Extra Codex Args (space-separated)</label>
                 <input
                   value={local.codexArgs ?? ""}
@@ -252,6 +282,41 @@ const SettingsModal = ({
                   Example: --model gpt-5 --max-tokens 2048
                 </span>
               </div>
+              {local.codexReviewProvider === "googleDrive" ? (
+                <>
+                  <div className="settings-field">
+                    <label>Google Drive Credentials (JSON)</label>
+                    <div style={{ display: "flex", gap: 8 }}>
+                      <input
+                        value={local.codexReviewGoogleCredentials ?? ""}
+                        onChange={(event) =>
+                          updateField("codexReviewGoogleCredentials", event.target.value)
+                        }
+                      />
+                      <button
+                        className="button"
+                        type="button"
+                        onClick={() => browse("codexReviewGoogleCredentials", "file")}
+                      >
+                        <FolderOpen size={12} />
+                        Browse
+                      </button>
+                    </div>
+                  </div>
+                  <div className="settings-field">
+                    <label>Google Drive Folder ID</label>
+                    <input
+                      value={local.codexReviewGoogleFolderId ?? ""}
+                      onChange={(event) =>
+                        updateField("codexReviewGoogleFolderId", event.target.value)
+                      }
+                    />
+                    <span style={{ color: "var(--muted)", fontSize: 11 }}>
+                      Share the folder with the service account email.
+                    </span>
+                  </div>
+                </>
+              ) : null}
             </>
           ) : null}
           {activeTab === "workspaces" ? (

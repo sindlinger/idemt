@@ -9,6 +9,7 @@ import type { SettingsService } from "./services/SettingsService";
 import { TerminalService } from "./services/TerminalService";
 import { TestService } from "./services/TestService";
 import { WorkspaceService } from "./services/WorkspaceService";
+import { ReviewStoreService } from "./services/ReviewStoreService";
 import { logLine } from "./logger";
 import fs from "node:fs/promises";
 import path from "node:path";
@@ -20,7 +21,14 @@ export const registerIpc = async (window: BrowserWindow, settingsService: Settin
   const workspaceService = new WorkspaceService(window);
   const logsService = new LogsService(window);
   const buildService = new BuildService(window, logsService);
-  const codexService = new CodexService(window, logsService, workspaceService, buildService);
+  const reviewStore = new ReviewStoreService(logsService);
+  const codexService = new CodexService(
+    window,
+    logsService,
+    workspaceService,
+    buildService,
+    reviewStore
+  );
   const testService = new TestService(window, logsService);
   const terminalService = new TerminalService(window);
 

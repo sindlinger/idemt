@@ -25,9 +25,15 @@ Settings are stored in the user data directory:
 Use **Validate** to verify that paths exist.
 
 ## Codex tab
+- **Review Storage Provider**: local (userData) or Google Drive.
+- **Review Max Size (MB)**: total storage budget for saved Codex changes.
+- **Review Retention (days)**: delete older review bundles automatically.
+- **Google Drive Credentials**: path to a service account JSON (required when Google Drive is selected).
+- **Google Drive Folder ID**: folder to store review bundles (share it with the service account).
 - **Extra Codex Args**: additional CLI flags to pass to Codex (space-separated)
 
 Codex is always executed with `--skip-git-repo-check` to avoid workspace trust errors.
+Codex change bundles are stored in `userData/codex-review` and can be mirrored to Google Drive if configured.
 
 ## Workspaces tab
 - **Recent Workspaces**: list of recently opened workspaces.

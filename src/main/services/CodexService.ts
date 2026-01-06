@@ -3,11 +3,12 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
 import type { BrowserWindow } from "electron";
-import type { CodexEvent, CodexRunRequest, CodexRunStatus, Settings } from "../../shared/ipc";
+import type { CodexEvent, CodexRunRequest, CodexRunStatus, ReviewChangePayload, Settings } from "../../shared/ipc";
 import { LogsService } from "./LogsService";
 import { WorkspaceService } from "./WorkspaceService";
 import { BuildService } from "./BuildService";
 import { buildContext } from "./ContextBuilder";
+import type { ReviewStoreService } from "./ReviewStoreService";
 
 const CODEX_LOG_DIR = path.join(process.cwd(), "logs", "codex");
 const parseArgs = (value?: string): string[] => {
@@ -23,14 +24,22 @@ export class CodexService {
   private logs: LogsService;
   private workspace: WorkspaceService;
   private build: BuildService;
+  private reviewStore?: ReviewStoreService;
   private currentProcess: ReturnType<typeof spawn> | null = null;
   private status: CodexRunStatus = { running: false, startedAt: 0 };
 
-  constructor(window: BrowserWindow, logs: LogsService, workspace: WorkspaceService, build: BuildService) {
+  constructor(
+    window: BrowserWindow,
+    logs: LogsService,
+    workspace: WorkspaceService,
+    build: BuildService,
+    reviewStore?: ReviewStoreService
+  ) {
     this.window = window;
     this.logs = logs;
     this.workspace = workspace;
     this.build = build;
+    this.reviewStore = reviewStore;
   }
 
   async run(request: CodexRunRequest, settings: Settings): Promise<CodexRunStatus> {
@@ -112,7 +121,7 @@ export class CodexService {
       };
       this.currentProcess = null;
 
-      await this.emitFileChanges(snapshots, runId);
+      await this.emitFileChanges(snapshots, runId, settings);
       this.window.webContents.send("codex:run:done", this.status);
     });
 
@@ -131,7 +140,11 @@ export class CodexService {
     }
   }
 
-  private async emitFileChanges(snapshots: Map<string, string>, changeId: string) {
+  private async emitFileChanges(
+    snapshots: Map<string, string>,
+    changeId: string,
+    settings: Settings
+  ) {
     for (const [filePath, beforeContent] of snapshots.entries()) {
       try {
         const afterContent = await fs.readFile(filePath, "utf-8");
@@ -143,6 +156,17 @@ export class CodexService {
             source: "codex",
             changeId
           });
+          if (this.reviewStore) {
+            const payload: ReviewChangePayload = {
+              path: filePath,
+              before: beforeContent,
+              after: afterContent,
+              source: "codex",
+              changeId,
+              timestamp: Date.now()
+            };
+            await this.reviewStore.storeChange(payload, settings);
+          }
         }
       } catch {
         continue;

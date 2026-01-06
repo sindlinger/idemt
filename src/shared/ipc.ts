@@ -56,6 +56,15 @@ export type CodexRunStatus = {
   exitCode?: number;
 };
 
+export type ReviewChangePayload = {
+  path: string;
+  before: string;
+  after: string;
+  source?: string;
+  changeId?: string;
+  timestamp: number;
+};
+
 export type BuildRequest = {
   filePath: string;
 };
@@ -101,6 +110,11 @@ export type Settings = {
   editorShowRulers?: boolean;
   editorRulers?: number[];
   editorShowCursorPosition?: boolean;
+  codexReviewProvider?: "local" | "googleDrive";
+  codexReviewMaxMb?: number;
+  codexReviewKeepDays?: number;
+  codexReviewGoogleCredentials?: string;
+  codexReviewGoogleFolderId?: string;
   windowBounds?: WindowBounds;
 };
 

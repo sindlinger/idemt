@@ -19,6 +19,11 @@ const DEFAULTS: Settings = {
   editorShowRulers: false,
   editorRulers: [80, 120],
   editorShowCursorPosition: false,
+  codexReviewProvider: "local",
+  codexReviewMaxMb: 200,
+  codexReviewKeepDays: 14,
+  codexReviewGoogleCredentials: "",
+  codexReviewGoogleFolderId: "",
   windowBounds: undefined
 };
 
@@ -62,6 +67,10 @@ export class SettingsService {
       ["mtDataDir", settings.mtDataDir],
       ["reportsDir", settings.reportsDir]
     ];
+
+    if (settings.codexReviewProvider === "googleDrive") {
+      entries.push(["codexReviewGoogleCredentials", settings.codexReviewGoogleCredentials]);
+    }
 
     for (const [key, value] of entries) {
       if (!value) {
