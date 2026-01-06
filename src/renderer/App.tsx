@@ -1168,6 +1168,10 @@ const App = () => {
             if (bottomPanelOpen) return;
             toggleBottomPanelOpen();
           }}
+          onDoubleClick={() => {
+            if (!bottomPanelOpen) return;
+            toggleBottomPanelOpen();
+          }}
         >
           <button
             className="split-pin"
