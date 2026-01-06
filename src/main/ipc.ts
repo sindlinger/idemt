@@ -3,6 +3,7 @@ import type { BrowserWindow } from "electron";
 import type { BuildRequest, CodexRunRequest, FileFilters, Settings, TestRequest } from "../shared/ipc";
 import { BuildService } from "./services/BuildService";
 import { CodexService } from "./services/CodexService";
+import { getCodexModelsInfo } from "./services/CodexModelsService";
 import { LogsService } from "./services/LogsService";
 import type { SettingsService } from "./services/SettingsService";
 import { TerminalService } from "./services/TerminalService";
@@ -144,6 +145,11 @@ export const registerIpc = async (window: BrowserWindow, settingsService: Settin
   ipcMain.on("codex:run:cancel", () => {
     logLine("ipc", "codex:run:cancel");
     codexService.cancel();
+  });
+
+  ipcMain.handle("codex:models:get", async () => {
+    logLine("ipc", "codex:models:get");
+    return getCodexModelsInfo(settingsService.get());
   });
 
   ipcMain.handle("build:start", async (_event, request: BuildRequest) =>

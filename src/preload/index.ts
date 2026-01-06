@@ -3,6 +3,7 @@ import type {
   BuildRequest,
   BuildResult,
   CodexEvent,
+  CodexModelsInfo,
   CodexRunRequest,
   CodexRunStatus,
   FileChangePayload,
@@ -52,6 +53,7 @@ contextBridge.exposeInMainWorld("api", {
   onFileChanged: (handler: (payload: FileChangePayload) => void) => on("file:changed", handler),
   runCodex: (request: CodexRunRequest): Promise<CodexRunStatus> =>
     ipcRenderer.invoke("codex:run:start", request),
+  codexModelsGet: (): Promise<CodexModelsInfo> => ipcRenderer.invoke("codex:models:get"),
   cancelCodex: (): void => ipcRenderer.send("codex:run:cancel"),
   onCodexEvent: (handler: (event: CodexEvent) => void) => on("codex:run:event", handler),
   onCodexDone: (handler: (status: CodexRunStatus) => void) => on("codex:run:done", handler),

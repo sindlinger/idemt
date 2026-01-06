@@ -1636,6 +1636,19 @@ button {
   gap: 12px;
 }
 
+.codex-chat,
+.codex-panel,
+.codex-review-diff {
+  scrollbar-width: none;
+}
+
+.codex-chat::-webkit-scrollbar,
+.codex-panel::-webkit-scrollbar,
+.codex-review-diff::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+
 .codex-message {
   background: rgba(255, 255, 255, 0.02);
   border-left: 2px solid rgba(255, 255, 255, 0.12);
@@ -1720,19 +1733,27 @@ button {
 
 .codex-combo {
   height: 22px;
-  padding: 0 6px;
+  padding: 0 20px 0 8px;
   border-radius: 6px;
-  border: 1px solid transparent;
-  background: transparent;
-  color: var(--muted);
+  border: 1px solid var(--border);
+  background: var(--panel-2);
+  color: var(--text);
   font-size: 11px;
   appearance: none;
   cursor: pointer;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23b5b5b5' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='m6 9 6 6 6-6'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 6px center;
+  background-size: 12px 12px;
 }
 
 .codex-combo:hover {
-  border-color: rgba(255, 255, 255, 0.1);
-  color: var(--text);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.codex-combo:focus-visible {
+  outline: 1px solid rgba(255, 255, 255, 0.3);
+  outline-offset: 1px;
 }
 
 .codex-actions {
@@ -1936,6 +1957,13 @@ button {
   background: #ffffff;
   border-color: #d6dbe6;
   color: #1e2431;
+}
+
+.app[data-mode="light"] .codex-combo {
+  background: #ffffff;
+  color: #1e2431;
+  border-color: #d6dbe6;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2360616a' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='m6 9 6 6 6-6'/></svg>");
 }
 
 .bottom-panel {

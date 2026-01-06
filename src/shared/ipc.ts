@@ -36,6 +36,13 @@ export type CodexRunRequest = {
   level?: string;
 };
 
+export type CodexModelsInfo = {
+  models: string[];
+  defaultModel?: string;
+  defaultLevel?: string;
+  source: "config" | "empty";
+};
+
 export type CodexEvent = {
   type: "stdout" | "stderr" | "json" | "status" | "timeline" | "log";
   data: string;

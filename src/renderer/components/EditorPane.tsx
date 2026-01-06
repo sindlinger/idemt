@@ -122,9 +122,12 @@ const EditorPane = ({
               minimap: { enabled: false },
               wordWrap: "on",
               lineNumbers: "on",
+              lineNumbersMinChars: 3,
+              lineDecorationsWidth: 6,
+              glyphMargin: false,
               scrollbar: {
-                verticalScrollbarSize: 8,
-                horizontalScrollbarSize: 8,
+                verticalScrollbarSize: 6,
+                horizontalScrollbarSize: 6,
                 useShadows: false
               },
               mouseWheelZoom: true,

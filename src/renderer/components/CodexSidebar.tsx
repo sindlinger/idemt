@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Check,
   ChevronDown,
@@ -19,6 +19,9 @@ type CodexSidebarProps = {
   codexStatus: CodexRunStatus;
   sessionActive: boolean;
   reviewChanges: Record<string, ReviewChange>;
+  models: string[];
+  defaultModel?: string;
+  defaultLevel?: string;
   onRun: (message: string, options?: { model?: string; level?: string }) => void;
   onCancel: () => void;
   onToggleSession: (active: boolean) => void;
@@ -33,6 +36,9 @@ const CodexSidebar = ({
   codexStatus,
   sessionActive,
   reviewChanges,
+  models,
+  defaultModel,
+  defaultLevel,
   onRun,
   onCancel,
   onToggleSession,
@@ -43,17 +49,26 @@ const CodexSidebar = ({
   const [message, setMessage] = useState("");
   const [showHistory, setShowHistory] = useState(true);
   const [showReview, setShowReview] = useState(true);
-  const [model, setModel] = useState("default");
-  const [level, setLevel] = useState("default");
+  const [model, setModel] = useState(defaultModel ?? "default");
+  const [level, setLevel] = useState(defaultLevel ?? "default");
   const [expandedReview, setExpandedReview] = useState<Set<string>>(() => new Set());
   const historyEntries = useMemo(() => codexEvents.slice().reverse(), [codexEvents]);
 
   const changes = Object.values(reviewChanges);
+  const modelOptions = useMemo(() => models.filter(Boolean), [models]);
+  const levelOptions = useMemo(() => {
+    const base = ["default", "low", "medium", "high", "xhigh"];
+    if (defaultLevel && !base.includes(defaultLevel)) {
+      base.push(defaultLevel);
+    }
+    return base;
+  }, [defaultLevel]);
   const sendMessage = () => {
     if (!message.trim()) return;
     onRun(message.trim(), { model, level });
     setMessage("");
   };
+  const resolvedDefaultModel = defaultModel ?? modelOptions[0];
   const statusInfo = useMemo(() => {
     if (codexStatus.running) {
       return { label: "Running", className: "running" };
@@ -69,6 +84,19 @@ const CodexSidebar = ({
     if (!codexStatus.startedAt) return "—";
     return new Date(codexStatus.startedAt).toLocaleTimeString();
   }, [codexStatus.startedAt]);
+  useEffect(() => {
+    if (!resolvedDefaultModel) return;
+    setModel((prev) => {
+      if (prev === "default" || !modelOptions.includes(prev)) {
+        return resolvedDefaultModel;
+      }
+      return prev;
+    });
+  }, [resolvedDefaultModel, modelOptions]);
+  useEffect(() => {
+    if (!defaultLevel) return;
+    setLevel((prev) => (prev === "default" ? defaultLevel : prev));
+  }, [defaultLevel]);
   const toggleReviewItem = (path: string) => {
     setExpandedReview((prev) => {
       const next = new Set(prev);
@@ -202,9 +230,15 @@ const CodexSidebar = ({
                 onChange={(event) => setModel(event.target.value)}
                 aria-label="Model"
               >
-                <option value="default">Model</option>
-                <option value="o3">o3</option>
-                <option value="o4-mini">o4-mini</option>
+                {modelOptions.length === 0 ? (
+                  <option value="default">Model</option>
+                ) : (
+                  modelOptions.map((option) => (
+                    <option key={option} value={option}>
+                      {option}
+                    </option>
+                  ))
+                )}
               </select>
               <select
                 className="codex-combo"
@@ -212,9 +246,11 @@ const CodexSidebar = ({
                 onChange={(event) => setLevel(event.target.value)}
                 aria-label="Level"
               >
-                <option value="default">Level</option>
-                <option value="low">Low</option>
-                <option value="high">High</option>
+                {levelOptions.map((option) => (
+                  <option key={option} value={option}>
+                    {option === "default" ? "Level" : option}
+                  </option>
+                ))}
               </select>
             </div>
             <div className="codex-action-group right">

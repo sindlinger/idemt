@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Pin, PinOff } from "lucide-react";
 import type {
+  CodexModelsInfo,
   CodexRunStatus,
   Diagnostic,
   FileChangePayload,
@@ -237,6 +238,10 @@ const App = () => {
     python: true,
     cpp: true
   });
+  const [codexModelsInfo, setCodexModelsInfo] = useState<CodexModelsInfo>({
+    models: [],
+    source: "empty"
+  });
   const [newFileExt, setNewFileExt] = useState("mq5");
   const [layout, setLayout] = useState<LayoutState>(() => readLayoutState());
   const [viewport, setViewport] = useState(() => ({
@@ -325,6 +330,13 @@ const App = () => {
       }
     });
   }, [addWorkspace, api, fileFilters, setActiveWorkspace, setSettings, setTree]);
+
+  useEffect(() => {
+    if (typeof api.codexModelsGet !== "function") return;
+    api.codexModelsGet()
+      .then((info) => setCodexModelsInfo(info))
+      .catch(() => setCodexModelsInfo({ models: [], source: "empty" }));
+  }, [api]);
 
   useEffect(() => {
     api.setWorkspaceFilters?.(fileFilters);
@@ -1089,6 +1101,9 @@ const App = () => {
             codexStatus={codexStatus}
             sessionActive={codexSessionActive}
             reviewChanges={reviewChanges}
+            models={codexModelsInfo.models}
+            defaultModel={codexModelsInfo.defaultModel}
+            defaultLevel={codexModelsInfo.defaultLevel}
             onRun={handleCodexRun}
             onCancel={() => api.cancelCodex?.()}
             onToggleSession={(active) => {

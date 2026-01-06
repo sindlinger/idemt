@@ -3,6 +3,7 @@ import type {
   BuildRequest,
   BuildResult,
   CodexEvent,
+  CodexModelsInfo,
   CodexRunRequest,
   CodexRunStatus,
   FileChangePayload,
@@ -40,6 +41,7 @@ declare global {
       onWorkspaceDirUpdate: (handler: (payload: WorkspaceDirUpdate) => void) => () => void;
       onFileChanged: (handler: (payload: FileChangePayload) => void) => () => void;
       runCodex: (request: CodexRunRequest) => Promise<CodexRunStatus>;
+      codexModelsGet: () => Promise<CodexModelsInfo>;
       cancelCodex: () => void;
       onCodexEvent: (handler: (event: CodexEvent) => void) => () => void;
       onCodexDone: (handler: (status: CodexRunStatus) => void) => () => void;
