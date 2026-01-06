@@ -61,7 +61,7 @@ const LOCAL_WORKSPACE_ID = "__local__";
 const getCodexStorageKey = (workspaceId: string) => `${CODEX_STORAGE_KEY}:${workspaceId}`;
 const WORKSPACE_STATE_STORAGE_KEY = "mt5ide.workspace.state";
 const LAYOUT_STORAGE_KEY = "mt5ide.layout.state";
-const SPLITTER_SIZE = 8;
+const SPLITTER_SIZE = 4;
 
 type LayoutState = {
   leftWidth: number;
@@ -1051,6 +1051,12 @@ const App = () => {
           <div
             className={`splitter vertical left ${layout.leftCollapsed ? "ghost" : ""}`}
             onMouseDown={(event) => startResize("left", event)}
+            onDoubleClick={(event) => {
+              event.preventDefault();
+              event.stopPropagation();
+              if (layout.leftCollapsed) return;
+              setLayout((prev) => ({ ...prev, leftCollapsed: true }));
+            }}
           >
             <button
               className={`split-pin ${layout.leftCollapsed ? "" : "active"}`}
@@ -1085,6 +1091,12 @@ const App = () => {
           <div
             className={`splitter vertical right ${layout.rightCollapsed ? "ghost" : ""}`}
             onMouseDown={(event) => startResize("right", event)}
+            onDoubleClick={(event) => {
+              event.preventDefault();
+              event.stopPropagation();
+              if (layout.rightCollapsed) return;
+              setLayout((prev) => ({ ...prev, rightCollapsed: true }));
+            }}
           >
             <button
               className={`split-pin ${layout.rightCollapsed ? "" : "active"}`}
