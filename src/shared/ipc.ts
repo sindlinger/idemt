@@ -34,6 +34,7 @@ export type CodexRunRequest = {
   contextBundle?: string;
   model?: string;
   level?: string;
+  sessionActive?: boolean;
 };
 
 export type CodexModelsInfo = {

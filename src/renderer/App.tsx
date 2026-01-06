@@ -965,7 +965,8 @@ const App = () => {
       selection,
       contextBundle: codexSessionActive ? buildCodexContextBundle(codexMessages) : undefined,
       model: options?.model,
-      level: options?.level
+      level: options?.level,
+      sessionActive: codexSessionActive
     });
     setCodexStatus(status, workspaceId);
   };

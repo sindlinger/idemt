@@ -68,9 +68,11 @@ export class CodexService {
     const extraArgs = parseArgs(settings.codexArgs);
     const model = request.model && request.model !== "default" ? request.model : undefined;
     const level = request.level && request.level !== "default" ? request.level : undefined;
+    const resumeArgs = request.sessionActive ? ["resume", "--last"] : [];
     const args = [
       "exec",
       "--skip-git-repo-check",
+      ...resumeArgs,
       ...(model ? ["--model", model] : []),
       ...(level ? ["-c", `reasoning.level="${level}"`] : []),
       ...extraArgs,
