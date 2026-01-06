@@ -2,6 +2,7 @@ import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import type { CodexModelsInfo, Settings } from "../../shared/ipc";
+import { resolveCodexConfigPath } from "./CodexConfigService";
 
 const extractModelsFromToml = (raw: string) => {
   const models = new Set<string>();
@@ -40,7 +41,7 @@ const getConfigPath = () => {
 };
 
 export const getCodexModelsInfo = async (_settings: Settings): Promise<CodexModelsInfo> => {
-  const configPath = getConfigPath();
+  const configPath = (await resolveCodexConfigPath()) ?? getConfigPath();
   try {
     const raw = await fs.readFile(configPath, "utf-8");
     const parsed = extractModelsFromToml(raw);
