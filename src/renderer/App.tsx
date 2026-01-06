@@ -10,7 +10,6 @@ import type {
   WorkspaceNode
 } from "@shared/ipc";
 import { useAppStore } from "@state/store";
-import type { CodexHistoryItem } from "@state/store";
 import { calculateChangedLines, createUnifiedDiff } from "@state/diff";
 import TopBar from "./components/TopBar";
 import LeftSidebar from "./components/LeftSidebar";
@@ -222,7 +221,6 @@ const App = () => {
     addCodexEvent,
     addCodexMessage,
     setCodexMessages,
-    setCodexEvents,
     setCodexHistory,
     addCodexHistoryItem,
     setCodexStatus,
@@ -269,6 +267,7 @@ const App = () => {
     models: [],
     source: "empty"
   });
+  const codexResumeCommand = settings.codexPath || "codex";
   const [newFileExt, setNewFileExt] = useState("mq5");
   const [layout, setLayout] = useState<LayoutState>(() => readLayoutState());
   const [viewport, setViewport] = useState(() => ({
@@ -971,13 +970,6 @@ const App = () => {
     setCodexStatus(status, workspaceId);
   };
 
-  const handleResumeHistory = (item: CodexHistoryItem) => {
-    const workspaceId = activeWorkspaceId ?? LOCAL_WORKSPACE_ID;
-    setCodexMessages(item.messages, workspaceId);
-    setCodexEvents([], workspaceId);
-    setCodexSessionActive(true, workspaceId);
-  };
-
   const resolveWorkspaceForPath = (filePath: string) => {
     const normalize = (value: string) => value.replace(/\\/g, "/").toLowerCase();
     const target = normalize(filePath);
@@ -1198,7 +1190,8 @@ const App = () => {
             codexStatus={codexStatus}
             sessionActive={codexSessionActive}
             reviewChanges={reviewChanges}
-            historyItems={codexHistory}
+            resumeCommand={codexResumeCommand}
+            resumeCwd={workspaceRoot ?? undefined}
             models={codexModelsInfo.models}
             defaultModel={codexModelsInfo.defaultModel}
             defaultLevel={codexModelsInfo.defaultLevel}
@@ -1209,7 +1202,6 @@ const App = () => {
               setCodexSessionActive(active, workspaceId);
               if (!active) clearCodexSession(workspaceId);
             }}
-            onResumeHistory={handleResumeHistory}
             onAcceptChange={handleAcceptChange}
             onRevertChange={handleRevertChange}
             collapsed={layout.rightCollapsed}

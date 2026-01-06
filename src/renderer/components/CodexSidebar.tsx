@@ -11,7 +11,8 @@ import {
   Square
 } from "lucide-react";
 import type { CodexEvent, CodexRunStatus } from "@shared/ipc";
-import type { CodexHistoryItem, CodexMessage, ReviewChange } from "@state/store";
+import type { CodexMessage, ReviewChange } from "@state/store";
+import CodexResumePanel from "./CodexResumePanel";
 
 type CodexSidebarProps = {
   codexEvents: CodexEvent[];
@@ -19,14 +20,14 @@ type CodexSidebarProps = {
   codexStatus: CodexRunStatus;
   sessionActive: boolean;
   reviewChanges: Record<string, ReviewChange>;
-  historyItems: CodexHistoryItem[];
+  resumeCommand: string;
+  resumeCwd?: string;
   models: string[];
   defaultModel?: string;
   defaultLevel?: string;
   onRun: (message: string, options?: { model?: string; level?: string }) => void;
   onCancel: () => void;
   onToggleSession: (active: boolean) => void;
-  onResumeHistory: (item: CodexHistoryItem) => void;
   onAcceptChange: (path: string) => void;
   onRevertChange: (path: string) => void;
   collapsed?: boolean;
@@ -38,14 +39,14 @@ const CodexSidebar = ({
   codexStatus,
   sessionActive,
   reviewChanges,
-  historyItems,
+  resumeCommand,
+  resumeCwd,
   models,
   defaultModel,
   defaultLevel,
   onRun,
   onCancel,
   onToggleSession,
-  onResumeHistory,
   onAcceptChange,
   onRevertChange,
   collapsed
@@ -156,7 +157,7 @@ const CodexSidebar = ({
             <button
               className={`codex-view-toggle ${showHistory ? "active" : ""}`}
               onClick={() => setShowHistory((value) => !value)}
-              title="Past conversations"
+              title="Resume picker"
               aria-pressed={showHistory}
             >
               <History size={12} />
@@ -200,26 +201,11 @@ const CodexSidebar = ({
               ));
             })}
         </div>
-        {(showHistory && historyItems.length > 0) || (showReview && changes.length > 0) ? (
+        {(showHistory || (showReview && changes.length > 0)) ? (
           <div className="codex-panels">
-            {showHistory && historyItems.length > 0 ? (
+            {showHistory ? (
               <div className="codex-panel codex-history">
-                {historyItems
-                  .slice()
-                  .sort((a, b) => b.timestamp - a.timestamp)
-                  .map((item) => (
-                    <button
-                      key={item.id}
-                      className="codex-history-item"
-                      onClick={() => onResumeHistory(item)}
-                      title="Resume"
-                    >
-                      <span className="codex-history-title">{item.title}</span>
-                      <span className="codex-history-time">
-                        {new Date(item.timestamp).toLocaleTimeString()}
-                      </span>
-                    </button>
-                  ))}
+                <CodexResumePanel command={resumeCommand} cwd={resumeCwd} />
               </div>
             ) : null}
             {showReview && changes.length > 0 ? (
