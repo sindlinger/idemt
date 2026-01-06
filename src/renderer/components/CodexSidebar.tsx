@@ -4,7 +4,6 @@ import {
   ChevronDown,
   ChevronRight,
   GitCompare,
-  History,
   Power,
   RotateCcw,
   Send,
@@ -12,7 +11,6 @@ import {
 } from "lucide-react";
 import type { CodexEvent, CodexRunStatus } from "@shared/ipc";
 import type { CodexMessage, ReviewChange } from "@state/store";
-import CodexResumePanel from "./CodexResumePanel";
 
 type CodexSidebarProps = {
   codexEvents: CodexEvent[];
@@ -20,8 +18,6 @@ type CodexSidebarProps = {
   codexStatus: CodexRunStatus;
   sessionActive: boolean;
   reviewChanges: Record<string, ReviewChange>;
-  resumeCommand: string;
-  resumeCwd?: string;
   runTarget?: "windows" | "wsl";
   onRunTargetChange?: (target: "windows" | "wsl") => void;
   models: string[];
@@ -41,8 +37,6 @@ const CodexSidebar = ({
   codexStatus,
   sessionActive,
   reviewChanges,
-  resumeCommand,
-  resumeCwd,
   runTarget,
   onRunTargetChange,
   models,
@@ -56,7 +50,6 @@ const CodexSidebar = ({
   collapsed
 }: CodexSidebarProps) => {
   const [message, setMessage] = useState("");
-  const [showHistory, setShowHistory] = useState(true);
   const [showReview, setShowReview] = useState(true);
   const [model, setModel] = useState(defaultModel ?? "default");
   const [level, setLevel] = useState(defaultLevel ?? "default");
@@ -131,11 +124,10 @@ const CodexSidebar = ({
     setLevel((prev) => (prev === "default" ? defaultLevel : prev));
   }, [defaultLevel]);
   useEffect(() => {
-    if (!showHistory) return;
     const el = chatRef.current;
     if (!el) return;
     el.scrollTop = el.scrollHeight;
-  }, [showHistory, streamItems.length]);
+  }, [streamItems.length]);
   const toggleReviewItem = (path: string) => {
     setExpandedReview((prev) => {
       const next = new Set(prev);
@@ -177,14 +169,6 @@ const CodexSidebar = ({
               </div>
             ) : null}
             <button
-              className={`codex-view-toggle ${showHistory ? "active" : ""}`}
-              onClick={() => setShowHistory((value) => !value)}
-              title="Resume picker"
-              aria-pressed={showHistory}
-            >
-              <History size={12} />
-            </button>
-            <button
               className={`codex-view-toggle ${showReview ? "active" : ""}`}
               onClick={() => setShowReview((value) => !value)}
               title="Review"
@@ -223,17 +207,8 @@ const CodexSidebar = ({
               ));
             })}
         </div>
-        {(showHistory || (showReview && changes.length > 0)) ? (
+        {showReview && changes.length > 0 ? (
           <div className="codex-panels">
-            {showHistory ? (
-              <div className="codex-panel codex-history">
-                <CodexResumePanel
-                  command={resumeCommand}
-                  cwd={resumeCwd}
-                  runTarget={runTarget}
-                />
-              </div>
-            ) : null}
             {showReview && changes.length > 0 ? (
               <div className="codex-panel codex-review">
                 {changes.map((change) => {

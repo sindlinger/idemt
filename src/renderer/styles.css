@@ -1762,62 +1762,6 @@ button {
   max-height: 220px;
 }
 
-.codex-resume {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.codex-resume-toolbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-}
-
-.codex-resume-title {
-  font-size: 11px;
-  color: var(--muted);
-}
-
-.codex-resume-button {
-  border: 1px solid var(--border);
-  background: transparent;
-  color: var(--text);
-  border-radius: 6px;
-  font-size: 11px;
-  padding: 4px 8px;
-  cursor: pointer;
-}
-
-.codex-resume-button:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.04);
-}
-
-.codex-resume-button:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.codex-resume-terminal {
-  height: 180px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  background: var(--panel);
-  padding: 6px;
-}
-
-.codex-resume-hint {
-  font-size: 10px;
-  color: var(--muted);
-}
-
-.codex-history {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
 .codex-history-item {
   border: 1px solid var(--border);
   background: transparent;
