@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ChevronDown, ChevronLeft, ChevronRight, ChevronUp } from "lucide-react";
 import type {
   CodexModelsInfo,
   CodexRunStatus,
@@ -1066,7 +1065,7 @@ const App = () => {
                 setLayout((prev) => ({ ...prev, leftCollapsed: !prev.leftCollapsed }));
               }}
             >
-              {layout.leftCollapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
+              <span className="split-grip" />
             </button>
           </div>
           <EditorPane
@@ -1106,7 +1105,7 @@ const App = () => {
                 setLayout((prev) => ({ ...prev, rightCollapsed: !prev.rightCollapsed }));
               }}
             >
-              {layout.rightCollapsed ? <ChevronLeft size={14} /> : <ChevronRight size={14} />}
+              <span className="split-grip" />
             </button>
           </div>
           <CodexSidebar
@@ -1160,7 +1159,7 @@ const App = () => {
               toggleBottomPanelOpen();
             }}
           >
-            {bottomPanelOpen ? <ChevronDown size={14} /> : <ChevronUp size={14} />}
+            <span className="split-grip" />
           </button>
         </div>
       <BottomPanel

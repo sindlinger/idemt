@@ -29,6 +29,8 @@
   --editor-bg: var(--bg-soft);
   --splitter-bg: rgba(55, 55, 55, 0.9);
   --splitter-hover: rgba(49, 208, 154, 0.18);
+  --split-grip: rgba(230, 230, 230, 0.35);
+  --split-grip-hover: rgba(230, 230, 230, 0.9);
   --line-highlight: rgba(49, 208, 154, 0.12);
   --line-highlight-border: #31d09a;
   --window-radius: 8px;
@@ -673,6 +675,8 @@ button {
   --editor-bg: #f4f6f9;
   --splitter-bg: #e1e6ee;
   --splitter-hover: rgba(47, 143, 115, 0.25);
+  --split-grip: rgba(60, 70, 85, 0.35);
+  --split-grip-hover: rgba(60, 70, 85, 0.85);
   --app-bg: #f1f4f8;
   --line-highlight: rgba(47, 143, 115, 0.16);
   --line-highlight-border: #2f8f73;
@@ -855,12 +859,11 @@ button {
 }
 
 .split-pin {
-  width: 16px;
-  height: 16px;
+  width: 14px;
+  height: 22px;
   border-radius: 6px;
   border: none;
   background: transparent;
-  color: rgba(230, 230, 230, 0.75);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -872,6 +875,11 @@ button {
 
 .splitter.vertical .split-pin {
   transform: none;
+}
+
+.splitter.horizontal .split-pin {
+  width: 22px;
+  height: 14px;
 }
 
 .splitter:hover .split-pin,
@@ -889,22 +897,54 @@ button {
   opacity: 1;
 }
 
-.split-pin svg {
-  display: block;
-  opacity: 0.7;
+.split-grip {
+  width: 10px;
+  height: 18px;
+  opacity: 0.6;
+  background-image: repeating-linear-gradient(
+    90deg,
+    var(--split-grip),
+    var(--split-grip) 1px,
+    transparent 1px,
+    transparent 3px
+  );
 }
 
-.splitter:hover .split-pin svg,
-.split-pin:focus-visible svg {
-  opacity: 1;
+.splitter.horizontal .split-grip {
+  width: 18px;
+  height: 10px;
+  background-image: repeating-linear-gradient(
+    0deg,
+    var(--split-grip),
+    var(--split-grip) 1px,
+    transparent 1px,
+    transparent 3px
+  );
 }
 
-.split-pin.active svg {
-  opacity: 0.9;
+.splitter:hover .split-grip,
+.split-pin:focus-visible .split-grip,
+.split-pin.active .split-grip {
+  opacity: 0.95;
+  background-image: repeating-linear-gradient(
+    90deg,
+    var(--split-grip-hover),
+    var(--split-grip-hover) 1px,
+    transparent 1px,
+    transparent 3px
+  );
 }
 
-.app[data-mode="light"] .split-pin {
-  color: rgba(60, 70, 85, 0.75);
+.splitter.horizontal:hover .split-grip,
+.splitter.horizontal .split-pin:focus-visible .split-grip,
+.splitter.horizontal .split-pin.active .split-grip {
+  background-image: repeating-linear-gradient(
+    0deg,
+    var(--split-grip-hover),
+    var(--split-grip-hover) 1px,
+    transparent 1px,
+    transparent 3px
+  );
 }
 
 .sidebar {
