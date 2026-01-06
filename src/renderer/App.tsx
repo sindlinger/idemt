@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Pin, PinOff } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import type {
   CodexModelsInfo,
   CodexRunStatus,
@@ -1066,7 +1066,7 @@ const App = () => {
                 setLayout((prev) => ({ ...prev, leftCollapsed: !prev.leftCollapsed }));
               }}
             >
-              {layout.leftCollapsed ? <PinOff size={12} /> : <Pin size={12} />}
+              {layout.leftCollapsed ? <ChevronRight size={10} /> : <ChevronLeft size={10} />}
             </button>
           </div>
           <EditorPane
@@ -1106,7 +1106,7 @@ const App = () => {
                 setLayout((prev) => ({ ...prev, rightCollapsed: !prev.rightCollapsed }));
               }}
             >
-              {layout.rightCollapsed ? <PinOff size={12} /> : <Pin size={12} />}
+              {layout.rightCollapsed ? <ChevronLeft size={10} /> : <ChevronRight size={10} />}
             </button>
           </div>
           <CodexSidebar
