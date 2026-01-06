@@ -1056,16 +1056,20 @@ const App = () => {
               if (layout.leftCollapsed) return;
               setLayout((prev) => ({ ...prev, leftCollapsed: true }));
             }}
+            onClick={() => {
+              if (!layout.leftCollapsed) return;
+              setLayout((prev) => ({ ...prev, leftCollapsed: false }));
+            }}
           >
             <button
-              className={`split-pin left ${layout.leftCollapsed ? "collapsed" : "expanded"}`}
+              className={`split-pin ${layout.leftCollapsed ? "collapsed" : "expanded"}`}
               title={layout.leftCollapsed ? "Expand sidebar" : "Collapse sidebar"}
               onClick={(event) => {
                 event.stopPropagation();
                 setLayout((prev) => ({ ...prev, leftCollapsed: !prev.leftCollapsed }));
               }}
             >
-              <span className="split-arrow" />
+              <span className="split-grip" />
             </button>
           </div>
           <EditorPane
@@ -1096,16 +1100,20 @@ const App = () => {
               if (layout.rightCollapsed) return;
               setLayout((prev) => ({ ...prev, rightCollapsed: true }));
             }}
+            onClick={() => {
+              if (!layout.rightCollapsed) return;
+              setLayout((prev) => ({ ...prev, rightCollapsed: false }));
+            }}
           >
             <button
-              className={`split-pin right ${layout.rightCollapsed ? "collapsed" : "expanded"}`}
+              className={`split-pin ${layout.rightCollapsed ? "collapsed" : "expanded"}`}
               title={layout.rightCollapsed ? "Expand Codex" : "Collapse Codex"}
               onClick={(event) => {
                 event.stopPropagation();
                 setLayout((prev) => ({ ...prev, rightCollapsed: !prev.rightCollapsed }));
               }}
             >
-              <span className="split-arrow" />
+              <span className="split-grip" />
             </button>
           </div>
           <CodexSidebar
@@ -1150,16 +1158,20 @@ const App = () => {
         <div
           className={`splitter horizontal ${bottomPanelOpen ? "" : "ghost"}`}
           onMouseDown={(event) => startResize("bottom", event)}
+          onClick={() => {
+            if (bottomPanelOpen) return;
+            toggleBottomPanelOpen();
+          }}
         >
           <button
-            className={`split-pin bottom ${bottomPanelOpen ? "expanded" : "collapsed"}`}
+            className={`split-pin ${bottomPanelOpen ? "expanded" : "collapsed"}`}
             title={bottomPanelOpen ? "Collapse panel" : "Expand panel"}
             onClick={(event) => {
               event.stopPropagation();
               toggleBottomPanelOpen();
             }}
           >
-            <span className="split-arrow" />
+            <span className="split-grip" />
           </button>
         </div>
       <BottomPanel
