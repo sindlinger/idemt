@@ -7,14 +7,14 @@ const buildCommand = (raw: string, platform: string) => {
   if (!raw) return "";
   if (platform === "win32") {
     if (raw.includes("\\") || raw.includes(" ")) {
-      return `& "${raw}" resume --all`;
+      return `& "${raw}" resume`;
     }
-    return `${raw} resume --all`;
+    return `${raw} resume`;
   }
   if (raw.includes(" ") || raw.includes("/")) {
-    return `"${raw.replace(/\"/g, "\\\"")}" resume --all`;
+    return `"${raw.replace(/\"/g, "\\\"")}" resume`;
   }
-  return `${raw} resume --all`;
+  return `${raw} resume`;
 };
 
 const CodexResumePanel = ({ command, cwd }: { command: string; cwd?: string }) => {
