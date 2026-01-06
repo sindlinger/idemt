@@ -891,16 +891,16 @@ button {
 
 .split-pin svg {
   display: block;
-  opacity: 0.35;
+  opacity: 0.7;
 }
 
 .splitter:hover .split-pin svg,
 .split-pin:focus-visible svg {
-  opacity: 0.85;
+  opacity: 1;
 }
 
 .split-pin.active svg {
-  opacity: 0.6;
+  opacity: 0.85;
 }
 
 .sidebar {

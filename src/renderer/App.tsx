@@ -1066,7 +1066,7 @@ const App = () => {
                 setLayout((prev) => ({ ...prev, leftCollapsed: !prev.leftCollapsed }));
               }}
             >
-              {layout.leftCollapsed ? <ChevronRight size={12} /> : <ChevronLeft size={12} />}
+              {layout.leftCollapsed ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
             </button>
           </div>
           <EditorPane
@@ -1106,7 +1106,7 @@ const App = () => {
                 setLayout((prev) => ({ ...prev, rightCollapsed: !prev.rightCollapsed }));
               }}
             >
-              {layout.rightCollapsed ? <ChevronLeft size={12} /> : <ChevronRight size={12} />}
+              {layout.rightCollapsed ? <ChevronLeft size={14} /> : <ChevronRight size={14} />}
             </button>
           </div>
           <CodexSidebar
@@ -1160,7 +1160,7 @@ const App = () => {
               toggleBottomPanelOpen();
             }}
           >
-            {bottomPanelOpen ? <ChevronDown size={12} /> : <ChevronUp size={12} />}
+            {bottomPanelOpen ? <ChevronDown size={14} /> : <ChevronUp size={14} />}
           </button>
         </div>
       <BottomPanel
