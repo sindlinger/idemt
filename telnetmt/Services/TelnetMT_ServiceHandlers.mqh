@@ -363,6 +363,36 @@ string NormalizeExpertPath(string expert)
   return e;
 }
 
+string NormalizeIndicatorPath(string name)
+{
+  string e=name;
+  if(StringFind(e, "wpath ")==0) e=StringSubstr(e, 6);
+  StringReplace(e, "\"", "");
+  StringReplace(e, "/", "\\");
+  string lower=e; StringToLower(lower);
+  string marker="\\mql5\\indicators\\";
+  int idx=StringFind(lower, marker);
+  if(idx>=0)
+    e=StringSubstr(e, idx+StringLen(marker));
+  if(StringFind(e, "Indicators\\")==0) e=StringSubstr(e, StringLen("Indicators\\"));
+  if(StringLen(e)>4)
+  {
+    string tail=StringSubstr(e, StringLen(e)-4);
+    if(tail==".ex5" || tail==".mq5") e=StringSubstr(e,0,StringLen(e)-4);
+  }
+  return e;
+}
+
+string ResolveIndicatorPath(const string name)
+{
+  string e=NormalizeIndicatorPath(name);
+  string base="MQL5\\Indicators\\";
+  if(FileIsExist(base+e+".ex5") || FileIsExist(base+e+".mq5")) return e;
+  string alt="Examples\\"+e+"\\"+e;
+  if(FileIsExist(base+alt+".ex5") || FileIsExist(base+alt+".mq5")) return alt;
+  return e;
+}
+
 string ResolveExpertPath(const string expert)
 {
   string e=NormalizeExpertPath(expert);
@@ -720,7 +750,7 @@ bool H_ListCharts(string &p[], string &m, string &d[])
 bool H_AttachInd(string &p[], string &m, string &d[])
 {
   if(ArraySize(p)<4){ m="params"; return false; }
-  string sym=p[0]; string tfstr=p[1]; string name=p[2]; int sub=SubwindowSafe(p[3]);
+  string sym=p[0]; string tfstr=p[1]; string name=ResolveIndicatorPath(p[2]); int sub=SubwindowSafe(p[3]);
   string pstr="";
   if(ArraySize(p)>4)
   {
