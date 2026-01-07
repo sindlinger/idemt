@@ -297,19 +297,28 @@ export function dispatch(tokens: string[], ctx: Ctx): DispatchResult {
       const r = resolveSymTf(args, ctx, false);
       if (!r || !r.sym || !r.tf || r.rest.length < 1)
         return err("uso: expert attach [SYMBOL TF] NAME [BASE_TPL] [k=v ...]");
-      const name = r.rest[0];
-      const rest2 = r.rest.slice(1);
+      const { params, rest: rest2 } = parseParamsTokens(r.rest);
+      if (rest2.length === 1 && rest2[0].toLowerCase().endsWith(".tpl") && !params) {
+        return { kind: "send", type: "APPLY_TPL", params: [r.sym, r.tf, rest2[0]] };
+      }
       let baseTpl = "";
       const tplIdx = rest2.findIndex((t) => t.toLowerCase().endsWith(".tpl"));
       if (tplIdx >= 0) {
         baseTpl = rest2[tplIdx];
         rest2.splice(tplIdx, 1);
       }
-      const params = rest2.length ? rest2.join(";") : "";
-      const payload = [r.sym, r.tf, name];
-      if (baseTpl) payload.push(baseTpl);
-      if (params) payload.push(params);
-      return { kind: "send", type: "ATTACH_EA_FULL", params: payload };
+      const name = rest2.join(" ");
+      if (!name) return err("uso: expert attach [SYMBOL TF] NAME [BASE_TPL] [k=v ...]");
+      const hash = stableHash(`${name}|${r.sym}|${r.tf}|${params}`);
+      const outTpl = `cmdmt_ea_${hash}.tpl`;
+      const saveParams = [name, outTpl];
+      if (baseTpl) saveParams.push(baseTpl);
+      if (params) saveParams.push(params);
+      const steps: SendAction[] = [
+        { type: "SAVE_TPL_EA", params: saveParams },
+        { type: "APPLY_TPL", params: [r.sym, r.tf, outTpl] }
+      ];
+      return { kind: "multi", steps };
     }
     if (sub === "detach") {
       const r = resolveSymTf(args, ctx, false);

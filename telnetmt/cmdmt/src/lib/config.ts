@@ -56,6 +56,7 @@ export type ConfigLayer = {
   context?: ContextConfig;
   runner?: string;
   baseTpl?: string;
+  compilePath?: string;
   tester?: TesterConfig;
 };
 
@@ -78,6 +79,7 @@ export type CliOptions = {
   tf?: string;
   sub?: number;
   baseTpl?: string;
+  compilePath?: string;
   mt5Path?: string;
   mt5Data?: string;
 };
@@ -88,6 +90,7 @@ export type ResolvedConfig = {
   transport: { hosts: string[]; port: number; timeoutMs: number };
   context: { symbol?: string; tf?: string; sub?: number };
   baseTpl?: string;
+  compilePath?: string;
   runnerId?: string;
   runner?: RunnerConfig;
   tester: Required<Pick<TesterConfig, "artifactsDir" | "reportDir">> & TesterConfig;
@@ -202,6 +205,7 @@ function mergeLayer(base: ConfigLayer, overlay: ConfigLayer): ConfigLayer {
     context: mergeDefined(base.context ?? {}, overlay.context),
     runner: overlay.runner ?? base.runner,
     baseTpl: overlay.baseTpl ?? base.baseTpl,
+    compilePath: overlay.compilePath ?? base.compilePath,
     tester: mergeDefined(base.tester ?? {}, overlay.tester)
   };
 }
@@ -307,7 +311,8 @@ export function resolveConfig(cli: CliOptions, env = process.env): ResolvedConfi
       sub: env.CMDMT_SUB
     },
     runner: env.CMDMT_RUNNER,
-    baseTpl: env.CMDMT_BASE_TPL
+    baseTpl: env.CMDMT_BASE_TPL,
+    compilePath: env.CMDMT_COMPILE
   };
   const cliLayer: ConfigLayer = {
     transport: {
@@ -322,7 +327,8 @@ export function resolveConfig(cli: CliOptions, env = process.env): ResolvedConfi
       sub: cli.sub
     },
     runner: cli.runner,
-    baseTpl: cli.baseTpl
+    baseTpl: cli.baseTpl,
+    compilePath: cli.compilePath
   };
 
   const merged = [defaultsLayer, profileLayer ?? {}, configLayer, envLayer, cliLayer].reduce(
@@ -359,6 +365,7 @@ export function resolveConfig(cli: CliOptions, env = process.env): ResolvedConfi
     transport: { hosts, port, timeoutMs },
     context,
     baseTpl: merged.baseTpl,
+    compilePath: merged.compilePath,
     runnerId,
     runner,
     tester

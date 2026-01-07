@@ -295,7 +295,7 @@ export async function runTester(
     let baseTpl = spec.baseTpl?.trim() ?? "";
     if (!baseTpl) {
       const templatesDir = path.join(dataPathWsl, "MQL5", "Profiles", "Templates");
-      const candidates = ["Default.tpl", "default.tpl"];
+      const candidates = ["Moving Average.tpl", "Default.tpl", "default.tpl"];
       const found = candidates.find((name) => fs.existsSync(path.join(templatesDir, name)));
       if (found) baseTpl = found;
     }

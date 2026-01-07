@@ -66,7 +66,7 @@ function resolveVersion(): string {
   if (env) return env;
   try {
     const here = path.dirname(fileURLToPath(import.meta.url));
-    const pkgPath = path.resolve(here, "../../../package.json");
+    const pkgPath = path.resolve(here, "../../package.json");
     const raw = fs.readFileSync(pkgPath, "utf8");
     const pkg = JSON.parse(raw) as { version?: string };
     if (pkg.version) return String(pkg.version);
@@ -82,7 +82,7 @@ const VERSION = resolveVersion();
 export type HelpSection = { title: string; items: string[] };
 
 const SECTIONS: HelpSection[] = [
-  { title: "basic", items: ["ping", "debug", "use", "ctx", "help", "indicador"] },
+  { title: "basic", items: ["ping", "debug", "compile", "use", "ctx", "help", "indicador"] },
   { title: "chart", items: ["open", "close", "list", "closeall", "redraw", "detachall", "find"] },
   { title: "template", items: ["apply", "save", "saveea", "savechart"] },
   { title: "indicator", items: ["attach", "detach", "total", "name", "handle", "get", "release"] },
@@ -195,6 +195,7 @@ type ExampleGroup = { title: string; lines: string[] };
 const EXAMPLES: Record<string, ExampleGroup[]> = {
   ping: [{ title: "ping", lines: ["ping"] }],
   debug: [{ title: "debug", lines: ["debug hello world", "debug {\"msg\":\"ok\"}"] }],
+  compile: [{ title: "compile", lines: ["compile", "compile C:\\\\caminho\\\\arquivo.mq5"] }],
   use: [{ title: "use", lines: ["use EURUSD M5", "use GBPUSD H1"] }],
   ctx: [{ title: "ctx", lines: ["ctx"] }],
   help: [{ title: "help", lines: ["help", "examples", "examples chart"] }],
@@ -288,6 +289,7 @@ function renderIndex(): string {
   const items = [
     "examples ping",
     "examples debug",
+    "examples compile",
     "examples use",
     "examples ctx",
     "examples help",

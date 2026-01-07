@@ -53,12 +53,17 @@ function parseParams(pstr?: string): Array<{ key: string; value: string }> {
     });
 }
 
-function buildExpertBlock(name: string, pstr?: string, newline = "\n"): string {
+function buildExpertBlock(
+  name: string,
+  pathLine: string,
+  pstr?: string,
+  newline = "\n"
+): string {
   const params = parseParams(pstr);
   let block = `<expert>${newline}`;
   block += `name=${name}${newline}`;
-  block += `flags=343${newline}`;
-  block += `window_num=0${newline}`;
+  if (pathLine) block += `path=${pathLine}${newline}`;
+  block += `expertmode=5${newline}`;
   block += `<inputs>${newline}`;
   for (const pair of params) {
     if (!pair.key) continue;
@@ -110,7 +115,14 @@ export function createExpertTemplate(input: TemplateInput): string {
   const newline = text.includes("\r\n") ? "\r\n" : "\n";
   const stripped = stripExpertBlock(text);
   const expertPath = resolveExpertPath(input.expert, dataPath);
-  const block = buildExpertBlock(expertPath, input.params, newline);
+  const base = path.join(dataPath, "MQL5", "Experts");
+  const rel = expertPath.replace(/\//g, "\\");
+  const relFs = rel.replace(/\\/g, path.sep);
+  const nameLine = path.win32.basename(rel) || rel;
+  let pathLine = `Experts\\${rel}`;
+  if (fs.existsSync(path.join(base, `${relFs}.ex5`))) pathLine = `Experts\\${rel}.ex5`;
+  else if (fs.existsSync(path.join(base, `${relFs}.mq5`))) pathLine = `Experts\\${rel}.mq5`;
+  const block = buildExpertBlock(nameLine, pathLine, input.params, newline);
 
   let next = stripped;
   const idx = stripped.indexOf("</chart>");

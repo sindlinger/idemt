@@ -71,6 +71,7 @@ Se algum valor obrigatorio estiver ausente (ex: host, symbol, runner), o CLI ret
 - `CMDMT_HOST` / `CMDMT_HOSTS`
 - `CMDMT_PORT` / `CMDMT_TIMEOUT`
 - `CMDMT_MT5_PATH` / `CMDMT_MT5_DATA`
+- `CMDMT_COMPILE`: caminho do script/exe de compile
 
 ### Flags principais
 - `--config <path>`
@@ -82,12 +83,14 @@ Se algum valor obrigatorio estiver ausente (ex: host, symbol, runner), o CLI ret
 - `--base-tpl <tpl>`
 - `--host <host>` / `--hosts <a,b>`
 - `--mt5-path <path>` / `--mt5-data <path>`
+- `--compile-path <path>`
 
 ## Comandos
 ### Basicos
 ```bash
 cmdmt ping
 cmdmt help
+cmdmt compile
 ```
 
 ### Indicador (com defaults)
