@@ -259,7 +259,7 @@ async function main() {
   program
     .name("cmdmt")
     .description("TelnetMT CLI (socket)")
-    .version("0.1.6")
+    .version("0.1.7")
     .option("--config <path>", "caminho do config JSON")
     .option("--profile <name>", "perfil do config")
     .option("--runner <id>", "runner do config")
@@ -277,6 +277,7 @@ async function main() {
     .option("--json", "saida em JSON", false)
     .option("--quiet", "nao imprime banner no modo interativo", false)
     .argument("[cmd...]", "comando e parametros")
+    .allowUnknownOption(true)
     .configureOutput({
       writeErr: (str) => process.stderr.write(str),
       writeOut: (str) => process.stdout.write(str)
