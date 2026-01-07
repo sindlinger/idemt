@@ -1,3 +1,5 @@
+import fs from "node:fs";
+import path from "node:path";
 import { Ctx, isTf, parseSub, resolveSymTf } from "./args.js";
 import { renderHelp, renderExamples } from "./help.js";
 import { safeFileBase, stableHash } from "./naming.js";
@@ -123,6 +125,14 @@ function hasImplicitParams(tokens: string[]): boolean {
   return tokens.some((t) => t.includes("=") && !t.toLowerCase().startsWith("sub="));
 }
 
+function maybeResolveLocalPath(name: string): string {
+  const trimmed = name.trim().replace(/^"+|"+$/g, "");
+  if (!/\.(mq5|ex5)$/i.test(trimmed)) return name;
+  const abs = path.isAbsolute(trimmed) ? trimmed : path.resolve(process.cwd(), trimmed);
+  if (fs.existsSync(abs)) return abs;
+  return name;
+}
+
 function requireDefaultSymbol(ctx: Ctx): string | null {
   return ctx.symbol?.trim() || null;
 }
@@ -185,8 +195,9 @@ export function dispatch(tokens: string[], ctx: Ctx): DispatchResult {
     if (!params && hasImplicitParams(rest3)) {
       return err(PARAMS_HINT);
     }
-    const name = rest3.join(" ");
+    let name = rest3.join(" ");
     if (!name) return err("uso: indicador [TF] NOME [sub=N] [--params k=v ...]");
+    name = maybeResolveLocalPath(name);
     const payload = [symbol, tf, name, subw];
     if (params) payload.push(params);
     return {
@@ -276,7 +287,8 @@ export function dispatch(tokens: string[], ctx: Ctx): DispatchResult {
       if (!params && hasImplicitParams(rest3)) {
         return err(PARAMS_HINT);
       }
-      const name = rest3.join(" ");
+      let name = rest3.join(" ");
+      name = maybeResolveLocalPath(name);
       const payload = [r.sym, r.tf, name, subw];
       if (params) payload.push(params);
       return {

@@ -1,6 +1,6 @@
 {
   "name": "telnetmt-cmdmt",
-  "version": "0.1.10",
+  "version": "0.1.11",
   "type": "module",
   "bin": {
     "cmdmt": "dist/index.js"
