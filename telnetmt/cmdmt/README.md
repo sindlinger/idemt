@@ -99,6 +99,19 @@ cmdmt indicador M5 ZigZag sub=1 depth=12 deviation=5 backstep=3
 cmdmt indicador ZigZag
 ```
 
+Meta params (nao enviados ao MT5) para relatorio pos-attach:
+- `_report=0|1` (liga/desliga)
+- `_buffers=10` (quantos valores por buffer)
+- `_log=50` (linhas do log)
+- `_shot=1` (salva screenshot)
+- `_shotname=meu.png` (nome do arquivo)
+
+Exemplos:
+```bash
+cmdmt indicador ZigZag _buffers=10 _log=50
+cmdmt indicador ZigZag _shot=1 _shotname=zigzag.png
+```
+
 ### Indicador completo (compatibilidade)
 ```bash
 cmdmt indicator attach EURUSD M5 ZigZag sub=1 depth=12 deviation=5 backstep=3

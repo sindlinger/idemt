@@ -19,6 +19,9 @@ import {
 } from "./lib/config.js";
 import { runTester } from "./lib/tester.js";
 import { createExpertTemplate } from "./lib/template.js";
+import { splitMetaParams, buildAttachReport, formatAttachReport } from "./lib/attach_report.js";
+
+type AttachReport = Awaited<ReturnType<typeof buildAttachReport>>;
 
 function isErrorResponse(resp: string): boolean {
   const up = resp.trim().toUpperCase();
@@ -256,7 +259,7 @@ async function main() {
   program
     .name("cmdmt")
     .description("TelnetMT CLI (socket)")
-    .version("0.1.3")
+    .version("0.1.4")
     .option("--config <path>", "caminho do config JSON")
     .option("--profile <name>", "perfil do config")
     .option("--runner <id>", "runner do config")
@@ -392,11 +395,41 @@ async function main() {
   const transport = requireTransport(resolved);
 
   if (res.kind === "send") {
+    let attachMeta = null as null | ReturnType<typeof splitMetaParams>["meta"];
+    if (res.type === "ATTACH_IND_FULL") {
+      const pstr = res.params[4] ?? "";
+      const split = splitMetaParams(pstr);
+      attachMeta = split.meta;
+      if (split.params) {
+        res.params[4] = split.params;
+      } else {
+        res.params = res.params.slice(0, 4);
+      }
+    }
     const response = await executeSend({ type: res.type, params: res.params }, transport);
+    let report: AttachReport | null = null;
+    if (!isErrorResponse(response) && res.type === "ATTACH_IND_FULL" && attachMeta?.report) {
+      try {
+        const runner = requireRunner(resolved);
+        report = await buildAttachReport({
+          kind: "indicator",
+          name: res.params[2],
+          symbol: res.params[0],
+          tf: res.params[1],
+          sub: Number(res.params[3]),
+          meta: attachMeta,
+          runner,
+          send: (action) => executeSend(action, transport)
+        });
+      } catch (err) {
+        process.stderr.write(`WARN attach_report: ${String(err)}\n`);
+      }
+    }
     if (opts.json) {
-      process.stdout.write(JSON.stringify({ kind: "send", type: res.type, params: res.params, response }) + "\n");
+      process.stdout.write(JSON.stringify({ kind: "send", type: res.type, params: res.params, response, report }) + "\n");
     } else {
       process.stdout.write(response);
+      if (report) process.stdout.write(formatAttachReport(report) + "\n");
     }
     if (isErrorResponse(response)) process.exitCode = 1;
     return;
@@ -412,7 +445,11 @@ async function main() {
       }
     }
     const saveStep = res.steps.find((s) => s.type === "SAVE_TPL_EA");
+    let attachMeta = splitMetaParams("").meta;
     if (saveStep) {
+      const split = splitMetaParams(saveStep.params[3] ?? "");
+      attachMeta = split.meta;
+      saveStep.params[3] = split.params;
       const expertPath = saveStep.params[0] ?? "";
       if (expertPath && (expertPath.toLowerCase().endsWith(".mq5") || expertPath.toLowerCase().endsWith(".ex5") || expertPath.includes(":\\") || expertPath.includes("/"))) {
         const kind = detectMqlKind(expertPath);
@@ -555,8 +592,28 @@ async function main() {
         process.stderr.write(`WARN verify_ea: ${String(err)}\n`);
       }
     }
+    let report: AttachReport | null = null;
+    if (!hadFatalError && attachMeta.report && lastExpertName) {
+      try {
+        const runner = requireRunner(resolved);
+        const apply = res.steps.find((s) => s.type === "APPLY_TPL");
+        if (apply) {
+          report = await buildAttachReport({
+            kind: "expert",
+            name: lastExpertName,
+            symbol: apply.params[0],
+            tf: apply.params[1],
+            meta: attachMeta,
+            runner,
+            send: (action) => executeSend(action, transport)
+          });
+        }
+      } catch (err) {
+        process.stderr.write(`WARN attach_report: ${String(err)}\n`);
+      }
+    }
     if (opts.json) {
-      process.stdout.write(JSON.stringify({ kind: "multi", responses }) + "\n");
+      process.stdout.write(JSON.stringify({ kind: "multi", responses, report }) + "\n");
     } else if (hadFatalError) {
       for (const r of responses) {
         const errs = extractErrorLines(r.response);
@@ -567,6 +624,7 @@ async function main() {
         if (hadBaseTplError && r.type === "SAVE_TPL_EA" && isBaseTplError(r.response)) continue;
         process.stdout.write(r.response);
       }
+      if (report) process.stdout.write(formatAttachReport(report) + "\n");
     }
   }
 }

@@ -828,6 +828,91 @@ bool H_IndHandle(string &p[], string &m, string &d[])
   return true;
 }
 
+// Retorna buffers do indicador (valores e tempos) para Data Window
+// params: [0]=symbol, [1]=tf, [2]=sub, [3]=name, [4]=count (opcional)
+bool H_IndSnapshot(string &p[], string &m, string &d[])
+{
+  if(ArraySize(p)<4){ m="params"; return false; }
+  string sym=p[0]; string tfstr=p[1]; int sub=SubwindowSafe(p[2]); string name=p[3];
+  int count = (ArraySize(p)>4)? (int)StringToInteger(p[4]) : 5;
+  if(count<1) count=1;
+  if(count>200) count=200;
+  ENUM_TIMEFRAMES tf=TfFromString(tfstr); if(tf==0){ m="tf"; return false; }
+  if(!EnsureSymbol(sym))
+  {
+    if(UseChartDefaults(sym, tfstr))
+    {
+      tf=TfFromString(tfstr); if(tf==0){ m="tf"; return false; }
+    }
+    else { m="symbol"; return false; }
+  }
+  long cid=ChartOpen(sym, tf); if(cid==0){ m="ChartOpen"; return false; }
+  long h=ChartIndicatorGet(cid, sub-1, name);
+  if(h==INVALID_HANDLE || h==0){ m="handle"; return false; }
+
+  int buffers=(int)IndicatorGetInteger(h, INDICATOR_BUFFERS);
+  if(buffers<=0){ m="buffers"; return false; }
+
+  datetime times[]; int copied=CopyTime(sym, tf, 0, count, times);
+  int bars=Bars(sym, tf);
+
+  ArrayResize(d,0);
+  ArrayResize(d,ArraySize(d)+1); d[ArraySize(d)-1]="bars="+IntegerToString(bars);
+  ArrayResize(d,ArraySize(d)+1); d[ArraySize(d)-1]="count="+IntegerToString(copied);
+  if(copied>0){
+    ArrayResize(d,ArraySize(d)+1); d[ArraySize(d)-1]="time0="+TimeToString(times[0], TIME_DATE|TIME_MINUTES|TIME_SECONDS);
+    ArrayResize(d,ArraySize(d)+1); d[ArraySize(d)-1]="timeN="+TimeToString(times[copied-1], TIME_DATE|TIME_MINUTES|TIME_SECONDS);
+  }
+  ArrayResize(d,ArraySize(d)+1); d[ArraySize(d)-1]="buffers="+IntegerToString(buffers);
+
+  for(int i=0;i<buffers;i++)
+  {
+    double vals[]; int got=CopyBuffer(h, i, 0, count, vals);
+    string line="buf"+IntegerToString(i)+"=";
+    if(got<=0){ line+="ERR"; }
+    else
+    {
+      for(int j=0;j<got;j++)
+      {
+        if(j>0) line+=",";
+        line+=DoubleToString(vals[j], 8);
+      }
+    }
+    ArrayResize(d,ArraySize(d)+1); d[ArraySize(d)-1]=line;
+  }
+  m="ok"; return true;
+}
+
+// Retorna info de barras/tempo
+// params: [0]=symbol, [1]=tf, [2]=count (opcional)
+bool H_BarInfo(string &p[], string &m, string &d[])
+{
+  if(ArraySize(p)<2){ m="params"; return false; }
+  string sym=p[0]; string tfstr=p[1];
+  int count = (ArraySize(p)>2)? (int)StringToInteger(p[2]) : 5;
+  if(count<1) count=1;
+  if(count>200) count=200;
+  ENUM_TIMEFRAMES tf=TfFromString(tfstr); if(tf==0){ m="tf"; return false; }
+  if(!EnsureSymbol(sym))
+  {
+    if(UseChartDefaults(sym, tfstr))
+    {
+      tf=TfFromString(tfstr); if(tf==0){ m="tf"; return false; }
+    }
+    else { m="symbol"; return false; }
+  }
+  datetime times[]; int copied=CopyTime(sym, tf, 0, count, times);
+  int bars=Bars(sym, tf);
+  ArrayResize(d,0);
+  ArrayResize(d,ArraySize(d)+1); d[ArraySize(d)-1]="bars="+IntegerToString(bars);
+  ArrayResize(d,ArraySize(d)+1); d[ArraySize(d)-1]="count="+IntegerToString(copied);
+  if(copied>0){
+    ArrayResize(d,ArraySize(d)+1); d[ArraySize(d)-1]="time0="+TimeToString(times[0], TIME_DATE|TIME_MINUTES|TIME_SECONDS);
+    ArrayResize(d,ArraySize(d)+1); d[ArraySize(d)-1]="timeN="+TimeToString(times[copied-1], TIME_DATE|TIME_MINUTES|TIME_SECONDS);
+  }
+  m="ok"; return true;
+}
+
 // Libera um handle obtido via ChartIndicatorGet/indhandle
 bool H_IndRelease(string &p[], string &m, string &d[])
 {
@@ -1071,8 +1156,35 @@ bool H_ObjCreate(string &p[], string &m, string &d[])
 
 bool H_Screenshot(string &p[], string &m, string &d[])
 {
-  m="screenshot disabled";
-  return true;
+  string sym=""; string tfstr=""; string name="";
+  if(ArraySize(p)>=2){ sym=p[0]; tfstr=p[1]; }
+  if(ArraySize(p)>=3){ name=p[2]; }
+  long cid=0;
+  if(sym!="" && tfstr!="")
+  {
+    ENUM_TIMEFRAMES tf=TfFromString(tfstr); if(tf==0){ m="tf"; return false; }
+    cid=ChartOpen(sym, tf); if(cid==0){ m="ChartOpen"; return false; }
+  }
+  else
+  {
+    cid=ChartID();
+  }
+  string base="MQL5\\Files\\cmdmt";
+  FolderCreate(base);
+  string folder=base+"\\screens";
+  FolderCreate(folder);
+  if(name=="")
+  {
+    string s = (sym!=""?sym:ChartSymbol(cid));
+    string t = (tfstr!=""?tfstr:EnumToString((ENUM_TIMEFRAMES)ChartPeriod(cid)));
+    name=StringFormat("cmdmt_%s_%s_%d.png", s, t, (int)TimeLocal());
+  }
+  if(StringFind(name, ".png")<0) name += ".png";
+  string path=folder+"\\"+name;
+  bool ok=ChartScreenShot(cid, path, 0, 0, ALIGN_RIGHT);
+  if(!ok){ m="screenshot_fail"; return false; }
+  ArrayResize(d,1); d[0]="file="+path;
+  m="ok"; return true;
 }
 
 bool H_DropInfo(string &p[], string &m, string &d[])
@@ -1228,6 +1340,8 @@ bool Dispatch(string type, string &params[], string &msg, string &data[])
   else if(type=="IND_NAME") ok = H_IndName(params,msg,data);
   else if(type=="IND_HANDLE") ok = H_IndHandle(params,msg,data);
   else if(type=="IND_GET") ok = H_IndHandle(params,msg,data);
+  else if(type=="IND_SNAPSHOT") ok = H_IndSnapshot(params,msg,data);
+  else if(type=="BAR_INFO") ok = H_BarInfo(params,msg,data);
   else if(type=="IND_RELEASE") ok = H_IndRelease(params,msg,data);
   else if(type=="ATTACH_EA_FULL") ok = H_AttachEA(params,msg,data);
   else if(type=="DETACH_EA_FULL") ok = H_DetachEA(params,msg,data);
