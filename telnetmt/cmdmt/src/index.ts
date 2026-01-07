@@ -229,13 +229,34 @@ function extractErrorLines(resp: string): string {
   return kept.length ? kept.join("\n") + "\n" : "";
 }
 
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function resolveBaseTplName(
+  baseTpl: string,
+  dataPath: string
+): string {
+  const dataPathWsl = toWslPath(dataPath);
+  const templatesDir = path.join(dataPathWsl, "MQL5", "Profiles", "Templates");
+  if (baseTpl) {
+    if (existsPath(baseTpl)) return baseTpl;
+    if (fs.existsSync(path.join(templatesDir, baseTpl))) return baseTpl;
+  }
+  const candidates = ["Moving Average.tpl", "Default.tpl", "default.tpl"];
+  for (const name of candidates) {
+    if (fs.existsSync(path.join(templatesDir, name))) return name;
+  }
+  return "";
+}
+
 async function main() {
   const program = new Command();
 
   program
     .name("cmdmt")
     .description("TelnetMT CLI (socket)")
-    .version("0.1.2")
+    .version("0.1.3")
     .option("--config <path>", "caminho do config JSON")
     .option("--profile <name>", "perfil do config")
     .option("--runner <id>", "runner do config")
@@ -407,12 +428,32 @@ async function main() {
         }
       }
     }
+    let steps = [...res.steps];
+    if (saveStep) {
+      try {
+        const runner = requireRunner(resolved);
+        const baseTpl = resolveBaseTplName(saveStep.params[2] ?? resolved.baseTpl ?? "", runner.dataPath ?? "");
+        if (baseTpl) {
+          createExpertTemplate({
+            expert: saveStep.params[0],
+            outTpl: saveStep.params[1],
+            baseTpl,
+            params: saveStep.params[3],
+            dataPath: runner.dataPath ?? ""
+          });
+          steps = steps.filter((s) => s.type !== "SAVE_TPL_EA");
+        }
+      } catch {
+        // fallback to service SAVE_TPL_EA
+      }
+    }
+
     const responses: Array<{ type: string; params: string[]; response: string }> = [];
     let hadBaseTplError = false;
     let lastApplyOk = false;
-    let lastExpertName = "";
+    let lastExpertName = saveStep?.params[0] ?? "";
     let hadFatalError = false;
-    for (const step of res.steps) {
+    for (const step of steps) {
       const response = await executeSend(step, transport);
       responses.push({ type: step.type, params: step.params, response });
       if (isErrorResponse(response)) {
@@ -478,13 +519,32 @@ async function main() {
         const runner = requireRunner(resolved);
         const apply = res.steps.find((s) => s.type === "APPLY_TPL");
         if (apply) {
-          const ok = await verifyExpertAttached(
+          let ok = await verifyExpertAttached(
             apply.params[0],
             apply.params[1],
             lastExpertName,
             transport,
             runner.dataPath ?? ""
           );
+          if (!ok) {
+            await sleep(400);
+            const applyResp = await executeSend({ type: "APPLY_TPL", params: apply.params }, transport);
+            responses.push({ type: "APPLY_TPL", params: apply.params, response: applyResp });
+            if (isErrorResponse(applyResp)) {
+              process.exitCode = 1;
+              hadFatalError = true;
+              ok = false;
+            } else {
+              await sleep(400);
+              ok = await verifyExpertAttached(
+                apply.params[0],
+                apply.params[1],
+                lastExpertName,
+                transport,
+                runner.dataPath ?? ""
+              );
+            }
+          }
           if (!ok) {
             process.stderr.write("ERR ea_not_attached (template aplicado, mas EA nao apareceu no chart)\n");
             process.exitCode = 1;
