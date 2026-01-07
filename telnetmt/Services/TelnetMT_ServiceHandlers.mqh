@@ -63,6 +63,17 @@ int SubwindowSafe(string &val)
   return (v<=0)?1:v;
 }
 
+long FindChartBySymbolTf(const string sym, ENUM_TIMEFRAMES tf)
+{
+  long id=ChartFirst();
+  while(id>=0)
+  {
+    if((string)ChartSymbol(id)==sym && (ENUM_TIMEFRAMES)ChartPeriod(id)==tf) return id;
+    id=ChartNext(id);
+  }
+  return 0;
+}
+
 int ParseParams(string &pstr, string &keys[], string &vals[])
 {
   if(pstr=="") { ArrayResize(keys,0); ArrayResize(vals,0); return 0; }
@@ -621,7 +632,9 @@ bool H_ApplyTpl(string &p[], string &m, string &d[])
 {
   if(ArraySize(p)<3){ m="params"; return false; }
   string sym=p[0]; ENUM_TIMEFRAMES tf=TfFromString(p[1]); string tpl=p[2];
-  long cid=ChartOpen(sym, tf); if(cid==0){ m="ChartOpen"; return false; }
+  long cid=FindChartBySymbolTf(sym, tf);
+  if(cid==0) cid=ChartOpen(sym, tf);
+  if(cid==0){ m="ChartOpen"; return false; }
   if(!ChartApplyTemplate(cid, tpl)) { m="apply fail"; return false; }
   Sleep(200);
   m="template applied"; return true;
@@ -631,7 +644,9 @@ bool H_SaveTpl(string &p[], string &m, string &d[])
 {
   if(ArraySize(p)<3){ m="params"; return false; }
   string sym=p[0]; ENUM_TIMEFRAMES tf=TfFromString(p[1]); string tpl=p[2];
-  long cid=ChartOpen(sym, tf); if(cid==0){ m="ChartOpen"; return false; }
+  long cid=FindChartBySymbolTf(sym, tf);
+  if(cid==0) cid=ChartOpen(sym, tf);
+  if(cid==0){ m="ChartOpen"; return false; }
   if(!ChartSaveTemplate(cid, tpl)) { m="save fail"; return false; }
   m="template saved"; return true;
 }
@@ -771,7 +786,9 @@ bool H_AttachInd(string &p[], string &m, string &d[])
     }
     else { m="symbol"; return false; }
   }
-  long cid=ChartOpen(sym, tf); if(cid==0){ m="ChartOpen"; return false; }
+  long cid=FindChartBySymbolTf(sym, tf);
+  if(cid==0) cid=ChartOpen(sym, tf);
+  if(cid==0){ m="ChartOpen"; return false; }
   int handle=INVALID_HANDLE;
   if(pstr=="")
   {
@@ -813,7 +830,9 @@ bool H_DetachInd(string &p[], string &m, string &d[])
     }
     else { m="symbol"; return false; }
   }
-  long cid=ChartOpen(sym, tf); if(cid==0){ m="ChartOpen"; return false; }
+  long cid=FindChartBySymbolTf(sym, tf);
+  if(cid==0) cid=ChartOpen(sym, tf);
+  if(cid==0){ m="ChartOpen"; return false; }
   int total=ChartIndicatorsTotal(cid, sub-1);
   int deleted=0;
   for(int i=total-1;i>=0;i--)
@@ -832,7 +851,9 @@ bool H_IndTotal(string &p[], string &m, string &d[])
 {
   if(ArraySize(p)<3){ m="params"; return false; }
   string sym=p[0]; ENUM_TIMEFRAMES tf=TfFromString(p[1]); int sub=SubwindowSafe(p[2]);
-  long cid=ChartOpen(sym, tf); if(cid==0){ m="ChartOpen"; return false; }
+  long cid=FindChartBySymbolTf(sym, tf);
+  if(cid==0) cid=ChartOpen(sym, tf);
+  if(cid==0){ m="ChartOpen"; return false; }
   int total=ChartIndicatorsTotal(cid, sub-1);
   ArrayResize(d,1); d[0]=IntegerToString(total);
   m="ok"; return true;
@@ -842,7 +863,9 @@ bool H_IndName(string &p[], string &m, string &d[])
 {
   if(ArraySize(p)<4){ m="params"; return false; }
   string sym=p[0]; ENUM_TIMEFRAMES tf=TfFromString(p[1]); int sub=SubwindowSafe(p[2]); int idx=(int)StringToInteger(p[3]);
-  long cid=ChartOpen(sym, tf); if(cid==0){ m="ChartOpen"; return false; }
+  long cid=FindChartBySymbolTf(sym, tf);
+  if(cid==0) cid=ChartOpen(sym, tf);
+  if(cid==0){ m="ChartOpen"; return false; }
   string nm=ChartIndicatorName(cid, sub-1, idx);
   ArrayResize(d,1); d[0]=nm; m="ok"; return true;
 }
@@ -851,7 +874,9 @@ bool H_IndHandle(string &p[], string &m, string &d[])
 {
   if(ArraySize(p)<4){ m="params"; return false; }
   string sym=p[0]; ENUM_TIMEFRAMES tf=TfFromString(p[1]); int sub=SubwindowSafe(p[2]); string name=p[3];
-  long cid=ChartOpen(sym, tf); if(cid==0){ m="ChartOpen"; return false; }
+  long cid=FindChartBySymbolTf(sym, tf);
+  if(cid==0) cid=ChartOpen(sym, tf);
+  if(cid==0){ m="ChartOpen"; return false; }
   long h=ChartIndicatorGet(cid, sub-1, name);
   ArrayResize(d,1); d[0]=IntegerToString((long)h);
   m=(h!=INVALID_HANDLE)?"ok":"not_found";
@@ -876,7 +901,9 @@ bool H_IndSnapshot(string &p[], string &m, string &d[])
     }
     else { m="symbol"; return false; }
   }
-  long cid=ChartOpen(sym, tf); if(cid==0){ m="ChartOpen"; return false; }
+  long cid=FindChartBySymbolTf(sym, tf);
+  if(cid==0) cid=ChartOpen(sym, tf);
+  if(cid==0){ m="ChartOpen"; return false; }
   int h=(int)ChartIndicatorGet(cid, sub-1, name);
   if(h==INVALID_HANDLE || h==0){
     // tenta achar pelo nome "curto"
