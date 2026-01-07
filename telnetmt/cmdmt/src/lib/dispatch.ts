@@ -28,6 +28,8 @@ function err(msg: string): DispatchResult {
   return { kind: "error", message: msg };
 }
 
+const PARAMS_HINT = "params devem ser passados com --params k=v ... (ex: --params depth=12 deviation=5)";
+
 function requireSymTf(args: string[], ctx: Ctx): { sym: string; tf: string; rest: string[] } | null {
   return resolveSymTf(args, ctx, true);
 }
@@ -181,7 +183,7 @@ export function dispatch(tokens: string[], ctx: Ctx): DispatchResult {
     const { params, rest: rest2, meta } = parseParamsAndMeta(remaining);
     const { sub: subw, rest: rest3 } = parseSub(rest2, ctx);
     if (!params && hasImplicitParams(rest3)) {
-      return err("params devem ser passados com --params k=v ...");
+      return err(PARAMS_HINT);
     }
     const name = rest3.join(" ");
     if (!name) return err("uso: indicador [TF] NOME [sub=N] [--params k=v ...]");
@@ -272,7 +274,7 @@ export function dispatch(tokens: string[], ctx: Ctx): DispatchResult {
       const { params, rest: rest2, meta } = parseParamsAndMeta(r.rest);
       const { sub: subw, rest: rest3 } = parseSub(rest2, ctx);
       if (!params && hasImplicitParams(rest3)) {
-        return err("params devem ser passados com --params k=v ...");
+        return err(PARAMS_HINT);
       }
       const name = rest3.join(" ");
       const payload = [r.sym, r.tf, name, subw];
@@ -349,7 +351,7 @@ export function dispatch(tokens: string[], ctx: Ctx): DispatchResult {
       }
       const { params, rest: rest2 } = parseParamsAndMeta(restArgs);
       if (!params && hasImplicitParams(rest2)) {
-        return err("params devem ser passados com --params k=v ...");
+        return err(PARAMS_HINT);
       }
       const name = rest2.join(" ");
       if (!name) return err("uso: expert run [TF] NOME [BASE_TPL] [--params k=v ...]");
@@ -372,7 +374,7 @@ export function dispatch(tokens: string[], ctx: Ctx): DispatchResult {
       if (!tf) return err("tf default ausente. Use --tf/CMDMT_TF ou defaults.context.tf.");
       const { params, rest: rest2 } = parseParamsAndMeta(restArgs);
       if (!params && hasImplicitParams(rest2)) {
-        return err("params devem ser passados com --params k=v ...");
+        return err(PARAMS_HINT);
       }
       const name = rest2.join(" ");
       if (!name) return err("uso: expert test [TF] NOME [--params k=v ...]");
@@ -394,7 +396,7 @@ export function dispatch(tokens: string[], ctx: Ctx): DispatchResult {
       if (!baseTpl) return err("base template ausente. Use --base-tpl/CMDMT_BASE_TPL ou defaults.baseTpl.");
       const { params, rest: rest2 } = parseParamsAndMeta(restArgs);
       if (!params && hasImplicitParams(rest2)) {
-        return err("params devem ser passados com --params k=v ...");
+        return err(PARAMS_HINT);
       }
       const name = rest2.join(" ");
       if (!name) return err("uso: expert oneshot TF NOME [BASE_TPL] [--params k=v ...]");
@@ -416,7 +418,7 @@ export function dispatch(tokens: string[], ctx: Ctx): DispatchResult {
         rest2.splice(tplIdx, 1);
       }
       if (!params && hasImplicitParams(rest2)) {
-        return err("params devem ser passados com --params k=v ...");
+        return err(PARAMS_HINT);
       }
       const name = rest2.join(" ");
       if (!name) return err("uso: expert attach [SYMBOL TF] NAME [BASE_TPL] [--params k=v ...]");

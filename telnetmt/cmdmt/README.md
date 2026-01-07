@@ -119,6 +119,11 @@ cmdmt indicador ZigZag --report --params depth=12 deviation=5 backstep=3
 cmdmt indicator attach EURUSD M5 ZigZag sub=1 --params depth=12 deviation=5 backstep=3
 ```
 
+### Validar parsing de --params (sem MT5)
+```bash
+npm run validate-params
+```
+
 ### Expert no tester (OneShot via `run`)
 ```bash
 cmdmt expert run M5 MyEA base.tpl --params lots=0.1
