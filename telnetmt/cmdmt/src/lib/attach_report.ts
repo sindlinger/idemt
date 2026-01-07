@@ -100,6 +100,18 @@ function parseBuffers(map: Record<string, string>): Record<string, number[]> {
   return out;
 }
 
+function normalizeIndicatorName(name: string): string {
+  let n = name.trim();
+  if (n.toLowerCase().startsWith("wpath ")) n = n.slice(6);
+  n = n.replace(/^"+|"+$/g, "");
+  n = n.replace(/\//g, "\\");
+  const base = path.win32.basename(n);
+  let out = base || n;
+  const low = out.toLowerCase();
+  if (low.endsWith(".mq5") || low.endsWith(".ex5")) out = out.slice(0, -4);
+  return out || name;
+}
+
 export async function buildAttachReport(opts: {
   kind: "indicator" | "expert";
   name: string;
@@ -119,9 +131,10 @@ export async function buildAttachReport(opts: {
   };
 
   if (opts.kind === "indicator") {
+    const indName = normalizeIndicatorName(opts.name);
     const resp = await opts.send({
       type: "IND_SNAPSHOT",
-      params: [opts.symbol, opts.tf, String(opts.sub ?? 1), opts.name, String(opts.meta.buffers)]
+      params: [opts.symbol, opts.tf, String(opts.sub ?? 1), indName, String(opts.meta.buffers)]
     });
     const map = parseKeyValueLines(resp);
     if (map.time0) report.time0 = map.time0;
