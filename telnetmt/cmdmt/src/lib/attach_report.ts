@@ -32,12 +32,25 @@ export type AttachReport = {
   screenshot?: string | null;
 };
 
+export type LogStart = { file: string; offset: number };
+
 function readTextMaybeUtf16(p: string): string {
   const raw = fs.readFileSync(p);
   if (raw.length >= 2 && raw[0] === 0xff && raw[1] === 0xfe) {
     return raw.slice(2).toString("utf16le");
   }
   return raw.toString("utf8");
+}
+
+function readTextFromOffset(p: string, offset: number): string {
+  const raw = fs.readFileSync(p);
+  let start = Math.max(0, Math.min(offset, raw.length));
+  if (raw.length >= 2 && raw[0] === 0xff && raw[1] === 0xfe) {
+    if (start < 2) start = 2;
+    if (start % 2 === 1) start -= 1;
+    return raw.slice(start).toString("utf16le");
+  }
+  return raw.slice(start).toString("utf8");
 }
 
 function latestFile(dir: string): string | null {
@@ -69,6 +82,19 @@ function tailLines(file: string, maxLines: number): string[] {
   const lines = text.split(/\r?\n/).filter(Boolean);
   if (!lines.length) return [];
   return lines.slice(-maxLines);
+}
+
+export function findLatestLogFile(dataPath?: string): string | null {
+  if (!dataPath) return null;
+  const base = isWindowsPath(dataPath) ? toWslPath(dataPath) : dataPath;
+  const mqlLogsDir = path.join(base, "MQL5", "Logs");
+  return latestFile(mqlLogsDir);
+}
+
+function readLinesFromOffset(file: string, offset: number): string[] {
+  if (!file || !fs.existsSync(file)) return [];
+  const text = readTextFromOffset(file, offset);
+  return text.split(/\r?\n/).filter(Boolean);
 }
 
 function parseKeyValueLines(resp: string): Record<string, string> {
@@ -121,6 +147,7 @@ export async function buildAttachReport(opts: {
   meta: AttachMeta;
   runner: RunnerConfig;
   send: (action: { type: string; params: string[] }) => Promise<string>;
+  logStart?: LogStart;
 }): Promise<AttachReport> {
   const report: AttachReport = {
     kind: opts.kind,
@@ -154,16 +181,20 @@ export async function buildAttachReport(opts: {
 
   const dataPath = opts.runner.dataPath ? (isWindowsPath(opts.runner.dataPath) ? toWslPath(opts.runner.dataPath) : opts.runner.dataPath) : "";
   if (dataPath) {
-    const mqlLogsDir = path.join(dataPath, "MQL5", "Logs");
-    const logFile = latestFile(mqlLogsDir);
-    const baseName = path.win32.basename(opts.name);
-    let lines = logFile ? tailMatchLines(logFile, [opts.name, baseName], opts.meta.logTail) : [];
-    let mode: "match" | "tail" | undefined = lines.length ? "match" : undefined;
-    if (logFile && lines.length === 0) {
-      lines = tailLines(logFile, opts.meta.logTail);
-      mode = "tail";
+    const logFile = opts.logStart?.file ?? findLatestLogFile(dataPath);
+    if (logFile && opts.logStart && opts.logStart.file === logFile) {
+      const lines = readLinesFromOffset(logFile, opts.logStart.offset).slice(-opts.meta.logTail);
+      report.logs = { file: logFile, lines, mode: "tail" };
+    } else {
+      const baseName = path.win32.basename(opts.name);
+      let lines = logFile ? tailMatchLines(logFile, [opts.name, baseName], opts.meta.logTail) : [];
+      let mode: "match" | "tail" | undefined = lines.length ? "match" : undefined;
+      if (logFile && lines.length === 0) {
+        lines = tailLines(logFile, opts.meta.logTail);
+        mode = "tail";
+      }
+      report.logs = logFile ? { file: logFile, lines, mode } : null;
     }
-    report.logs = logFile ? { file: logFile, lines, mode } : null;
   }
 
   if (opts.meta.shot) {

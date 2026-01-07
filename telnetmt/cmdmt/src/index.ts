@@ -19,7 +19,7 @@ import {
 } from "./lib/config.js";
 import { runTester } from "./lib/tester.js";
 import { createExpertTemplate } from "./lib/template.js";
-import { buildAttachReport, formatAttachReport, DEFAULT_ATTACH_META } from "./lib/attach_report.js";
+import { buildAttachReport, formatAttachReport, DEFAULT_ATTACH_META, findLatestLogFile } from "./lib/attach_report.js";
 
 type AttachReport = Awaited<ReturnType<typeof buildAttachReport>>;
 
@@ -259,7 +259,7 @@ async function main() {
   program
     .name("cmdmt")
     .description("TelnetMT CLI (socket)")
-    .version("0.1.9")
+    .version("0.1.10")
     .option("--config <path>", "caminho do config JSON")
     .option("--profile <name>", "perfil do config")
     .option("--runner <id>", "runner do config")
@@ -396,6 +396,19 @@ async function main() {
   const transport = requireTransport(resolved);
 
   if (res.kind === "send") {
+    let logStart = null as null | { file: string; offset: number };
+    if (res.attach) {
+      try {
+        const runner = requireRunner(resolved);
+        const logFile = findLatestLogFile(runner.dataPath);
+        if (logFile && fs.existsSync(logFile)) {
+          const stat = fs.statSync(logFile);
+          logStart = { file: logFile, offset: stat.size };
+        }
+      } catch {
+        // ignore logStart
+      }
+    }
     const response = await executeSend({ type: res.type, params: res.params }, transport);
     let report: AttachReport | null = null;
     const attachMeta = res.meta ?? DEFAULT_ATTACH_META;
@@ -410,7 +423,8 @@ async function main() {
           sub: res.attach.sub,
           meta: attachMeta,
           runner,
-          send: (action) => executeSend(action, transport)
+          send: (action) => executeSend(action, transport),
+          logStart: logStart ?? undefined
         });
       } catch (err) {
         process.stderr.write(`WARN attach_report: ${String(err)}\n`);
@@ -427,6 +441,19 @@ async function main() {
   }
 
   if (res.kind === "multi") {
+    let logStart = null as null | { file: string; offset: number };
+    if (res.attach) {
+      try {
+        const runner = requireRunner(resolved);
+        const logFile = findLatestLogFile(runner.dataPath);
+        if (logFile && fs.existsSync(logFile)) {
+          const stat = fs.statSync(logFile);
+          logStart = { file: logFile, offset: stat.size };
+        }
+      } catch {
+        // ignore logStart
+      }
+    }
     const applyStep = res.steps.find((s) => s.type === "APPLY_TPL");
     if (applyStep && applyStep.params.length >= 2) {
       try {
@@ -592,7 +619,8 @@ async function main() {
           sub: res.attach.sub,
           meta: attachMeta,
           runner,
-          send: (action) => executeSend(action, transport)
+          send: (action) => executeSend(action, transport),
+          logStart: logStart ?? undefined
         });
       } catch (err) {
         process.stderr.write(`WARN attach_report: ${String(err)}\n`);

@@ -1,3 +1,4 @@
+import fs from "node:fs";
 import readline from "node:readline";
 import { splitArgs, Ctx } from "./lib/args.js";
 import { dispatch } from "./lib/dispatch.js";
@@ -7,7 +8,7 @@ import { requireRunner } from "./lib/config.js";
 import type { ResolvedConfig } from "./lib/config.js";
 import { runTester } from "./lib/tester.js";
 import { createExpertTemplate } from "./lib/template.js";
-import { buildAttachReport, formatAttachReport, DEFAULT_ATTACH_META } from "./lib/attach_report.js";
+import { buildAttachReport, formatAttachReport, DEFAULT_ATTACH_META, findLatestLogFile } from "./lib/attach_report.js";
 
 export type ReplOpts = TransportOpts & { json?: boolean; quiet?: boolean };
 
@@ -58,6 +59,19 @@ async function handleCommand(tokens: string[], ctx: Ctx, opts: ReplOpts, resolve
     return;
   }
   if (res.kind === "send") {
+    let logStart = null as null | { file: string; offset: number };
+    if (res.attach) {
+      try {
+        const runner = requireRunner(resolved);
+        const logFile = findLatestLogFile(runner.dataPath);
+        if (logFile && fs.existsSync(logFile)) {
+          const stat = fs.statSync(logFile);
+          logStart = { file: logFile, offset: stat.size };
+        }
+      } catch {
+        // ignore
+      }
+    }
     const resp = await executeSend({ type: res.type, params: res.params }, opts);
     process.stdout.write(resp);
     const attachMeta = res.meta ?? DEFAULT_ATTACH_META;
@@ -72,7 +86,8 @@ async function handleCommand(tokens: string[], ctx: Ctx, opts: ReplOpts, resolve
           sub: res.attach.sub,
           meta: attachMeta,
           runner,
-          send: (action) => executeSend(action, opts)
+          send: (action) => executeSend(action, opts),
+          logStart: logStart ?? undefined
         });
         process.stdout.write(formatAttachReport(report) + "\n");
       } catch (err) {
@@ -82,6 +97,19 @@ async function handleCommand(tokens: string[], ctx: Ctx, opts: ReplOpts, resolve
     return;
   }
   if (res.kind === "multi") {
+    let logStart = null as null | { file: string; offset: number };
+    if (res.attach) {
+      try {
+        const runner = requireRunner(resolved);
+        const logFile = findLatestLogFile(runner.dataPath);
+        if (logFile && fs.existsSync(logFile)) {
+          const stat = fs.statSync(logFile);
+          logStart = { file: logFile, offset: stat.size };
+        }
+      } catch {
+        // ignore
+      }
+    }
     let hadError = false;
     for (const step of res.steps) {
       const resp = await executeSend(step, opts);
@@ -123,7 +151,8 @@ async function handleCommand(tokens: string[], ctx: Ctx, opts: ReplOpts, resolve
           sub: res.attach.sub,
           meta: attachMeta,
           runner,
-          send: (action) => executeSend(action, opts)
+          send: (action) => executeSend(action, opts),
+          logStart: logStart ?? undefined
         });
         process.stdout.write(formatAttachReport(report) + "\n");
       } catch (err) {
