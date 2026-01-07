@@ -19,7 +19,7 @@ import {
 } from "./lib/config.js";
 import { runTester } from "./lib/tester.js";
 import { createExpertTemplate } from "./lib/template.js";
-import { splitMetaParams, buildAttachReport, formatAttachReport } from "./lib/attach_report.js";
+import { buildAttachReport, formatAttachReport, DEFAULT_ATTACH_META } from "./lib/attach_report.js";
 
 type AttachReport = Awaited<ReturnType<typeof buildAttachReport>>;
 
@@ -259,7 +259,7 @@ async function main() {
   program
     .name("cmdmt")
     .description("TelnetMT CLI (socket)")
-    .version("0.1.4")
+    .version("0.1.5")
     .option("--config <path>", "caminho do config JSON")
     .option("--profile <name>", "perfil do config")
     .option("--runner <id>", "runner do config")
@@ -395,28 +395,18 @@ async function main() {
   const transport = requireTransport(resolved);
 
   if (res.kind === "send") {
-    let attachMeta = null as null | ReturnType<typeof splitMetaParams>["meta"];
-    if (res.type === "ATTACH_IND_FULL") {
-      const pstr = res.params[4] ?? "";
-      const split = splitMetaParams(pstr);
-      attachMeta = split.meta;
-      if (split.params) {
-        res.params[4] = split.params;
-      } else {
-        res.params = res.params.slice(0, 4);
-      }
-    }
     const response = await executeSend({ type: res.type, params: res.params }, transport);
     let report: AttachReport | null = null;
-    if (!isErrorResponse(response) && res.type === "ATTACH_IND_FULL" && attachMeta?.report) {
+    const attachMeta = res.meta ?? DEFAULT_ATTACH_META;
+    if (!isErrorResponse(response) && res.attach && attachMeta.report) {
       try {
         const runner = requireRunner(resolved);
         report = await buildAttachReport({
-          kind: "indicator",
-          name: res.params[2],
-          symbol: res.params[0],
-          tf: res.params[1],
-          sub: Number(res.params[3]),
+          kind: res.attach.kind,
+          name: res.attach.name,
+          symbol: res.attach.symbol,
+          tf: res.attach.tf,
+          sub: res.attach.sub,
           meta: attachMeta,
           runner,
           send: (action) => executeSend(action, transport)
@@ -445,11 +435,8 @@ async function main() {
       }
     }
     const saveStep = res.steps.find((s) => s.type === "SAVE_TPL_EA");
-    let attachMeta = splitMetaParams("").meta;
+    const attachMeta = res.meta ?? DEFAULT_ATTACH_META;
     if (saveStep) {
-      const split = splitMetaParams(saveStep.params[3] ?? "");
-      attachMeta = split.meta;
-      saveStep.params[3] = split.params;
       const expertPath = saveStep.params[0] ?? "";
       if (expertPath && (expertPath.toLowerCase().endsWith(".mq5") || expertPath.toLowerCase().endsWith(".ex5") || expertPath.includes(":\\") || expertPath.includes("/"))) {
         const kind = detectMqlKind(expertPath);
@@ -593,21 +580,19 @@ async function main() {
       }
     }
     let report: AttachReport | null = null;
-    if (!hadFatalError && attachMeta.report && lastExpertName) {
+    if (!hadFatalError && res.attach && attachMeta.report) {
       try {
         const runner = requireRunner(resolved);
-        const apply = res.steps.find((s) => s.type === "APPLY_TPL");
-        if (apply) {
-          report = await buildAttachReport({
-            kind: "expert",
-            name: lastExpertName,
-            symbol: apply.params[0],
-            tf: apply.params[1],
-            meta: attachMeta,
-            runner,
-            send: (action) => executeSend(action, transport)
-          });
-        }
+        report = await buildAttachReport({
+          kind: res.attach.kind,
+          name: res.attach.name,
+          symbol: res.attach.symbol,
+          tf: res.attach.tf,
+          sub: res.attach.sub,
+          meta: attachMeta,
+          runner,
+          send: (action) => executeSend(action, transport)
+        });
       } catch (err) {
         process.stderr.write(`WARN attach_report: ${String(err)}\n`);
       }

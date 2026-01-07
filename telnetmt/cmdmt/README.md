@@ -95,31 +95,33 @@ cmdmt compile
 
 ### Indicador (com defaults)
 ```bash
-cmdmt indicador M5 ZigZag sub=1 depth=12 deviation=5 backstep=3
+cmdmt indicador M5 ZigZag sub=1 --params depth=12 deviation=5 backstep=3
 cmdmt indicador ZigZag
 ```
 
-Meta params (nao enviados ao MT5) para relatorio pos-attach:
-- `_report=0|1` (liga/desliga)
-- `_buffers=10` (quantos valores por buffer)
-- `_log=50` (linhas do log)
-- `_shot=1` (salva screenshot)
-- `_shotname=meu.png` (nome do arquivo)
+Flags de relatorio pos-attach (nao enviados ao MT5):
+- `--report` / `--no-report`
+- `--buffers 10` (quantos valores por buffer)
+- `--log 50` (linhas do log)
+- `--shot` / `--no-shot` (salva screenshot)
+- `--shotname meu.png` (nome do arquivo)
+Obs: coloque as flags antes de `--params`.
 
 Exemplos:
 ```bash
-cmdmt indicador ZigZag _buffers=10 _log=50
-cmdmt indicador ZigZag _shot=1 _shotname=zigzag.png
+cmdmt indicador ZigZag --buffers 10 --log 50
+cmdmt indicador ZigZag --shot --shotname zigzag.png
+cmdmt indicador ZigZag --report --params depth=12 deviation=5 backstep=3
 ```
 
 ### Indicador completo (compatibilidade)
 ```bash
-cmdmt indicator attach EURUSD M5 ZigZag sub=1 depth=12 deviation=5 backstep=3
+cmdmt indicator attach EURUSD M5 ZigZag sub=1 --params depth=12 deviation=5 backstep=3
 ```
 
 ### Expert no tester (OneShot via `run`)
 ```bash
-cmdmt expert run M5 MyEA base.tpl lots=0.1
+cmdmt expert run M5 MyEA base.tpl --params lots=0.1
 cmdmt expert run MyEA
 ```
 Resolve o Expert (compila se existir `.mq5` via `metaeditorPath`), gera `tester.tpl` em `MQL5/Profiles/Templates`,
@@ -128,7 +130,7 @@ Se `baseTpl` nao for informado, tenta usar `Default.tpl` automaticamente (se exi
 
 ### Expert no tester
 ```bash
-cmdmt expert test M5 MyEA lots=0.1
+cmdmt expert test M5 MyEA --params lots=0.1
 ```
 Gera `.set` em `MQL5/Profiles/Tester`, cria `.ini` e executa o terminal com `/config`. Logs e report sao copiados para a pasta de artefatos.
 

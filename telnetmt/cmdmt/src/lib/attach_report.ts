@@ -11,6 +11,13 @@ export type AttachMeta = {
   shotName?: string;
 };
 
+export const DEFAULT_ATTACH_META: AttachMeta = {
+  report: true,
+  buffers: 5,
+  logTail: 30,
+  shot: false
+};
+
 export type AttachReport = {
   kind: "indicator" | "expert";
   name: string;
@@ -24,51 +31,6 @@ export type AttachReport = {
   logs?: { file: string; lines: string[] } | null;
   screenshot?: string | null;
 };
-
-export function splitMetaParams(pstr?: string): { params: string; meta: AttachMeta } {
-  const meta: AttachMeta = {
-    report: true,
-    buffers: 5,
-    logTail: 30,
-    shot: false
-  };
-  if (!pstr) return { params: "", meta };
-  const parts = pstr
-    .split(";")
-    .map((s) => s.trim())
-    .filter(Boolean);
-  const kept: string[] = [];
-  for (const part of parts) {
-    const idx = part.indexOf("=");
-    const key = (idx >= 0 ? part.slice(0, idx) : part).trim();
-    const val = idx >= 0 ? part.slice(idx + 1).trim() : "";
-    const low = key.toLowerCase();
-    if (low === "_report") {
-      meta.report = val === "" ? true : !["0", "false", "no"].includes(val.toLowerCase());
-      continue;
-    }
-    if (low === "_buffers") {
-      const n = parseInt(val, 10);
-      if (Number.isFinite(n) && n > 0) meta.buffers = Math.min(n, 200);
-      continue;
-    }
-    if (low === "_log") {
-      const n = parseInt(val, 10);
-      if (Number.isFinite(n) && n > 0) meta.logTail = Math.min(n, 500);
-      continue;
-    }
-    if (low === "_shot") {
-      meta.shot = val === "" ? true : !["0", "false", "no"].includes(val.toLowerCase());
-      continue;
-    }
-    if (low === "_shotname") {
-      if (val) meta.shotName = val;
-      continue;
-    }
-    kept.push(part);
-  }
-  return { params: kept.join(";"), meta };
-}
 
 function readTextMaybeUtf16(p: string): string {
   const raw = fs.readFileSync(p);
@@ -194,7 +156,8 @@ export function formatAttachReport(report: AttachReport): string {
   const lines: string[] = [];
   lines.push(`attach: ${report.kind} ${report.name} (${report.symbol} ${report.tf})`);
   if (report.time0 || report.timeN) {
-    lines.push(`bars: time0=${report.time0 ?? "?"} timeN=${report.timeN ?? "?"}`);
+    const bars = report.bars !== undefined ? ` count=${report.bars}` : "";
+    lines.push(`bars:${bars} time0=${report.time0 ?? "?"} timeN=${report.timeN ?? "?"}`);
   }
   if (report.buffers && Object.keys(report.buffers).length) {
     lines.push(`buffers:`);

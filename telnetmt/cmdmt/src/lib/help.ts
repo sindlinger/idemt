@@ -200,7 +200,14 @@ const EXAMPLES: Record<string, ExampleGroup[]> = {
   ctx: [{ title: "ctx", lines: ["ctx"] }],
   help: [{ title: "help", lines: ["help", "examples", "examples chart"] }],
   indicador: [
-    { title: "indicador", lines: ["indicador ZigZag", "indicador M5 ZigZag sub=1 depth=12 deviation=5 backstep=3"] }
+    {
+      title: "indicador",
+      lines: [
+        "indicador ZigZag",
+        "indicador M5 ZigZag sub=1 --params depth=12 deviation=5 backstep=3",
+        "indicador M5 ZigZag --buffers 10 --log 50 --shot"
+      ]
+    }
   ],
   chart: [
     { title: "open", lines: ["chart open", "chart open EURUSD H1"] },
@@ -221,8 +228,9 @@ const EXAMPLES: Record<string, ExampleGroup[]> = {
     {
       title: "attach",
       lines: [
-        "indicator attach ZigZag sub=1 depth=12 deviation=5 backstep=3",
-        "indicator attach EURUSD H1 ZigZag sub=1 depth=12 deviation=5 backstep=3"
+        "indicator attach ZigZag sub=1 --params depth=12 deviation=5 backstep=3",
+        "indicator attach EURUSD H1 ZigZag sub=1 --params depth=12 deviation=5 backstep=3",
+        "indicator attach EURUSD H1 ZigZag --buffers 10 --log 50 --shot"
       ]
     },
     { title: "detach", lines: ["indicator detach ZigZag sub=1", "indicator detach EURUSD H1 ZigZag sub=1"] },
@@ -235,12 +243,16 @@ const EXAMPLES: Record<string, ExampleGroup[]> = {
   expert: [
     {
       title: "attach",
-      lines: ["expert attach MyEA base.tpl lots=0.1", "expert attach EURUSD H1 MyEA base.tpl lots=0.1"]
+      lines: [
+        "expert attach MyEA base.tpl --params lots=0.1",
+        "expert attach EURUSD H1 MyEA base.tpl --params lots=0.1",
+        "expert attach EURUSD H1 MyEA --buffers 5 --log 50"
+      ]
     },
     { title: "detach", lines: ["expert detach", "expert detach EURUSD H1"] },
     { title: "find", lines: ["expert find MyEA"] },
-    { title: "run", lines: ["expert run MyEA lots=0.1", "expert run M5 MyEA base.tpl lots=0.1"] },
-    { title: "test", lines: ["expert test MyEA lots=0.1", "expert test M5 MyEA lots=0.1"] }
+    { title: "run", lines: ["expert run MyEA --params lots=0.1", "expert run M5 MyEA base.tpl --params lots=0.1"] },
+    { title: "test", lines: ["expert test MyEA --params lots=0.1", "expert test M5 MyEA --params lots=0.1"] }
   ],
   script: [{ title: "run", lines: ["script run MeuScript.tpl", "script run EURUSD H1 MeuScript.tpl"] }],
   trade: [

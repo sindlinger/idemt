@@ -7,6 +7,7 @@ import { requireRunner } from "./lib/config.js";
 import type { ResolvedConfig } from "./lib/config.js";
 import { runTester } from "./lib/tester.js";
 import { createExpertTemplate } from "./lib/template.js";
+import { buildAttachReport, formatAttachReport, DEFAULT_ATTACH_META } from "./lib/attach_report.js";
 
 export type ReplOpts = TransportOpts & { json?: boolean; quiet?: boolean };
 
@@ -28,6 +29,11 @@ async function executeSend(action: SendAction, opts: TransportOpts): Promise<str
   const id = Date.now().toString();
   const line = [id, action.type, ...action.params].join("|");
   return sendLine(line, opts);
+}
+
+function isErrorResponse(resp: string): boolean {
+  const up = resp.trim().toUpperCase();
+  return up.startsWith("ERR") || up.includes(" ERR ") || up.includes("CODE=");
 }
 
 async function handleCommand(tokens: string[], ctx: Ctx, opts: ReplOpts, resolved: ResolvedConfig) {
@@ -54,12 +60,33 @@ async function handleCommand(tokens: string[], ctx: Ctx, opts: ReplOpts, resolve
   if (res.kind === "send") {
     const resp = await executeSend({ type: res.type, params: res.params }, opts);
     process.stdout.write(resp);
+    const attachMeta = res.meta ?? DEFAULT_ATTACH_META;
+    if (!isErrorResponse(resp) && res.attach && attachMeta.report) {
+      try {
+        const runner = requireRunner(resolved);
+        const report = await buildAttachReport({
+          kind: res.attach.kind,
+          name: res.attach.name,
+          symbol: res.attach.symbol,
+          tf: res.attach.tf,
+          sub: res.attach.sub,
+          meta: attachMeta,
+          runner,
+          send: (action) => executeSend(action, opts)
+        });
+        process.stdout.write(formatAttachReport(report) + "\n");
+      } catch (err) {
+        process.stderr.write(`WARN attach_report: ${String(err)}\n`);
+      }
+    }
     return;
   }
   if (res.kind === "multi") {
+    let hadError = false;
     for (const step of res.steps) {
       const resp = await executeSend(step, opts);
       process.stdout.write(resp);
+      if (isErrorResponse(resp)) hadError = true;
       if (resp.toLowerCase().includes("base_tpl")) {
         try {
           const applyStep = res.steps.find((s) => s.type === "APPLY_TPL");
@@ -76,10 +103,31 @@ async function handleCommand(tokens: string[], ctx: Ctx, opts: ReplOpts, resolve
           });
           const applyResp = await executeSend({ type: "APPLY_TPL", params: applyStep.params }, opts);
           process.stdout.write(applyResp);
+          hadError = isErrorResponse(applyResp);
         } catch (err) {
           process.stderr.write(String(err) + "\n");
+          hadError = true;
         }
         break;
+      }
+    }
+    const attachMeta = res.meta ?? DEFAULT_ATTACH_META;
+    if (!hadError && res.attach && attachMeta.report) {
+      try {
+        const runner = requireRunner(resolved);
+        const report = await buildAttachReport({
+          kind: res.attach.kind,
+          name: res.attach.name,
+          symbol: res.attach.symbol,
+          tf: res.attach.tf,
+          sub: res.attach.sub,
+          meta: attachMeta,
+          runner,
+          send: (action) => executeSend(action, opts)
+        });
+        process.stdout.write(formatAttachReport(report) + "\n");
+      } catch (err) {
+        process.stderr.write(`WARN attach_report: ${String(err)}\n`);
       }
     }
     return;

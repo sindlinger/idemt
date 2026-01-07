@@ -2,15 +2,25 @@ import { Ctx, isTf, parseSub, resolveSymTf } from "./args.js";
 import { renderHelp, renderExamples } from "./help.js";
 import { safeFileBase, stableHash } from "./naming.js";
 import type { TestSpec } from "./tester.js";
+import type { AttachMeta } from "./attach_report.js";
+import { DEFAULT_ATTACH_META } from "./attach_report.js";
 
 export type SendAction = { type: string; params: string[] };
 
+export type AttachInfo = {
+  kind: "indicator" | "expert";
+  name: string;
+  symbol: string;
+  tf: string;
+  sub?: number;
+};
+
 export type DispatchResult =
-  | { kind: "send"; type: string; params: string[] }
+  | { kind: "send"; type: string; params: string[]; attach?: AttachInfo; meta?: AttachMeta }
   | { kind: "local"; output: string }
   | { kind: "exit" }
   | { kind: "error"; message: string }
-  | { kind: "multi"; steps: SendAction[] }
+  | { kind: "multi"; steps: SendAction[]; attach?: AttachInfo; meta?: AttachMeta }
   | { kind: "test"; spec: TestSpec };
 
 
@@ -22,22 +32,93 @@ function requireSymTf(args: string[], ctx: Ctx): { sym: string; tf: string; rest
   return resolveSymTf(args, ctx, true);
 }
 
-function parseParamsTokens(tokens: string[]): { params: string; rest: string[] } {
-  if (tokens.length === 0) return { params: "", rest: tokens };
-  let rest = [...tokens];
-  let paramsTokens: string[] = [];
-  const idx = rest.indexOf("--");
-  if (idx >= 0) {
-    paramsTokens = rest.slice(idx + 1);
-    rest = rest.slice(0, idx);
-  } else {
-    const i = rest.findIndex((t) => t.includes("=") && !t.toLowerCase().startsWith("sub="));
-    if (i >= 0) {
-      paramsTokens = rest.slice(i);
-      rest = rest.slice(0, i);
+function parseBoolFlag(val: string | undefined, defaultValue: boolean): boolean {
+  if (val === undefined || val === "") return defaultValue;
+  const v = val.toLowerCase();
+  if (["1", "true", "yes", "y", "on"].includes(v)) return true;
+  if (["0", "false", "no", "n", "off"].includes(v)) return false;
+  return defaultValue;
+}
+
+function parseIntFlag(val: string | undefined, min: number, max: number): number | null {
+  if (!val) return null;
+  const n = parseInt(val, 10);
+  if (!Number.isFinite(n)) return null;
+  return Math.max(min, Math.min(max, n));
+}
+
+function parseParamsAndMeta(tokens: string[]): { params: string; rest: string[]; meta: AttachMeta } {
+  const meta: AttachMeta = { ...DEFAULT_ATTACH_META };
+  if (tokens.length === 0) return { params: "", rest: tokens, meta };
+
+  const rest: string[] = [];
+  for (let i = 0; i < tokens.length; i++) {
+    const tok = tokens[i];
+    const lower = tok.toLowerCase();
+
+    if (lower === "--params" || lower.startsWith("--params=")) {
+      const inline = lower.startsWith("--params=") ? tok.slice("--params=".length) : "";
+      const paramsTokens = inline ? [inline] : tokens.slice(i + 1);
+      return { params: paramsTokens.join(";"), rest, meta };
     }
+    if (lower === "--report" || lower.startsWith("--report=")) {
+      const val = lower.includes("=") ? tok.slice(tok.indexOf("=") + 1) : "";
+      meta.report = parseBoolFlag(val, true);
+      continue;
+    }
+    if (lower === "--no-report") {
+      meta.report = false;
+      continue;
+    }
+    if (lower === "--buffers" || lower.startsWith("--buffers=")) {
+      let val = lower.includes("=") ? tok.slice(tok.indexOf("=") + 1) : "";
+      if (!val && i + 1 < tokens.length && !tokens[i + 1].startsWith("--")) {
+        val = tokens[i + 1];
+        i += 1;
+      }
+      const n = parseIntFlag(val, 1, 200);
+      if (n !== null) meta.buffers = n;
+      continue;
+    }
+    if (lower === "--log" || lower.startsWith("--log=")) {
+      let val = lower.includes("=") ? tok.slice(tok.indexOf("=") + 1) : "";
+      if (!val && i + 1 < tokens.length && !tokens[i + 1].startsWith("--")) {
+        val = tokens[i + 1];
+        i += 1;
+      }
+      const n = parseIntFlag(val, 1, 500);
+      if (n !== null) meta.logTail = n;
+      continue;
+    }
+    if (lower === "--shot" || lower.startsWith("--shot=")) {
+      const val = lower.includes("=") ? tok.slice(tok.indexOf("=") + 1) : "";
+      meta.shot = parseBoolFlag(val, true);
+      continue;
+    }
+    if (lower === "--no-shot") {
+      meta.shot = false;
+      continue;
+    }
+    if (lower === "--shotname" || lower.startsWith("--shotname=")) {
+      let val = lower.includes("=") ? tok.slice(tok.indexOf("=") + 1) : "";
+      if (!val && i + 1 < tokens.length && !tokens[i + 1].startsWith("--")) {
+        val = tokens[i + 1];
+        i += 1;
+      }
+      if (val) {
+        meta.shotName = val;
+        meta.shot = true;
+      }
+      continue;
+    }
+
+    rest.push(tok);
   }
-  return { params: paramsTokens.join(";"), rest };
+  return { params: "", rest, meta };
+}
+
+function hasImplicitParams(tokens: string[]): boolean {
+  return tokens.some((t) => t.includes("=") && !t.toLowerCase().startsWith("sub="));
 }
 
 function requireDefaultSymbol(ctx: Ctx): string | null {
@@ -97,13 +178,22 @@ export function dispatch(tokens: string[], ctx: Ctx): DispatchResult {
       remaining = remaining.slice(1);
     }
     if (!tf) return err("tf default ausente. Use --tf/CMDMT_TF ou defaults.context.tf.");
-    const { params, rest: rest2 } = parseParamsTokens(remaining);
+    const { params, rest: rest2, meta } = parseParamsAndMeta(remaining);
     const { sub: subw, rest: rest3 } = parseSub(rest2, ctx);
+    if (!params && hasImplicitParams(rest3)) {
+      return err("params devem ser passados com --params k=v ...");
+    }
     const name = rest3.join(" ");
-    if (!name) return err("uso: indicador [TF] NOME [sub=N] [k=v ...]");
+    if (!name) return err("uso: indicador [TF] NOME [sub=N] [--params k=v ...]");
     const payload = [symbol, tf, name, subw];
     if (params) payload.push(params);
-    return { kind: "send", type: "ATTACH_IND_FULL", params: payload };
+    return {
+      kind: "send",
+      type: "ATTACH_IND_FULL",
+      params: payload,
+      attach: { kind: "indicator", name, symbol, tf, sub: Number(subw) },
+      meta
+    };
   }
 
   if (cmd === "chart") {
@@ -178,13 +268,22 @@ export function dispatch(tokens: string[], ctx: Ctx): DispatchResult {
     if (sub === "attach") {
       const r = resolveSymTf(args, ctx, false);
       if (!r || !r.sym || !r.tf || r.rest.length < 1)
-        return err("uso: indicator attach [SYMBOL TF] NAME [SUB|sub=N] [k=v ...]");
-      const { params, rest: rest2 } = parseParamsTokens(r.rest);
+        return err("uso: indicator attach [SYMBOL TF] NAME [SUB|sub=N] [--params k=v ...]");
+      const { params, rest: rest2, meta } = parseParamsAndMeta(r.rest);
       const { sub: subw, rest: rest3 } = parseSub(rest2, ctx);
+      if (!params && hasImplicitParams(rest3)) {
+        return err("params devem ser passados com --params k=v ...");
+      }
       const name = rest3.join(" ");
       const payload = [r.sym, r.tf, name, subw];
       if (params) payload.push(params);
-      return { kind: "send", type: "ATTACH_IND_FULL", params: payload };
+      return {
+        kind: "send",
+        type: "ATTACH_IND_FULL",
+        params: payload,
+        attach: { kind: "indicator", name, symbol: r.sym, tf: r.tf, sub: Number(subw) },
+        meta
+      };
     }
     if (sub === "detach") {
       const r = resolveSymTf(args, ctx, false);
@@ -248,9 +347,12 @@ export function dispatch(tokens: string[], ctx: Ctx): DispatchResult {
         baseTpl = restArgs[tplIdx];
         restArgs.splice(tplIdx, 1);
       }
-      const { params, rest: rest2 } = parseParamsTokens(restArgs);
+      const { params, rest: rest2 } = parseParamsAndMeta(restArgs);
+      if (!params && hasImplicitParams(rest2)) {
+        return err("params devem ser passados com --params k=v ...");
+      }
       const name = rest2.join(" ");
-      if (!name) return err("uso: expert run [TF] NOME [BASE_TPL] [k=v ...]");
+      if (!name) return err("uso: expert run [TF] NOME [BASE_TPL] [--params k=v ...]");
       const spec: TestSpec = { expert: name, symbol, tf, params, oneShot: true, baseTpl };
       return { kind: "test", spec };
     }
@@ -268,16 +370,19 @@ export function dispatch(tokens: string[], ctx: Ctx): DispatchResult {
       }
       if (!symbol) return err("symbol default ausente. Use --symbol/CMDMT_SYMBOL ou defaults.context.symbol.");
       if (!tf) return err("tf default ausente. Use --tf/CMDMT_TF ou defaults.context.tf.");
-      const { params, rest: rest2 } = parseParamsTokens(restArgs);
+      const { params, rest: rest2 } = parseParamsAndMeta(restArgs);
+      if (!params && hasImplicitParams(rest2)) {
+        return err("params devem ser passados com --params k=v ...");
+      }
       const name = rest2.join(" ");
-      if (!name) return err("uso: expert test [TF] NOME [k=v ...]");
+      if (!name) return err("uso: expert test [TF] NOME [--params k=v ...]");
       const spec: TestSpec = { expert: name, symbol, tf, params };
       return { kind: "test", spec };
     }
     if (sub === "oneshot") {
       const symbol = requireDefaultSymbol(ctx);
       if (!symbol) return err("symbol default ausente. Use --symbol/CMDMT_SYMBOL ou defaults.context.symbol.");
-      if (args.length < 2 || !isTf(args[0])) return err("uso: expert oneshot TF NOME [BASE_TPL] [k=v ...]");
+      if (args.length < 2 || !isTf(args[0])) return err("uso: expert oneshot TF NOME [BASE_TPL] [--params k=v ...]");
       const tf = args[0];
       const restArgs = args.slice(1);
       let baseTpl = requireBaseTpl(ctx) ?? "";
@@ -287,17 +392,20 @@ export function dispatch(tokens: string[], ctx: Ctx): DispatchResult {
         restArgs.splice(tplIdx, 1);
       }
       if (!baseTpl) return err("base template ausente. Use --base-tpl/CMDMT_BASE_TPL ou defaults.baseTpl.");
-      const { params, rest: rest2 } = parseParamsTokens(restArgs);
+      const { params, rest: rest2 } = parseParamsAndMeta(restArgs);
+      if (!params && hasImplicitParams(rest2)) {
+        return err("params devem ser passados com --params k=v ...");
+      }
       const name = rest2.join(" ");
-      if (!name) return err("uso: expert oneshot TF NOME [BASE_TPL] [k=v ...]");
+      if (!name) return err("uso: expert oneshot TF NOME [BASE_TPL] [--params k=v ...]");
       const spec: TestSpec = { expert: name, symbol, tf, params, oneShot: true, baseTpl };
       return { kind: "test", spec };
     }
     if (sub === "attach") {
       const r = resolveSymTf(args, ctx, false);
       if (!r || !r.sym || !r.tf || r.rest.length < 1)
-        return err("uso: expert attach [SYMBOL TF] NAME [BASE_TPL] [k=v ...]");
-      const { params, rest: rest2 } = parseParamsTokens(r.rest);
+        return err("uso: expert attach [SYMBOL TF] NAME [BASE_TPL] [--params k=v ...]");
+      const { params, rest: rest2, meta } = parseParamsAndMeta(r.rest);
       if (rest2.length === 1 && rest2[0].toLowerCase().endsWith(".tpl") && !params) {
         return { kind: "send", type: "APPLY_TPL", params: [r.sym, r.tf, rest2[0]] };
       }
@@ -307,8 +415,11 @@ export function dispatch(tokens: string[], ctx: Ctx): DispatchResult {
         baseTpl = rest2[tplIdx];
         rest2.splice(tplIdx, 1);
       }
+      if (!params && hasImplicitParams(rest2)) {
+        return err("params devem ser passados com --params k=v ...");
+      }
       const name = rest2.join(" ");
-      if (!name) return err("uso: expert attach [SYMBOL TF] NAME [BASE_TPL] [k=v ...]");
+      if (!name) return err("uso: expert attach [SYMBOL TF] NAME [BASE_TPL] [--params k=v ...]");
       const hash = stableHash(`${name}|${r.sym}|${r.tf}|${params}`);
       const outTpl = `cmdmt_ea_${hash}.tpl`;
       const saveParams = [name, outTpl];
@@ -318,7 +429,12 @@ export function dispatch(tokens: string[], ctx: Ctx): DispatchResult {
         { type: "SAVE_TPL_EA", params: saveParams },
         { type: "APPLY_TPL", params: [r.sym, r.tf, outTpl] }
       ];
-      return { kind: "multi", steps };
+      return {
+        kind: "multi",
+        steps,
+        attach: { kind: "expert", name, symbol: r.sym, tf: r.tf },
+        meta
+      };
     }
     if (sub === "detach") {
       const r = resolveSymTf(args, ctx, false);
