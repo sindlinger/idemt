@@ -28,7 +28,7 @@ export type AttachReport = {
   timeN?: string;
   bars?: number;
   buffers?: Record<string, number[]>;
-  logs?: { file: string; lines: string[] } | null;
+  logs?: { file: string; lines: string[]; mode?: "match" | "tail" } | null;
   screenshot?: string | null;
 };
 
@@ -61,6 +61,14 @@ function tailMatchLines(file: string, needles: string[], maxLines: number): stri
   });
   if (!hits.length) return [];
   return hits.slice(-maxLines);
+}
+
+function tailLines(file: string, maxLines: number): string[] {
+  if (!file || !fs.existsSync(file)) return [];
+  const text = readTextMaybeUtf16(file);
+  const lines = text.split(/\r?\n/).filter(Boolean);
+  if (!lines.length) return [];
+  return lines.slice(-maxLines);
 }
 
 function parseKeyValueLines(resp: string): Record<string, string> {
@@ -136,8 +144,13 @@ export async function buildAttachReport(opts: {
     const mqlLogsDir = path.join(dataPath, "MQL5", "Logs");
     const logFile = latestFile(mqlLogsDir);
     const baseName = path.win32.basename(opts.name);
-    const lines = logFile ? tailMatchLines(logFile, [opts.name, baseName], opts.meta.logTail) : [];
-    report.logs = logFile ? { file: logFile, lines } : null;
+    let lines = logFile ? tailMatchLines(logFile, [opts.name, baseName], opts.meta.logTail) : [];
+    let mode: "match" | "tail" | undefined = lines.length ? "match" : undefined;
+    if (logFile && lines.length === 0) {
+      lines = tailLines(logFile, opts.meta.logTail);
+      mode = "tail";
+    }
+    report.logs = logFile ? { file: logFile, lines, mode } : null;
   }
 
   if (opts.meta.shot) {
@@ -167,7 +180,8 @@ export function formatAttachReport(report: AttachReport): string {
     }
   }
   if (report.logs) {
-    lines.push(`log: ${report.logs.file}`);
+    const mode = report.logs.mode === "tail" ? " (tail)" : "";
+    lines.push(`log${mode}: ${report.logs.file}`);
     if (report.logs.lines.length) {
       for (const ln of report.logs.lines) lines.push(`  ${ln}`);
     } else {

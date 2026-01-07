@@ -847,10 +847,20 @@ bool H_IndSnapshot(string &p[], string &m, string &d[])
     else { m="symbol"; return false; }
   }
   long cid=ChartOpen(sym, tf); if(cid==0){ m="ChartOpen"; return false; }
-  long h=ChartIndicatorGet(cid, sub-1, name);
+  int h=(int)ChartIndicatorGet(cid, sub-1, name);
   if(h==INVALID_HANDLE || h==0){ m="handle"; return false; }
 
-  int buffers=(int)IndicatorGetInteger(h, INDICATOR_BUFFERS);
+  // Tenta inferir quantidade de buffers lendo os primeiros indices (nao existe INDICATOR_BUFFERS no MQL5)
+  int buffers=0;
+  int max_buffers=32;
+  for(int i=0;i<max_buffers;i++)
+  {
+    double tmp[]; ResetLastError();
+    int got=CopyBuffer(h, i, 0, 1, tmp);
+    if(got>0){ buffers=i+1; continue; }
+    if(i==0){ buffers=1; }
+    break;
+  }
   if(buffers<=0){ m="buffers"; return false; }
 
   datetime times[]; int copied=CopyTime(sym, tf, 0, count, times);

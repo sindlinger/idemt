@@ -259,7 +259,7 @@ async function main() {
   program
     .name("cmdmt")
     .description("TelnetMT CLI (socket)")
-    .version("0.1.7")
+    .version("0.1.8")
     .option("--config <path>", "caminho do config JSON")
     .option("--profile <name>", "perfil do config")
     .option("--runner <id>", "runner do config")
