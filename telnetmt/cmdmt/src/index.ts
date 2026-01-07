@@ -163,6 +163,43 @@ function resolveCompilePath(resolved: { compilePath?: string }): string | null {
   return null;
 }
 
+function isPlainFileName(p?: string): boolean {
+  if (!p) return false;
+  if (p.includes("/") || p.includes("\\")) return false;
+  return true;
+}
+
+function findFileRecursive(root: string, fileName: string, maxDepth = 6): string | null {
+  const queue: Array<{ dir: string; depth: number }> = [{ dir: root, depth: 0 }];
+  while (queue.length) {
+    const { dir, depth } = queue.shift()!;
+    let entries: fs.Dirent[];
+    try {
+      entries = fs.readdirSync(dir, { withFileTypes: true });
+    } catch {
+      continue;
+    }
+    for (const entry of entries) {
+      const full = path.join(dir, entry.name);
+      if (entry.isFile() && entry.name.toLowerCase() === fileName.toLowerCase()) {
+        return full;
+      }
+      if (entry.isDirectory() && depth < maxDepth) {
+        queue.push({ dir: full, depth: depth + 1 });
+      }
+    }
+  }
+  return null;
+}
+
+function resolveIndicatorFromRunner(name: string, dataPath?: string): string | null {
+  if (!dataPath) return null;
+  if (!isPlainFileName(name)) return null;
+  if (!/\.(mq5|ex5)$/i.test(name)) return null;
+  const base = path.join(toWslPath(dataPath), "MQL5", "Indicators");
+  return findFileRecursive(base, name);
+}
+
 function isMetaEditorPath(p: string): boolean {
   const base = path.basename(p).toLowerCase();
   return base.includes("metaeditor") && base.endsWith(".exe");
@@ -259,7 +296,7 @@ async function main() {
   program
     .name("cmdmt")
     .description("TelnetMT CLI (socket)")
-    .version("0.1.11")
+    .version("0.1.12")
     .option("--config <path>", "caminho do config JSON")
     .option("--profile <name>", "perfil do config")
     .option("--runner <id>", "runner do config")
@@ -400,6 +437,13 @@ async function main() {
     if (res.attach) {
       try {
         const runner = requireRunner(resolved);
+        if (res.type === "ATTACH_IND_FULL") {
+          const p = res.params[2] ?? "";
+          const resolvedPath = resolveIndicatorFromRunner(p, runner.dataPath);
+          if (resolvedPath) {
+            res.params[2] = resolvedPath;
+          }
+        }
         const logFile = findLatestLogFile(runner.dataPath);
         if (logFile && fs.existsSync(logFile)) {
           const stat = fs.statSync(logFile);
@@ -445,6 +489,16 @@ async function main() {
     if (res.attach) {
       try {
         const runner = requireRunner(resolved);
+        if (res.attach.kind === "indicator") {
+          const step = res.steps.find((s) => s.type === "ATTACH_IND_FULL");
+          if (step) {
+            const p = step.params[2] ?? "";
+            const resolvedPath = resolveIndicatorFromRunner(p, runner.dataPath);
+            if (resolvedPath) {
+              step.params[2] = resolvedPath;
+            }
+          }
+        }
         const logFile = findLatestLogFile(runner.dataPath);
         if (logFile && fs.existsSync(logFile)) {
           const stat = fs.statSync(logFile);
