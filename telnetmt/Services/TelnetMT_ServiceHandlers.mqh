@@ -878,6 +878,28 @@ bool H_IndSnapshot(string &p[], string &m, string &d[])
   }
   long cid=ChartOpen(sym, tf); if(cid==0){ m="ChartOpen"; return false; }
   int h=(int)ChartIndicatorGet(cid, sub-1, name);
+  if(h==INVALID_HANDLE || h==0){
+    // tenta achar pelo nome "curto"
+    string base=name;
+    int p=StringFind(base, "\\", StringLen(base)-1);
+    if(p>=0) base=StringSubstr(base, p+1);
+    if(StringLen(base)>4){
+      string tail=StringSubstr(base, StringLen(base)-4);
+      if(tail==".mq5" || tail==".ex5") base=StringSubstr(base,0,StringLen(base)-4);
+    }
+    string basel=base; StringToLower(basel);
+    int total=ChartIndicatorsTotal(cid, sub-1);
+    for(int i=0;i<total;i++)
+    {
+      string nm=ChartIndicatorName(cid, sub-1, i);
+      string nml=nm; StringToLower(nml);
+      if(StringFind(nml, basel)>=0)
+      {
+        h=(int)ChartIndicatorGet(cid, sub-1, nm);
+        if(h!=INVALID_HANDLE && h!=0) break;
+      }
+    }
+  }
   if(h==INVALID_HANDLE || h==0){ m="handle"; return false; }
 
   // Tenta inferir quantidade de buffers lendo os primeiros indices (nao existe INDICATOR_BUFFERS no MQL5)
