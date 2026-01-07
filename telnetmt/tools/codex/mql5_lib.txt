@@ -1,0 +1,3312 @@
+===== /mnt/c/Users/pichau/Downloads/Files and Folders - For Advanced Users - Getting Started - MetaTrader 5 Help(1).html =====
+
+﻿ Files and Folders - For Advanced Users - Getting Started - MetaTrader 5 Help 
+
+Trading Platform 
+MetaTrader 5 
+
+Download 
+
+Forex and Stock Markets 
+
+Trading 
+
+Charts 
+
+Technical Analysis 
+
+Fundamental Analysis 
+
+Alerts 
+
+Trading Services 
+Market 
+MQL5 Market 
+
+How to Buy Robots and Indicators 
+
+Signals 
+Forex Signals and Copy Trading 
+
+Find Signal 
+
+How to Subscribe to a Signal 
+
+How to Become a Signal Provider 
+
+Virtual Hosting (VPS) 
+
+Web Trading 
+MetaTrader 5 Web Platform 
+
+Web Version Features 
+
+Professional trading in a couple of clicks 
+
+When the Web Terminal is indispensable 
+
+How To Connect 
+
+Automated Trading 
+MQL5 IDE 
+
+Robots and Indicators 
+
+MQL5 Programming Language 
+
+MQL5 Wizard 
+
+MetaEditor 
+
+MetaEditor Help 
+
+Strategy Tester 
+
+MQL5.community 
+
+Mobile Trading 
+Mobile Trading with MetaTrader 5 
+
+MetaTrader 5 iPhone/iPad 
+
+MetaTrader 5 iPhone/iPad Help 
+
+MetaTrader 5 Android 
+
+MetaTrader 5 Android Help 
+
+Comparison with MetaTrader 4 
+
+MetaTrader 5 Help 
+
+Release Notes 
+
+Download 
+
+For Hedge Funds 
+MetaTrader 5 Platform 
+
+For Owner 
+
+For Managers 
+
+For Investors 
+
+Buy the Platform 
+
+For Brokers 
+MetaTrader 5 Platform 
+
+Buy the MetaTrader 5 Platform 
+
+Financial News in the Platform 
+
+Stock Exchanges 
+
+Ultency Matching Engine 
+
+Liquidity Providers (ECN) 
+
+End-to-End Analytics 
+
+Automations 
+
+Payments 
+
+Comparison with MetaTrader 4 
+
+How to start a brokerage business 
+
+Find Broker 
+
+Company 
+About 
+
+News 
+
+Contacts 
+
+Legal Information 
+
+For Business 
+
+English EN 
+
+Español ES 
+
+Français FR 
+
+日本語 JA 
+
+Português PT 
+
+Русский RU 
+
+中文 ZH 
+
+Deutsch DE 
+
+MetaTrader 5 Help → Getting Started → For Advanced Users → Files and Folders 
+
+Platform Installation 
+
+Installation on Mac OS 
+
+Installation on Linux 
+
+Platform Start 
+
+Extended Authentication 
+
+One Time Passwords - 2FA/TOTP 
+
+Files and Folders 
+
+Manage Trading Accounts 
+
+Mailbox 
+
+Security System 
+
+Live Update 
+
+Platform Logs 
+
+Task Manager 
+
+Hot Keys 
+
+Uninstalling the Platform 
+
+Files and Folders 
+This section contains the description of how the platform's files and folders are stored. In the main mode of platform start, modifiable and read-only files of the platform are stored separately. 
+
+Read-only Files of the Platform 
+These files are located in /Program Files/platform folder/. They are: 
+
+Terminal.exe — the executable file of the trading platform; 
+
+MetaEditor.exe — the executable file of the built-in MQL5 language editor ; 
+
+Sounds/*.wav — a set of standard audio files of the trading platform; 
+
+Modifiable Files 
+The main platform directory contains several folders: Bases , Config , Logs , MQL5 , Profiles , Templates, Tester. For quick access to the desired storage location, use command " Open data folder" in the File menu. 
+
+All text files are of Unicode format. Use appropriate software to edit them. 
+
+The Bases directory contains the platform's data bases grouped by servers, as well as some settings: 
+
+Folders and Files 
+
+Description 
+
+Sub-folders 
+
+Description 
+
+Default 
+
+Default folder of the platform database 
+
+History 
+
+The folder stores history data of financial instruments. Each security is stored in a separate directory that contains files yyyy.hcc, ticks.dat and the cache folder. Files yyyy.hcc contain one-minute data of a symbol, the file name reflects the year to which the data belong. The file ticks.dat contains tick data of a symbol. Files *.hc stored in the "Cache" folder contain bars of different timeframes calculated for a symbol from one-minute data. They are automatically created when you select the appropriate chart period . 
+
+Mail 
+
+The folder stores all emails received or sent from the platform. Mail databases are stored in *.dat files; a separate file is created for each account opened in the platform. For example, mail-xxxxx.dat, where xxxxx is the account number. 
+
+Server 1 — N 
+
+Platform database folders for different trade servers 
+
+News 
+
+The folder only stores one file news.dat containing the database of all newsletters ever received in the platform from a selected trade server. 
+
+Symbols 
+
+File selected-xxxxx.dat contains the database of symbol currently selected in the Market Watch window. File symbols-xxxxx.dat contains the common database of symbols available on this trade server. 
+
+Trades 
+
+Contains subfolders named by account numbers ever opened in the platform. Each account folder contains files deals_yyyy.mm.dat and history_yyyy.mm.dat with the information about trade and order history respectively. Separate files are created for each month. Here yyyy means the year, and mm — month. 
+
+alerts.dat 
+
+Contains the database of created alerts . 
+
+books.dat 
+
+Contains a list of currently open windows of request queues. 
+
+favourites.dat 
+
+Contains a database of elements added to Favorites of the Navigator window. 
+
+gvariables.dat 
+
+Contains information about global variables used in the platform. 
+
+hotkeys.ini 
+
+Contains a database of keyboard shortcuts. 
+
+indicators.dat 
+
+Contains usage statistics of indicators to display in the Insert menu. 
+
+objects.dat 
+
+Contains usage statistics of objects to display in the Insert menu. 
+
+Directory Config contains platform configuration files: 
+
+Folders and Files 
+
+Description 
+
+certificates 
+
+Folder containing certificate files *.pfx 
+
+accounts.dat 
+
+Contains a database of accounts and their settings. 
+
+common.ini 
+
+Contains common platform settings available in the Options window opened through the Tools menu. 
+
+metaeditor.ini 
+
+Contains common settings of MetaEditor . 
+
+terminal.ini 
+
+Contains platform interface settings and last used values (for window positioning, attached indicators, etc.) 
+
+servers.dat 
+
+Trade server settings for connection . 
+
+The Logs directory contains log files of the platform and MetaEditor , as well as crash logs: 
+
+Folders and Files 
+
+Description 
+
+/Crash/crash.log.* 
+
+Directory /crash contains files of the platform crashes. These files are automatically sent to the developer company to determine and eliminate their causes. 
+
+yyyymmdd.log 
+
+Log files containing information about events occurring in the platform. Platform logs are stored in separate files for each day it runs. Here yyyy stands for the year, mm — month, dd — day. 
+
+metaeditor.log 
+
+MetaEditor log files. 
+
+The MQL5 directory contains all the information related to programs written in this language: 
+
+Folders and Files 
+
+Description 
+
+/Experts 
+
+Contains Expert Advisor , compiled files (*.ex5) and source code files (*.mq5). 
+
+/Files 
+
+Contains files used by Expert Advisors and scripts. 
+
+/Images 
+
+Contains image files in *.bmp format. 
+
+/Include 
+
+Contains common *.mqh include files. 
+
+/Indicators 
+
+Contains files custom indicators . 
+
+/Libraries 
+
+Contains MQL5 libraries. 
+
+/Logs 
+
+Contains Expert Advisor log files (yyyymmdd.log). These files are created separately for each day of the EA operation, their names correspond to their creation date: yyyy stands for the year, mm — month, dd — date. 
+
+/Presets 
+
+Parameters of Expert Advisors start are stored in this folder ( "Input Parameters" ). 
+
+/Profiles 
+
+Contains various profiles and templates: 
+
+/Charts — chart profiles . Templates of default chart settings are stored in the Default subdirectory. Custom and built-in profiles are stored in separate subdirectories with their names corresponding to the names of the profiles. Each profile contains *.chr files with chart descriptions and order.wnd file with the windows placement order . 
+
+/Deleted — templates of deleted charts for subsequent re-opening. 
+
+/SymbolSets — sets of symbols (including displayed information columns) for the "Market Watch" window. 
+
+/Templates — chart templates as *.tpl files and ReportHistory.htm — trading history report template. 
+
+/Tester — *.set files with the last used sets of input parameters for each Expert Advisor that has ever been tested. 
+
+/Scripts 
+
+Contains files of scripts . 
+
+experts.dat 
+
+Contains usage statistics of MQL5 programs to display in the Insert menu. 
+
+The Tester directory contains files and folders used by the Strategy Tester : 
+
+Folders and Files 
+
+Description 
+
+Sub-folders 
+
+Description 
+
+Agent-IP-address-port 
+
+These folders are created for each agent of the tester. The folder name contains the IP address and port number the agent runs on. 
+
+MQL5 
+
+The file of the Expert Advisor that was tested last is stored in this folder. Expert Advisors are not saved in the folders of remote agents . 
+
+logs 
+
+The entries of the agent operation journal are stored in this folder. 
+
+bases 
+
+History data used by the agent are stored in this folder. 
+
+logs 
+
+This folder contains Strategy Tester log files (yyyymmdd.log). These files are created separately for each day of the EA operation, their names correspond to their creation date: yyyy — year, mm — month, dd — day. 
+
+/Manager 
+
+This directory contains log entries of the MetaTester component. 
+
+/Cache 
+
+This folder contains the XML-file of cache of last Expert Advisor optimization . 
+
+← One Time Passwords - 2FA/TOTP 
+
+Manage Trading Accounts → 
+
+Trading Platform 
+
+Mobile Trading 
+
+Market 
+
+Signals 
+
+Automated Trading 
+
+Download 
+
+For Brokers 
+
+Contacts 
+
+MetaQuotes is a software development company and does not provide investment or brokerage services 
+
+Copyright 2000-2026, MetaQuotes Ltd . Legal Information 
+
+This website uses cookies. Learn more about our Cookies Policy .
+
+
+===== /mnt/c/Users/pichau/Downloads/Platform Logs - For Advanced Users - Getting Started - MetaTrader 5 Help.html =====
+
+﻿ Platform Logs - For Advanced Users - Getting Started - MetaTrader 5 Help 
+
+Trading Platform 
+MetaTrader 5 
+
+Download 
+
+Forex and Stock Markets 
+
+Trading 
+
+Charts 
+
+Technical Analysis 
+
+Fundamental Analysis 
+
+Alerts 
+
+Trading Services 
+Market 
+MQL5 Market 
+
+How to Buy Robots and Indicators 
+
+Signals 
+Forex Signals and Copy Trading 
+
+Find Signal 
+
+How to Subscribe to a Signal 
+
+How to Become a Signal Provider 
+
+Virtual Hosting (VPS) 
+
+Web Trading 
+MetaTrader 5 Web Platform 
+
+Web Version Features 
+
+Professional trading in a couple of clicks 
+
+When the Web Terminal is indispensable 
+
+How To Connect 
+
+Automated Trading 
+MQL5 IDE 
+
+Robots and Indicators 
+
+MQL5 Programming Language 
+
+MQL5 Wizard 
+
+MetaEditor 
+
+MetaEditor Help 
+
+Strategy Tester 
+
+MQL5.community 
+
+Mobile Trading 
+Mobile Trading with MetaTrader 5 
+
+MetaTrader 5 iPhone/iPad 
+
+MetaTrader 5 iPhone/iPad Help 
+
+MetaTrader 5 Android 
+
+MetaTrader 5 Android Help 
+
+Comparison with MetaTrader 4 
+
+MetaTrader 5 Help 
+
+Release Notes 
+
+Download 
+
+For Hedge Funds 
+MetaTrader 5 Platform 
+
+For Owner 
+
+For Managers 
+
+For Investors 
+
+Buy the Platform 
+
+For Brokers 
+MetaTrader 5 Platform 
+
+Buy the MetaTrader 5 Platform 
+
+Financial News in the Platform 
+
+Stock Exchanges 
+
+Ultency Matching Engine 
+
+Liquidity Providers (ECN) 
+
+End-to-End Analytics 
+
+Automations 
+
+Payments 
+
+Comparison with MetaTrader 4 
+
+How to start a brokerage business 
+
+Find Broker 
+
+Company 
+About 
+
+News 
+
+Contacts 
+
+Legal Information 
+
+For Business 
+
+English EN 
+
+Español ES 
+
+Français FR 
+
+日本語 JA 
+
+Português PT 
+
+Русский RU 
+
+中文 ZH 
+
+Deutsch DE 
+
+MetaTrader 5 Help → Getting Started → For Advanced Users → Platform Logs 
+
+Platform Installation 
+
+Installation on Mac OS 
+
+Installation on Linux 
+
+Platform Start 
+
+Extended Authentication 
+
+One Time Passwords - 2FA/TOTP 
+
+Files and Folders 
+
+Manage Trading Accounts 
+
+Mailbox 
+
+Security System 
+
+Live Update 
+
+Platform Logs 
+
+Task Manager 
+
+Hot Keys 
+
+Uninstalling the Platform 
+
+Platform Logs 
+Almost all actions performed are logged in the platform journals. The logs reflect all important events: synchronization with the provider's account during copy trading, hosting migration results, details of purchases from the Market, and much more. 
+
+Two types of logs are available in the platform: 
+
+Experts Journal is displayed on the Experts tab of the Toolbox window. It contains information about the running indicators and Expert Advisor, including opening/closing of positions, modification of orders, Expert Advisor alerts and comments, etc. 
+
+Platform logs are shown on the Journal tab of the Toolbox window. It contains information about the recorded actions of the trader and platform for the current session. Information about the platform start and all events during its operation including execution of all trade operations are displayed here. 
+
+Journal logs are represented in a table with the following fields: 
+
+Time — the date and time of the event. Specified according to the time zone on the user's computer. 
+
+Source — event type: Network, Alert, HistoryBase, Experts, the name of a separate Expert Advisor or indicator, etc.; 
+
+Message — description of the event. 
+
+Events are divided into several types and marked by special icons: 
+
+— informational message; 
+
+— warning; 
+
+— error message. 
+
+The following commands can be run from the context menu of this tab: 
+
+Open — open the folder that contains the journal log files. Besides that, when this command is executed, all current journal entries are saved in log files. The platform log files are stored in the Logs directory, and Expert log files are saved in MQL5\Logs. File names correspond to the date of journal generation — YYYYMMDD.LOG. Previous logs on the platform operation can be reviewed from these files, while the "Journal" tab only contains the latest entries; 
+
+Copy — copy a row with information to clipboard for use in other applications; 
+
+Send — send the current log file to an administrator by the internal mailing system. Execution of this command opens a message creating window, to which the selected file is attached; 
+
+Alerts (in the Experts journal only) — open the window of Expert Advisor alerts ; 
+
+Viewer — open a special program to view log files; 
+
+Clear — remove current logs from the tab. Logs are not physically removed from the computer, they are still available in log files; 
+
+Auto Scroll — if this option is enabled, the list of logs is scrolled to the last one every time a new entry appears in the journal; 
+
+Auto Arrange — if this option is enabled, the size of table columns is selected automatically in case the window size is changed; 
+
+Grid — enable/disable table field separators. 
+
+Log Viewer # 
+The platform includes a special program for viewing log files. It can be opened by selecting "Viewer" in the context menu of the Journal and Experts tabs. 
+
+A search bar (search is performed by exact words, case sensitive) and the filter of entries (Full, No connection, Errors only) are available at the top of the window. You can specify time range for search. After specifying all the necessary search condition, click "Request". 
+
+The following commands are available in the context menu of the log viewer: 
+
+Open — open the folder that contains the journal log files. Besides that, when this command is executed, all current journal entries are saved in log files. The platform log files are stored in the Logs directory, and export log files are saved in MQL5\Logs. File names correspond to the date of journal generation — YYYYMMDD.LOG. Previous logs on the platform operation can be reviewed from thee files, while the "Journal" tab only contains the latest entries; 
+
+Copy — copy a row with information to clipboard for use in other applications; 
+
+Send — send the current log file to an administrator by the internal mailing system. Execution of this command opens a message creating window, to which the selected file is attached; 
+
+Search — open the search window. 
+
+Find next — find the next item matching the search query. 
+
+Find Previous — find the previous item matching the search query. 
+
+Auto Scroll — if this option is enabled, the list of logs is scrolled to the last one every time a new entry appears in the journal; 
+
+Auto Arrange — if this option is enabled, the size of table columns is selected automatically in case the window size is changed; 
+
+Grid — enable/disable table field separators. 
+
+Search in Logs # 
+To find a word or phrase in the records displayed, click " Search" in the context menu or press "Ctrl+F". 
+
+It contains the following commands and parameters: 
+
+Find — field to enter the search word or phrase; 
+
+Match Whole Word Only — this option allows to search by a particular word form, only the word or phrase that exactly match the search query will be found; 
+
+Match Case — enable/disable case sensitivity when executing the search query; 
+
+Direction up/down — Enable search up or down from the current cursor position; 
+
+Find Next — move to the next found item. The same command can be executed by pressing F3; 
+
+Cancel — close the window. 
+
+Alerts of Expert Advisors # 
+If the Expert Advisor code provides generation of alerts using the Alert (); function, a special dialog appears when the alerts trigger: 
+
+The message of the current alert appears at the top of the window. The current and the previous alerts of the Expert Advisor are shown in the table below: 
+
+Date and time; 
+
+Name of the MQL5 application, chart symbol and timeframe; 
+
+Alert message. 
+
+Using alerts, an Expert Advisor can notify a trader about significant events. The window of alerts opens even if the window of the platform is minimized. 
+
+← Live Update 
+
+Task Manager → 
+
+Trading Platform 
+
+Mobile Trading 
+
+Market 
+
+Signals 
+
+Automated Trading 
+
+Download 
+
+For Brokers 
+
+Contacts 
+
+MetaQuotes is a software development company and does not provide investment or brokerage services 
+
+Copyright 2000-2026, MetaQuotes Ltd . Legal Information 
+
+This website uses cookies. Learn more about our Cookies Policy .
+
+
+===== /mnt/c/Users/pichau/Downloads/Hot Keys - For Advanced Users - Getting Started - MetaTrader 5 Help(1).html =====
+
+﻿ Hot Keys - For Advanced Users - Getting Started - MetaTrader 5 Help 
+
+Trading Platform 
+MetaTrader 5 
+
+Download 
+
+Forex and Stock Markets 
+
+Trading 
+
+Charts 
+
+Technical Analysis 
+
+Fundamental Analysis 
+
+Alerts 
+
+Trading Services 
+Market 
+MQL5 Market 
+
+How to Buy Robots and Indicators 
+
+Signals 
+Forex Signals and Copy Trading 
+
+Find Signal 
+
+How to Subscribe to a Signal 
+
+How to Become a Signal Provider 
+
+Virtual Hosting (VPS) 
+
+Web Trading 
+MetaTrader 5 Web Platform 
+
+Web Version Features 
+
+Professional trading in a couple of clicks 
+
+When the Web Terminal is indispensable 
+
+How To Connect 
+
+Automated Trading 
+MQL5 IDE 
+
+Robots and Indicators 
+
+MQL5 Programming Language 
+
+MQL5 Wizard 
+
+MetaEditor 
+
+MetaEditor Help 
+
+Strategy Tester 
+
+MQL5.community 
+
+Mobile Trading 
+Mobile Trading with MetaTrader 5 
+
+MetaTrader 5 iPhone/iPad 
+
+MetaTrader 5 iPhone/iPad Help 
+
+MetaTrader 5 Android 
+
+MetaTrader 5 Android Help 
+
+Comparison with MetaTrader 4 
+
+MetaTrader 5 Help 
+
+Release Notes 
+
+Download 
+
+For Hedge Funds 
+MetaTrader 5 Platform 
+
+For Owner 
+
+For Managers 
+
+For Investors 
+
+Buy the Platform 
+
+For Brokers 
+MetaTrader 5 Platform 
+
+Buy the MetaTrader 5 Platform 
+
+Financial News in the Platform 
+
+Stock Exchanges 
+
+Ultency Matching Engine 
+
+Liquidity Providers (ECN) 
+
+End-to-End Analytics 
+
+Automations 
+
+Payments 
+
+Comparison with MetaTrader 4 
+
+How to start a brokerage business 
+
+Find Broker 
+
+Company 
+About 
+
+News 
+
+Contacts 
+
+Legal Information 
+
+For Business 
+
+English EN 
+
+Español ES 
+
+Français FR 
+
+日本語 JA 
+
+Português PT 
+
+Русский RU 
+
+中文 ZH 
+
+Deutsch DE 
+
+MetaTrader 5 Help → Getting Started → For Advanced Users → Hot Keys 
+
+Platform Installation 
+
+Installation on Mac OS 
+
+Installation on Linux 
+
+Platform Start 
+
+Extended Authentication 
+
+One Time Passwords - 2FA/TOTP 
+
+Files and Folders 
+
+Manage Trading Accounts 
+
+Mailbox 
+
+Security System 
+
+Live Update 
+
+Platform Logs 
+
+Task Manager 
+
+Hot Keys 
+
+Uninstalling the Platform 
+
+Key Shortcuts 
+Keyboard shortcuts (also referred to as hotkeys) are keys and their combinations that allow to execute various commands fast and without using menus or toolbars. Keyboard shortcuts can be assigned for calling any element of the Navigator window, except for elements of the Accounts group. In order to assign a combination of keys to an element, the " Set hotkey" command of its context menu should be executed. 
+
+Assigned hotkeys are of higher priorities than predefined ones. For example, initially the "Ctrl+O" combination calls the platform setup window. If call of the "On Balance Volume" indicator is set to the same combination, "Ctrl+O" will not call the platform setup window any more. 
+
+Predefined keyboard shortcuts execute various functions depending on what platform interface window is currently active. Some hotkeys execute certain functions independent of focus. 
+
+Keyboard shortcuts in the Chart Window 
+
+Hotkeys 
+
+Description 
+
+Scroll chart to the left. 
+
+Scroll chart to the right. 
+
+Fast chart scroll to the left; in case of a fixed scale — chart scroll upwards. 
+
+Fast chart scroll to the right; in case of a fixed scale — chart scroll downwards. 
+
+NumPad 5 
+
+Restoring of automatic chart vertical scale after its being changed. If the scale was defined, this hot key will return the chart into the visible range. 
+
+Page Up 
+
+Fast chart scroll to the left. 
+
+Page Down 
+
+Fast chart scroll to the right. 
+
+Home 
+
+Move chart to the start point. 
+
+End 
+
+Move chart to the end point. 
+
+"-" 
+
+Zoom out chart. 
+
+"+" 
+
+Zoom in chart. 
+
+Delete 
+
+Delete all selected graphical objects . 
+
+Backspace 
+
+Delete the latest objects imposed to a chart. 
+
+Enter 
+
+Open/close fast navigation bar . 
+
+Keyboard shortcuts for Working with Charts, Independent of the Active Window 
+
+Hotkeys 
+
+Description 
+
+F2 
+
+Open the Task Manager . 
+
+F7 
+
+Call the window with properties of an EA attached to a chart window for changing its settings. 
+
+F8 
+
+Call the chart setup window. 
+
+F12 
+
+Move chart by one bar to the left. 
+
+Shift+F12 
+
+Move chart by one bar to the right. 
+
+Shift+F5 
+
+Switch to the previous profile . 
+
+Alt+1 
+
+Show chart as a sequence of bars. 
+
+Alt+2 
+
+Show chart as a sequence of candlesticks. 
+
+Alt+3 
+
+Show chart as a broken line. 
+
+Alt+W 
+
+Call open chart managing window. 
+
+Alt+Backspace or Ctrl+Z 
+
+Cancel object deletion. 
+
+Ctrl+A 
+
+Arrange height of all indicator windows by default. 
+
+Ctrl+B 
+
+Call the "Objects List" window. 
+
+Ctrl+F 
+
+Enable "Crosshair" . 
+
+Ctrl+G 
+
+Show/hide grid. 
+
+Ctrl+H 
+
+Show/hide the OHLC line. 
+
+Ctrl+I 
+
+Call the "Indicators List" window. 
+
+Ctrl+K 
+
+Show/hide real volumes. 
+
+Ctrl+L 
+
+Show/hide volumes. 
+
+Ctrl+P 
+
+Print the chart. 
+
+Ctrl+S 
+
+Save chart as "CSV", "PRN" or "HTM" file. 
+
+Ctrl+W or Ctrl+F4 
+
+Close the current chart window. 
+
+Ctrl+Y 
+
+Show/hide period separators . 
+
+Ctrl+F5 
+
+Switch to the next profile . 
+
+Ctrl+F6 
+
+Activate the previous chart window. 
+
+Ctrl+Shift+F6 
+
+Activate the next chart window. 
+
+Hotkeys in the Market Watch Window 
+
+Hotkeys 
+
+Description 
+
+F9 
+
+Call the "New Order" window. 
+
+Space/Tab 
+
+Switch between "Symbols" , "Details" , "Trading" and "Ticks" tabs. 
+
+A 
+
+Auto arrange columns in the "Symbols" tab. 
+
+G 
+
+Show/hide grid. 
+
+Hotkeys in the Navigator Window 
+
+Hotkeys 
+
+Description 
+
+Enter 
+
+Depending on sections can perform: Authorization using a selected account, opening of a selected Expert Advisor, custom indicator or script in MetaEditor. 
+
+Insert 
+
+Open a new account when selecting the "Accounts" section or a certain trade server. 
+
+Delete 
+
+Delete a selected account, Expert Advisor, custom indicator or script. 
+
+G 
+
+Show/hide grid in the "Favorites" tab. 
+
+Hot Keys in the Data Window 
+
+Hotkeys 
+
+Description 
+
+Ctrl+C 
+
+Copy information to clipboard for using it in other applications. 
+
+A 
+
+Enable/disable auto sizing of columns. 
+
+G 
+
+Show/hide grid. 
+
+Hotkeys in the "Toolbox" Window 
+
+Hotkeys 
+
+Description 
+
+F9 
+
+Call the "New Order" window. 
+
+Enter 
+
+View a selected news , e-mail , application or modify a selected alert - depending on the tab selected. 
+
+Insert 
+
+Create a new e-mail or alert - depending on the tab selected. 
+
+Delete 
+
+Delete an e-mail or alert - depending on the tab selected. 
+
+Space 
+
+Unwrap a branch of mails or enable/disable an alert - depending on the tab selected. 
+
+C 
+
+Copy the selected journal line of the platform or Expert Advisors to the clipboard. 
+
+D 
+
+Download the selected application at the Code Base tab. 
+
+R key 
+
+Show/hide the column of news categories. 
+
+A 
+
+Enable/disable auto sizing of columns. 
+
+G 
+
+Show/hide grid. 
+
+Common Actions in the Platform 
+
+Hotkeys 
+
+Description 
+
+Esc 
+
+Close dialog windows. 
+
+F1 
+
+Open the "Userguide" 
+
+F3 
+
+Open the "Global variables" window. 
+
+F4 
+
+Start MetaEditor . 
+
+F6 
+
+Call the "Tester" window for testing an Expert Advisor attached to a chart window. 
+
+F9 
+
+Call the "New Order" window. 
+
+F10 
+
+Open "Quotes Window". 
+
+F11 
+
+Enable/disable fullscreen mode. The fullscreen mode hides all platform windows except the chart. If you have manually opened additional windows, when you exit and re-enter the fullscreen mode, they will be hidden again while your changes will not be saved. 
+
+Alt+F4 
+
+Close the platform. 
+
+Ctrl+C or Ctrl+Insert 
+
+Copy to clipboard. 
+
+Ctrl+D 
+
+Open/close the "Data Window" . 
+
+Ctrl+E 
+
+Allow/prohibit use of Expert Advisors . 
+
+Ctrl+M 
+
+Open/close the "Market Watch" window. 
+
+Ctrl+N 
+
+Open/close the "Navigator" window. 
+
+Ctrl+O 
+
+Open the "Settings" window. 
+
+Ctrl+R 
+
+Open/close the "Tester" window. 
+
+Ctrl+T 
+
+Open/close the "Toolbox" window. 
+
+Ctrl+F9 
+
+Open the "Trade" tab in the "Toolbox" window and switch the control focus to it. After that trade activities can be managed using the keyboard. 
+
+← Task Manager 
+
+Uninstalling the Platform → 
+
+Trading Platform 
+
+Mobile Trading 
+
+Market 
+
+Signals 
+
+Automated Trading 
+
+Download 
+
+For Brokers 
+
+Contacts 
+
+MetaQuotes is a software development company and does not provide investment or brokerage services 
+
+Copyright 2000-2026, MetaQuotes Ltd . Legal Information 
+
+This website uses cookies. Learn more about our Cookies Policy .
+
+
+===== /mnt/c/Users/pichau/Downloads/Platform Start - For Advanced Users - Getting Started - MetaTrader 5 Help(2).html =====
+
+﻿ Platform Start - For Advanced Users - Getting Started - MetaTrader 5 Help 
+
+Trading Platform 
+MetaTrader 5 
+
+Download 
+
+Forex and Stock Markets 
+
+Trading 
+
+Charts 
+
+Technical Analysis 
+
+Fundamental Analysis 
+
+Alerts 
+
+Trading Services 
+Market 
+MQL5 Market 
+
+How to Buy Robots and Indicators 
+
+Signals 
+Forex Signals and Copy Trading 
+
+Find Signal 
+
+How to Subscribe to a Signal 
+
+How to Become a Signal Provider 
+
+Virtual Hosting (VPS) 
+
+Web Trading 
+MetaTrader 5 Web Platform 
+
+Web Version Features 
+
+Professional trading in a couple of clicks 
+
+When the Web Terminal is indispensable 
+
+How To Connect 
+
+Automated Trading 
+MQL5 IDE 
+
+Robots and Indicators 
+
+MQL5 Programming Language 
+
+MQL5 Wizard 
+
+MetaEditor 
+
+MetaEditor Help 
+
+Strategy Tester 
+
+MQL5.community 
+
+Mobile Trading 
+Mobile Trading with MetaTrader 5 
+
+MetaTrader 5 iPhone/iPad 
+
+MetaTrader 5 iPhone/iPad Help 
+
+MetaTrader 5 Android 
+
+MetaTrader 5 Android Help 
+
+Comparison with MetaTrader 4 
+
+MetaTrader 5 Help 
+
+Release Notes 
+
+Download 
+
+For Hedge Funds 
+MetaTrader 5 Platform 
+
+For Owner 
+
+For Managers 
+
+For Investors 
+
+Buy the Platform 
+
+For Brokers 
+MetaTrader 5 Platform 
+
+Buy the MetaTrader 5 Platform 
+
+Financial News in the Platform 
+
+Stock Exchanges 
+
+Ultency Matching Engine 
+
+Liquidity Providers (ECN) 
+
+End-to-End Analytics 
+
+Automations 
+
+Payments 
+
+Comparison with MetaTrader 4 
+
+How to start a brokerage business 
+
+Find Broker 
+
+Company 
+About 
+
+News 
+
+Contacts 
+
+Legal Information 
+
+For Business 
+
+English EN 
+
+Español ES 
+
+Français FR 
+
+日本語 JA 
+
+Português PT 
+
+Русский RU 
+
+中文 ZH 
+
+Deutsch DE 
+
+MetaTrader 5 Help → Getting Started → For Advanced Users → Platform Start 
+
+Platform Installation 
+
+Installation on Mac OS 
+
+Installation on Linux 
+
+Platform Start 
+
+Extended Authentication 
+
+One Time Passwords - 2FA/TOTP 
+
+Files and Folders 
+
+Manage Trading Accounts 
+
+Mailbox 
+
+Security System 
+
+Live Update 
+
+Platform Logs 
+
+Task Manager 
+
+Hot Keys 
+
+Uninstalling the Platform 
+
+How to Start the Trading Platform 
+After installation, a group of programs of the trading platform is added to the Start menu, and the program shortcut is created on the desktop. Use them to run the platform. 
+
+Two copies of the platform cannot run from the same directory. If you need to run multiple copies at the same time, install the appropriate number of programs in different directories. 
+
+There are two main modes of trading platform start, as well as some additional methods. 
+
+Main Mode # 
+Starting from MS Windows Vista, applications installed to Program Files are not allowed to store their data in the installation folder on default. All data should be stored in a separate Windows user directory. 
+
+Thus, if the platform is installed in the Program Files directory and user rights to write to that directory are limited, it is run in the main mode. The main mode is also used in the following situations: 
+
+If the UAC (User Activity Control) system is enabled. 
+
+If remote connection to a computer is used (RDP, Remote Desktop Protocol). 
+
+In this mode, the editable files of the platform are stored in a specific Windows user directory, and the immutable files are stored in Program Files. Immutable files include executables of the platform, of MetaEditor, standard sounds, etc. Editable files are: 
+
+all platform settings, configuration files; 
+
+all the databases (price history); 
+
+platform and expert journals ; 
+
+all profiles. 
+
+All the editable files of the platform are stored in the following directories (depending on the operating system used): 
+
+Microsoft Windows XP SP3: 
+
+C:\Documents and Settings\ username \Application Data\MetaQuotes\Terminal\ instance_id \ 
+
+Microsoft Windows Vista and higher: 
+
+C:\Users\ username \AppData\Roaming\MetaQuotes\Terminal\ instance_id \ 
+
+Here 'C' is the logical drive letter on which Windows is installed, "username" is the account name in the operating system under which the platform has been installed, "instance_id" is a unique identifier generated based on the path to the directory where the platform is installed. 
+
+For quick access to these folders, use the command " Open Data Folder" in the File menu. Each data folder contains a special text file origin.txt. This file contains the path to the platform installation folder, which corresponds to this data directory. 
+
+In the main mode, the catalog where editable files are stored is different for each Windows account. 
+
+A detailed description of the platform file structure and their purpose is given in the appropriate section . 
+
+Portable Mode 
+When installed to Program Files, the platform works in the main mode described above on default. All the platform data are stored in a special Windows user directory. However you can force the platform to store its data in the installation folder. To do it, run the platform in the portable mode. To use this mode, start the platform from the command line with the additional /portable key. For example, "C:\Program Files\MyTerminal\terminal.exe /portable". 
+
+To run the platform in the Portable mode, the following conditions must be met: 
+
+If the platform is installed in the Program Files folder, the user must have administrator rights on the computer. In addition, UAC (User Account Control) must be disabled in the operating system. 
+
+If the platform is installed in any other folder, the user must have permission to write data to that folder. 
+
+Running from the Command Line # 
+The trading platform can be run manually with predefined parameters. This can be done by using different keys for starting from a command line and alternative configuration files . 
+
+The platform can be run with the keys from the command line. Specify there a path to the executable platform file (path to the file\terminal.exe) and after a space add one or several of the below keys: 
+
+/login:login number — running a platform under a certain account . For example, terminal.exe / login:100000 . 
+
+/config:path to a configuration file — running a platform with an alternative configuration file. For example, terminal.exe /config:c:\myconfiguration.ini . The default configuration file is common.ini . 
+
+/profile:profile name — running the platform with a definite profile . The profile must be pre-created and located in the /profiles/charts/ of the platform. For example, terminal.exe /profile:Euro . 
+
+/portable — set the platform to run in the Portable mode . Running in this mode may be needed if the platform was earlier launched in the main mode . To run the platform in the portable mode, the operating system user requires appropriate permissions. 
+
+If the key assignment is set incorrectly (invalid login, profile name or configuration file), the default value will be used. 
+
+Running with a Custom Configuration File # 
+The trading platform can be run with a custom set of parameters. Create your own configuration file based on the default common.ini . To start the platform with a custom configuration file, run the following command in the command line : 
+
+path_to_platform\terminal64.exe /config:c:\myconfiguration.ini 
+
+where "c:\myconfiguration.ini" is the path to the custom configuration file. 
+
+Custom configuration files are used in the "read only" mode during the work of the platform. Changes in settings made from the platform interface are not written to the used custom configuration file. 
+
+The configuration file parameters are divided into several blocks and correspond to the settings on platform configuration window tabs. Below are the most important settings in the configuration file: 
+
+[Common] 
+Common platform settings similar to the Server tab: 
+
+Login — account number. The platform tries to read additional authorization information from a configuration file (server, password and certificate password specified in the parameters described below). If the authorization information for the account is not specified, the platform tries to read it from its own account database; 
+
+Server — address and port number of a trade server separated with a colon; 
+
+Password — password for connecting to the account specified in the Login parameter; 
+
+CertPassword — certificate password. This parameter is required if the extended authentication mode is enabled for the account. If the used certificate is not installed in the operating system storage, its file should be placed in platform_folder/config/certificates/ ; 
+
+ProxyEnable — allow (1) or prohibit (0) connection through a proxy server; 
+
+ProxyType — type of a proxy server: 0 (SOCKS4), 1 (SOCKS5), 2 (HTTP); 
+
+ProxyAddress — IP address and port of the proxy server separated by a colon; 
+
+ProxyLogin — login for authorizing on a proxy server; 
+
+ProxyPassword — password for authorizing on a proxy server; 
+
+KeepPrivate — saving the password between connections: 1 — to save, 0 — not to save. 
+
+NewsEnable — enable (1) or disable (0) news letters; 
+
+CertInstall —  install (1) or do not install (0) new certificates in the system storage (for extended authentication ). 
+
+MQL5Login — account on MQL5.community . 
+
+MQL5Password — password for the specified account on MQL5.community . 
+
+[Charts] 
+Chart settings: 
+
+ProfileLast —  the name of the current profile ; 
+
+MaxBars — the maximum number of bars in a chart; 
+
+PrintColor — chart print mode: 1 — color printing, 0 — black-and-white printing; 
+
+SaveDeleted — save (1) or not (0) deleted chart to reopen later. 
+
+[Experts] 
+Expert Advisor settings: 
+
+AllowLiveTrading — enable (1) or disable (0) automated trading using Expert Advisors . 
+
+AllowDllImport — DLL import allowed (1) or not (0); 
+
+Enabled — enable or disable use of Expert Advisors; 
+
+Account — disable (1) or not (0) Expert Advisors when connecting with a different account ; 
+
+Profile — disable (1) or not (0) Expert Advisors after change after change of the active profile . 
+
+[Objects] 
+Object settings: 
+
+ShowPropertiesOnCreate — show (1) or do not show (0) properties of objects being created; 
+
+SelectOneClick — select (1) or not (0) objects at a single mouse click; 
+
+MagnetSens — docking sensitivity of objects; 
+
+[Email] 
+Email settings: 
+
+Enable — enable (1) or disable (0) use of email; 
+
+Server — address of the SMTP server; 
+
+Auth — encrypted information for authentication on the mail server; 
+
+Login — login for the SMTP server; 
+
+Password — password for the SMTP server; 
+
+From — sender's name and address; 
+
+To — recipient's name and address. 
+
+[StartUp] 
+Settings of Expert Advisors and scripts , that open automatically when you start the platform: 
+
+Expert — file name of the Expert Advisor that opens automatically when you start the platform. The Expert Advisor runs on the chart that opens in accordance with the Symbol and Period parameters. If the Symbol parameter is not set, no additional chart will be opened in the platform. The Expert Advisor will run on the first chart of the current profile in this case. If the current profile has no charts, the Expert Advisor will not be started. If the Expert parameter is not set, no Expert Advisors will be started. 
+
+Symbol — the symbol of the chart that opens straight after the platform start. An Expert Advisor or a script will be added to this chart. No information about this additional chart will be saved as the platform is closed. During the next start of the platform without the configuration file, this chart will not be opened. If this parameter is not set, no additional chart will be opened. 
+
+Period — the timeframe of the chart, to which an Expert Advisor or a script will be added (any of the 21 periods available in the platform). If the parameter is not set, default H1 is used. 
+
+Template — the name of the template to be applied to the chart. 
+
+ExpertParameters — the name of the file that contains Expert Advisor parameters . The file must be located in the folder MQL5\presets of the platform data directory . If this parameter is not set, default settings will be used. 
+
+Script — the name of the script that opens automatically when you start the platform. Scripts are run by the same rules as Expert Advisor. 
+
+ScriptParameters — the name of the file that contains script parameters . The file must be located in the folder MQL5\presets of the platform data directory . If this parameter is not set, default settings will be used. 
+
+ShutdownTerminal — enable/disable trading platform shutdown upon completion of script operation (0 — disable, 1 — enable). If this parameter is not set, the value "0" is used (shutdown disabled). The parameter is used for scripts only, other program types are not supported. 
+
+[Tester] 
+Parameters of testing that starts automatically when you run the platform: 
+
+Expert — the file name of the Expert Advisor that will automatically run in the testing (optimization) mode. If this parameter is not present, testing will not run. 
+
+ExpertParameters — the name of the file that contains Expert Advisor parameters . This file must be located in the MQL5\Profiles\Tester folder of the platform installation directory. 
+
+Symbol — the name of the symbol that will be used as the main testing symbol . If this parameter is not added, the last selected symbol in the tester is used. 
+
+Period — testing chart period (any of the 21 periods available in the platform). If the parameter is not set, default H1 is used. 
+
+Login — this parameter communicates to the Expert Advisor the value of an account, on which testing is allegedly performed. The need for this parameter is set in the source MQL5 code of the Expert Advisor (in the AccountInfoInteger function). 
+
+Model — tick generation mode (0 — "Every tick", 1 — "1 minute OHLC", 2 — "Open price only", 3 — "Math calculations", 4 — "Every tick based on real ticks"). If this parameter is not specified, Every Tick mode is used. 
+
+ExecutionMode — trading mode emulated by the strategy tester (0 — normal, -1 — with a random delay in the execution of trading orders, >0 — trade execution delay in milliseconds, it cannot exceed 600 000). 
+
+Optimization — enable/disable optimization , its type (0 — optimization disabled, 1 — "Slow complete algorithm", 2 — "Fast genetic based algorithm", 3 — "All symbols selected in Market Watch"). 
+
+OptimizationCriterion — optimization criterion : (0 — the maximum balance value, 1 — the maximum value of product of the balance and profitability, 2 — the product of the balance and expected payoff, 3 — the maximum value of the expression (100% - Drawdown)*Balance, 4 — the product of the balance and the recovery factor, 5 — the product of the balance and the Sharpe Ratio, 6 — a custom optimization criterion received from the OnTester() function in the Expert Advisor), 7 — the maximum of complex criterion. 
+
+FromDate — starting date of the testing range in format YYYY.MM.DD. If this parameter is not set, the date from the corresponding field of the strategy tester will be used. 
+
+ToDate — end date of the testing range in format YYYY.MM.DD. If this parameter is not set, the date from the corresponding field of the strategy tester will be used. 
+
+ForwardMode — forward testing mode (0 — off, 1 — 1/2 of the testing period, 2 — 1/3 of the testing period, 3 — 1/4 of the testing period, 4 — custom interval specified using the ForwardDate parameter). 
+
+ForwardDate — starting date of forward testing in the format YYYY.MM.DD. The parameter is valid only if ForwardMode=4. 
+
+Report — the name of the file to save the report on testing or optimization results. The file is created in the trading platform directory. You can specify a path to save the file, relative to this directory, for example, \reports\tester.htm. The subdirectory where the report is saved should exist. If no extension is specified in the file name, the ".htm" extension is automatically used for testing reports, and ".xml" is used for optimization reports. If this parameter is not set, the testing report will not be saved as a file. If forward testing is enabled, its results will be saved in a separate file with the ".forward" suffix. For example, tester.forward.htm. 
+
+ReplaceReport — enable/disable overwriting of the report file (0 — disable, 1 — enable). If overwriting is forbidden and a file with the same name already exists, a number in square brackets will be added to the file name. For example, tester[1].htm. If this parameter is not set, default 0 is used (overwriting is not allowed). 
+
+ShutdownTerminal — enable/disable platform shutdown after completion of testing (0 — disable, 1 — enable). If this parameter is not set, the "0" value is used (shutdown disabled). If the testing/optimization process is manually stopped by a user, the value of this parameter is automatically reset to 0. 
+
+Deposit — initial deposit for testing optimization. The amount is specified in the account deposit currency. If the parameter is not specified, a value from the appropriate field of the strategy tester is used. 
+
+Currency — deposit currency for testing/optimization purposes. Specified as a three-letter name, e.g. EUR, USD, CHF etc. Please note that cross rates for converting profit and margin to the specified deposit currency must be available on the account, to ensure proper testing. If the parameter is not specified, a value from the appropriate field of the strategy tester is used. 
+
+Leverage — leverage for testing/optimization. For example, 1:100. If the parameter is not specified, a leverage from the appropriate field of the strategy tester is used. 
+
+UseLocal — enable/disable the use of local agents for testing and optimization (0 — disable, 1 — enable). If the parameter is not specified, current platform settings are used. 
+
+UseRemote — enable/disable use of remote agents for testing and optimization (0 — disable, 1 — enable). If the parameter is not specified, current platform settings are used. 
+
+UseCloud — enable/disable use of agents from the MQL5 Cloud Network (0 — disable, 1 — enable). If the parameter is not specified, current platform settings are used. 
+
+Visual — enable (1) or disable (0) the visual test mode. If the parameter is not specified, the current setting is used. 
+
+Port — the port, on which the local testing agent is running. The port should be specified for the parallel start of testing on different agents. For example, you can run parallel tests of the same Expert Advisor with different parameters. During a single test port can be omitted. 
+
+Input parameters from the file specified in ExpertParameters are used for testing/optimization. 
+
+If the ExpertParameters setup is not available, parameters from the file Expert_name.set located in [platform_folder]\MQL5\Profiles\Tester are used. The last specified set of input parameters of an Expert Advisor is automatically saved in this file. 
+
+If there is no such file, then the default parameters specified in the Expert Advisor code are used for testing. Optimization is not possible. 
+
+To create or edit the set of parameters, select the Expert Advisor on the Settings tab of the strategy tester, and specify input parameters and their modification range on the corresponding tab . 
+
+Example of a Configuration File 
+
+[Common] 
+
+Login=1000575 
+
+ProxyEnable=0 
+
+ProxyType=0 
+
+ProxyAddress=192.168.0.1:3128 
+
+ProxyLogin=10 
+
+ProxyPassword=10 
+
+KeepPrivate=1 
+
+NewsEnable=1 
+
+CertInstall=1 
+
+[Charts] 
+
+ProfileLast=Euro 
+
+MaxBars=50000 
+
+PrintColor=0 
+
+SaveDeleted=1 
+
+[Experts] 
+
+AllowLiveTrading=0 
+
+AllowDllImport=0 
+
+Enabled=1 
+
+Account=0 
+
+Profile=0 
+
+[Objects] 
+
+ShowPropertiesOnCreate=0 
+
+SelectOneClick=0 
+
+MagnetSens=10 
+
+;+------------------------------------------------------------------------------+ 
+
+;|  Running an EA and/or script on the specified chart at the platform start    | 
+
+;+------------------------------------------------------------------------------+ 
+
+[StartUp] 
+
+;--- The Expert Advisor is located in platform_data_directory\MQL5\Experts\Examples\MACD\ 
+
+Expert=Examples\MACD\MACD Sample 
+
+;--- EA start parameters are available in platform_data_directory\MQL5\Presets\ 
+
+ExpertParameters=MACD Sample.set 
+
+;--- The script is located in platform_data_directory\MQL5\Scripts\Examples\ObjectSphere\ 
+
+Script=Examples\ObjectSphere\SphereSample 
+
+;--- Symbol chart, which will be opened when you start the platform, and EA and/or script will run on it 
+
+Symbol=EURUSD 
+
+;--- Chart timeframe, which will be opened when you start the platform, and EA and/or script will run on it 
+
+Period=M1 
+
+;--- The template to apply to a chart is located in platform_installation_directory\Profiles\Templates 
+
+Template=macd.tpl 
+
+;--- Set automatic platform shutdown upon completion of script operation 
+
+ShutdownTerminal=1 
+
+;+------------------------------------------------------------------------------+ 
+
+;| Start Expert Advisor testing or optimization                                 | 
+
+;+------------------------------------------------------------------------------+ 
+
+[Tester] 
+
+;--- The Expert Advisor is located in platform_data_directory\MQL5\Experts\Examples\MACD\ 
+
+Expert=Examples\MACD\MACD Sample 
+
+;--- The Expert Advisor parameters are available in platform_installatoin_directory\MQL5\Profiles\Tester\ 
+
+ExpertParameters=macd sample.set 
+
+;--- The symbol for testing/optimization 
+
+Symbol=EURUSD 
+
+;--- The timeframe for testing/optimization 
+
+Period=M1 
+
+;--- Emulated account number 
+
+Login=123456 
+
+;--- Initial deposit 
+
+Deposit=10000 
+
+;--- Leverage for testing 
+
+Leverage=1:100 
+
+;--- The "All Ticks" mode 
+
+Model=0 
+
+;--- Execution of trade orders with a random delay 
+
+ExecutionMode=1 
+
+;--- Genetic optimization 
+
+Optimization=2 
+
+;--- Optimization criterion - Maximum balance value 
+
+OptimizationCriterion=0 
+
+;--- Dates of beginning and end of the testing range 
+
+FromDate=2011.01.01 
+
+ToDate=2011.04.01 
+
+;--- Custom mode of forward testing 
+
+ForwardMode=4 
+
+;--- Start date of forward testing 
+
+ForwardDate=2011.03.01 
+
+;--- A file with a report will be saved to the folder platform_installation_directory 
+
+Report=test_macd 
+
+;--- If the specified report already exists, it will be overwritten 
+
+ReplaceReport=1 
+
+;--- Set automatic platform shutdown upon completion of testing/optimization 
+
+ShutdownTerminal=1 
+
+← Installation on Linux 
+
+Extended Authentication → 
+
+Trading Platform 
+
+Mobile Trading 
+
+Market 
+
+Signals 
+
+Automated Trading 
+
+Download 
+
+For Brokers 
+
+Contacts 
+
+MetaQuotes is a software development company and does not provide investment or brokerage services 
+
+Copyright 2000-2026, MetaQuotes Ltd . Legal Information 
+
+This website uses cookies. Learn more about our Cookies Policy .
+
+
+===== /mnt/c/Users/pichau/Downloads/Templates and Profiles - Additional Features - Price Charts, Technical and Fundamental Analysis - MetaTrader 5 Help.html =====
+
+﻿ Templates and Profiles - Additional Features - Price Charts, Technical and Fundamental Analysis - MetaTrader 5 Help 
+
+Trading Platform 
+MetaTrader 5 
+
+Download 
+
+Forex and Stock Markets 
+
+Trading 
+
+Charts 
+
+Technical Analysis 
+
+Fundamental Analysis 
+
+Alerts 
+
+Trading Services 
+Market 
+MQL5 Market 
+
+How to Buy Robots and Indicators 
+
+Signals 
+Forex Signals and Copy Trading 
+
+Find Signal 
+
+How to Subscribe to a Signal 
+
+How to Become a Signal Provider 
+
+Virtual Hosting (VPS) 
+
+Web Trading 
+MetaTrader 5 Web Platform 
+
+Web Version Features 
+
+Professional trading in a couple of clicks 
+
+When the Web Terminal is indispensable 
+
+How To Connect 
+
+Automated Trading 
+MQL5 IDE 
+
+Robots and Indicators 
+
+MQL5 Programming Language 
+
+MQL5 Wizard 
+
+MetaEditor 
+
+MetaEditor Help 
+
+Strategy Tester 
+
+MQL5.community 
+
+Mobile Trading 
+Mobile Trading with MetaTrader 5 
+
+MetaTrader 5 iPhone/iPad 
+
+MetaTrader 5 iPhone/iPad Help 
+
+MetaTrader 5 Android 
+
+MetaTrader 5 Android Help 
+
+Comparison with MetaTrader 4 
+
+MetaTrader 5 Help 
+
+Release Notes 
+
+Download 
+
+For Hedge Funds 
+MetaTrader 5 Platform 
+
+For Owner 
+
+For Managers 
+
+For Investors 
+
+Buy the Platform 
+
+For Brokers 
+MetaTrader 5 Platform 
+
+Buy the MetaTrader 5 Platform 
+
+Financial News in the Platform 
+
+Stock Exchanges 
+
+Ultency Matching Engine 
+
+Liquidity Providers (ECN) 
+
+End-to-End Analytics 
+
+Automations 
+
+Payments 
+
+Comparison with MetaTrader 4 
+
+How to start a brokerage business 
+
+Find Broker 
+
+Company 
+About 
+
+News 
+
+Contacts 
+
+Legal Information 
+
+For Business 
+
+English EN 
+
+Español ES 
+
+Français FR 
+
+日本語 JA 
+
+Português PT 
+
+Русский RU 
+
+中文 ZH 
+
+Deutsch DE 
+
+MetaTrader 5 Help → Price Charts, Technical and Fundamental Analysis → Additional Features → Templates and Profiles 
+
+Chart Settings 
+
+Chart Print 
+
+Chart Management 
+
+Lists of Objects Applied 
+
+Deleted Charts 
+
+Templates and Profiles 
+
+Templates and Profiles 
+A template is a set of chart window parameters that can be applied to other charts. The following data can be stored in a template: 
+
+chart type and color; 
+
+color scheme; 
+
+chart scale; 
+
+OHLC line shown or hidden; 
+
+running Expert Advisor and its parameters; 
+
+applied custom and technical indicators and their settings; 
+
+graphical objects; 
+
+separators of days. 
+
+When you apply a template to a chart, settings stored in it are applied to the instrument and timeframe. For example, you can create a template that includes indicators MACD, RSI, and Moving Average, and then use it for other charts. In this case, the chart windows look the same for different symbols and periods. 
+
+Templates are saved as TPL-files in folder \MQL5\Profiles\Templates . The platform provides several predefined names of templates: 
+
+default.tpl — the basic template that us automatically applied when you create a new chart; 
+
+tester.tpl — the template of the chart on which testing results are displayed; 
+
+debug.tpl — the template of the chart created when you start MQL5 application debugging from MetaEditor . 
+
+To create a template with the desired parameters (or modify an existing one), configure the chart and click " Save Template..." in its context menu. 
+
+To share and synchronize templates and profiles between your platforms, use the MQL5 Storage , which is integrated into MetaEditor. You will be able to access them from any computer using your MQL5.community account. 
+
+Actions with Templates 
+Click "Templates" in the Chart menu or in the context menu of a chart or click on on the toolbar. 
+
+Templates menu 
+
+Actions with templates 
+
+Creation 
+To create a new template click " Save Template...". A new template is created based on the information of the active chart window. 
+
+Modification 
+To edit a template, follow the same steps, but instead of a new file name select an existing template. 
+
+Applying 
+To apply a template to a chart, select the required file at the bottom of the menu or click "Load Template" to open a template from any other folder. 
+
+Deletion 
+To remove a template, click "Remove Template" in the Charts menu or the context menu of the chart. 
+
+Profiles # 
+Profiles provide a convenient way of working with groups of charts. The following data can be stored in a profile: 
+
+charts that are open at the moment when you save the profile 
+
+the location and size of these charts; 
+
+templates applied to the charts. 
+
+When a profile is opened, each chart with all its settings is located exactly in the same position where it was during profile saving. All changes in open chart windows are automatically saved in the current profile. The list of all charts of the current profile is available in the Window menu. The name of the current profile is displayed in the status bar and is marked with a tick in the profile control menu. 
+
+A default profile is created during platform installation. Initially, it stores four chart windows of basic currency pairs: EURUSD, USDCHF, GBPUSD and USDJPY. All profiles are stored in a folder \MQL5\Profiles\Charts . 
+
+Chart templates with running Expert Advisors are also saved in profiles, therefore the platform settings provide an option for automatic disabling of Expert Advisors when changing the profile. 
+
+Managing Profiles # 
+Click "Profiles" in the File menu , button on the toolbar or click on the name of the current profile in the status bar . 
+
+Profiles menu 
+
+Commands 
+
+Next — switch to the next profile in the list. The same action can be performed using hotkeys "Ctrl+F5"; 
+
+Previous — switch to the previous profile in the list. The same action can be performed using "Shift+F5"; 
+
+Save as — save the current profile with a new name. The new profile is a copy of the current one and becomes active after saving; 
+
+Remove — delete a profile. Clicking on this command opens the menu of existing profiles. Select one of them to delete it. 
+
+The lower part of this menu contains the list of existing profiles. To apply one of them click on it. 
+
+A predefined profile can be assigned to a trade account. Create a profile with the same name as the account number. The predefined profile is applied automatically when you switch to this account. If there is no predefined profile, the current profile remains active. 
+
+The current profile and the default profile (marked as DEFAULT) cannot be deleted. 
+
+← Deleted Charts 
+
+Algorithmic Trading, Trading Robots → 
+
+Trading Platform 
+
+Mobile Trading 
+
+Market 
+
+Signals 
+
+Automated Trading 
+
+Download 
+
+For Brokers 
+
+Contacts 
+
+MetaQuotes is a software development company and does not provide investment or brokerage services 
+
+Copyright 2000-2026, MetaQuotes Ltd . Legal Information 
+
+This website uses cookies. Learn more about our Cookies Policy .
+
+
+===== /mnt/c/Users/pichau/Downloads/How to Create an Expert Advisor or an Indicator - Algorithmic Trading, Trading Robots - MetaTrader 5 Help.html =====
+
+﻿ How to Create an Expert Advisor or an Indicator - Algorithmic Trading, Trading Robots - MetaTrader 5 Help 
+
+Trading Platform 
+MetaTrader 5 
+
+Download 
+
+Forex and Stock Markets 
+
+Trading 
+
+Charts 
+
+Technical Analysis 
+
+Fundamental Analysis 
+
+Alerts 
+
+Trading Services 
+Market 
+MQL5 Market 
+
+How to Buy Robots and Indicators 
+
+Signals 
+Forex Signals and Copy Trading 
+
+Find Signal 
+
+How to Subscribe to a Signal 
+
+How to Become a Signal Provider 
+
+Virtual Hosting (VPS) 
+
+Web Trading 
+MetaTrader 5 Web Platform 
+
+Web Version Features 
+
+Professional trading in a couple of clicks 
+
+When the Web Terminal is indispensable 
+
+How To Connect 
+
+Automated Trading 
+MQL5 IDE 
+
+Robots and Indicators 
+
+MQL5 Programming Language 
+
+MQL5 Wizard 
+
+MetaEditor 
+
+MetaEditor Help 
+
+Strategy Tester 
+
+MQL5.community 
+
+Mobile Trading 
+Mobile Trading with MetaTrader 5 
+
+MetaTrader 5 iPhone/iPad 
+
+MetaTrader 5 iPhone/iPad Help 
+
+MetaTrader 5 Android 
+
+MetaTrader 5 Android Help 
+
+Comparison with MetaTrader 4 
+
+MetaTrader 5 Help 
+
+Release Notes 
+
+Download 
+
+For Hedge Funds 
+MetaTrader 5 Platform 
+
+For Owner 
+
+For Managers 
+
+For Investors 
+
+Buy the Platform 
+
+For Brokers 
+MetaTrader 5 Platform 
+
+Buy the MetaTrader 5 Platform 
+
+Financial News in the Platform 
+
+Stock Exchanges 
+
+Ultency Matching Engine 
+
+Liquidity Providers (ECN) 
+
+End-to-End Analytics 
+
+Automations 
+
+Payments 
+
+Comparison with MetaTrader 4 
+
+How to start a brokerage business 
+
+Find Broker 
+
+Company 
+About 
+
+News 
+
+Contacts 
+
+Legal Information 
+
+For Business 
+
+English EN 
+
+Español ES 
+
+Français FR 
+
+日本語 JA 
+
+Português PT 
+
+Русский RU 
+
+中文 ZH 
+
+Deutsch DE 
+
+MetaTrader 5 Help → Algorithmic Trading, Trading Robots → How to Create an Expert Advisor or an Indicator 
+
+Expert Advisors and Custom Indicators 
+
+Where to Find Trading Robots and Indicators 
+
+How to Create an Expert Advisor or an Indicator 
+
+Strategy Testing 
+
+How the Tester Downloads Historical Data 
+
+Strategy Optimization 
+
+Testing Features 
+
+Testing Report 
+
+Testing Visualization 
+
+Journal of Testing 
+
+Optimization Types 
+
+Real and Generated Ticks 
+
+MetaTester and Remote Agents 
+
+Global Variables 
+
+How to Create an Expert Advisor or an Indicator 
+The trading platform contains a built in programming language MetaQuotes Language 5 ( MQL5 ), the MetaEditor development environment and strategy testing tools. 
+
+Any information about the development of trading strategies in MQL5 can be found on the official MQL5.community site. The website section Code Base contains examples of ready-to-use applications. 
+
+The MQL5 Programming Language of Trading Strategies # 
+The trading platform has its own built-in language for programming trading strategies MetaQuotes Language 5 . It is the fifth generation of MQL languages. It allows developing Expert Advisors to automate trading processes, as well as implementing your own trading strategies. MQL5 also allows creating custom indicators , scripts and function libraries. 
+
+MQL5 Features: 
+
+The language is object-oriented; 
+
+MQL5 syntax is similar to that of C++; 
+
+It contains a large number of functions necessary for analyzing quotes, managing positions, calling technical indicators, etc.; 
+
+It is a high-performance language; 
+
+High protection against decompilation: new complex encryption algorithms, file integrity checking, and the complexity of the language; 
+
+OpenCL support to enable use of video cards for calculations in MQL5 applications; 
+
+Integrated software development environment MetaEditor including a debugger. 
+
+A detailed description of all language constructions and functions is provided in the MQL5 Reference. All the necessary information about MQL5 can also be found on the developer community website at https://www.mql5.com . 
+
+MetaEditor # 
+MetaEditor is an integrated MQL5 development environment. It is a component of the trading platform. MetaEditor allows you to create, edit, compile and debug source code written in MQL5 . 
+
+MQL5 Wizard for creating templates and trading robots 
+MetaEditor includes the MQL5 Wizard that helps to quickly create MQL5 programs. With the MQL5 Wizard a trader without programming skills can easily create Expert Advisors. You only need to select trading signals for an Expert Advisor, as well as money management and trailing stop algorithms. The Expert Advisor code is generated automatically based on selected parameters. 
+In addition, the MQL5 Wizard allows creating MQL5 program templates to simplify the work of a programmer. 
+
+Helps with the source code 
+MetaEditor can recognize language structures: suggests tips on how to use functions and highlights various elements of the program source code. Thus, the editor enhances navigation in the source code of trading programs and speeds up the development process. 
+
+Debugging 
+MetaEditor allows you to debug programs to greatly facilitate troubleshooting. A step-by-step execution of a source code enables monitoring of the variable values. 
+
+Profiling for code optimization 
+The editor also provides tools for software profiling. You can identify the slowest functions in the source code and optimize your program. 
+
+Articles about programming and a source code library 
+Straight from the editor, you can find a plethora of MQL5 programming tutorials. You can additionally access a huge code base of free automated trading programs. 
+
+Online MQL5 Storage with versioning support 
+The storage provides safe storage of files and the possibility to restore lost files, as well as access your code from any computer using a MQL5.community account. 
+
+More details about MetaEditor can be found in its built-in help files. The description of MQL5 can be found in the built-in reference and the official MQL5.community website. 
+
+Algo Trading Books # 
+To assist beginners, we have released two comprehensive books on MQL5 programming, designed for anyone who wish to master the creation of trading robots and applications for algorithmic trading. The books offer a systematic and structured presentation of the material to make the learning process easier. Detailed code examples, which explain the step-by-step creation of trading robots and applications, allow for a deeper understanding of algorithmic trading nuances. 
+
+" MQL5 Programming for Traders " is the most complete and detailed tutorial on MQL5, suitable for programmers of all levels. Beginners will learn the basics: the book introduces development tools and basic programming concepts. Based on this material, you will create, compile and run your first application in the MetaTrader 5 trading platform. Users with experience in other programming languages can directly proceed to the applied sections: creating trading robots and analytical applications in MQL5. 
+
+" Neural Networks in Algorithmic Trading with MQL5 " is a guide to using machine learning methods in trading robots for the MetaTrader 5 platform. You will be progressively introduced to the fundamentals of neural networks and their application in algorithmic trading. As you advance, you will build and train your own AI solution, gradually adding new features. In addition to learning MQL5, you will gain Python and OpenCL programming skills and explore integrated matrix and vector methods, which enable the solution of complex mathematical problems with concise and efficient code. 
+
+Articles on the development of trading applications # 
+MQL5.community website features an extensive library of articles on MQL4/MQL5 programming . Articles are an excellent guide for creating applications, since they cover a lot of practical tasks involving algorithmic trading. New articles are published every week. 
+
+List of all available articles is displayed directly in MetaEditor. To find the necessary material, use the online search . 
+
+Types of MQL5 Applications # 
+Three major types of trading applications are available. 
+
+Expert Advisors 
+Expert Advisors are mechanical trading systems that allow complete automation of analytical and trading activities for the efficient operation in the financial markets. They allow to perform prompt technical analysis of price data and control trading activities on the basis of signals received. They also help to strictly follow a trading strategy eliminating emotions. 
+
+All Expert Advisors are stored in the /MQL5/Experts folder of the trading platform. 
+
+Custom Indicators 
+Custom Indicators are custom developed technical indicators intended for analyzing price dynamics. Trading tactics and Expert Advisors are developed based on algorithms of indicators. Custom indicators are only used for analyzing symbol price dynamics. Indicators cannot trade and do not have access to charts. 
+
+All indicators are stored in the /MQL5/Indicators folder of the trading platform. 
+
+Scripts 
+A script is an application written in MQL5 designed for a single execution of an action. A script can perform both analytical and trading functions. Unlike Advisors , scripts are executed on request. In other words, if an Expert Advisor works almost continuously, a script executes its function and quits. 
+
+All scripts are stored in the /MQL5/Scripts folder of the trading platform. 
+
+Services 
+Services enable the use of custom price feeds for the platform and to implement price delivery from external systems in real time, just like it is implemented on brokers' trade servers. Services can also be used to perform other service tasks in the background. 
+
+Unlike Expert Advisors, indicators and scripts, services are not linked to a specific chart. Such applications run in the background and are launched automatically when the terminal is started (unless such an app was forcibly stopped). 
+
+All services are stored under the /MQL5/Services folder of the trading platform. 
+
+Inside folders Experts, Indicators, Scripts and Services, applications can be sorted into subfolders. The structure of their location is displayed in the Navigator window. 
+
+How to Create and Run a Trading Application # 
+Click " Create in MetaEditor" in the context menu of the Navigator window in section Expert Advisors, Indicators or Scripts. MetaEditor can also be launched by pressing F4. 
+
+This launches MetaEditor with an automatically opened MQL5 Wizard. Use it to generate the necessary program template to quickly start software development. Let's create a simple script writing a message "Hello world" into the journal . 
+
+In the resulting template, we add the code Print ( "Hello World" ); and compile it by pressing F7 to receive an executable file. The executable file has an extension EX5 and can be run in the trading platform. 
+
+Compilation results are added to the editor log. 
+
+In accordance with the application type, the source code is saved to the folder MQL5\Scripts\. The executable file is created in the same folder. You can now return to the trading platform and run the generated script. 
+
+Specifics of use of automated trading programs are described in section "Expert Advisors and custom indicators" . 
+
+How to Edit a Trading Application # 
+To edit a trading robot or a custom indicator, click " Modify" in its context menu in the Navigator window or select it and press Enter. This opens MetaEditor with the source code of the selected indicator. After you have modified the indicator, re-compile it (F7). Otherwise its previous unchanged version will be used in the platform. 
+
+How to Shut Down a Trading Application # 
+There are many ways to shut down a trading application in the platform. 
+
+Trading robot 
+
+Custom technical indicator 
+
+Script 
+
+Click "Remove" in the Expert List window; 
+
+Change the chart template ; 
+
+Change the profile , provided that the appropriate option is enabled in the platform settings ; 
+
+Turn off the trading platform; 
+
+Close the chart the Expert Advisor is running on; 
+
+Run another Expert Advisor on the same chart; 
+
+Click " Remove" in the context menu of the Expert Advisor icon on the chart. 
+
+Click " Delete" or " Delete Indicator Window" in the context menu of the indicator; 
+
+Click "Delete" in the Indicator List window; 
+
+Change the chart template ; 
+
+Re-open the chart. 
+
+Click "Remove" in the Expert List window. This window also contains a list of running scripts; 
+
+Change the chart template ; 
+
+Change the profile , provided that the appropriate option is enabled in the platform settings ; 
+
+Change the chart symbol; 
+
+Change the chart timeframe ; 
+
+Turn off the trading platform; 
+
+Close the chart the script is running on; 
+
+Run another script on the same chart; 
+
+Click " Remove" in the context menu of the script icon on the chart. 
+
+If a trading application is running on a chart, it will not be shut down if you delete the appropriate executable file from the Navigator window. 
+
+Disabling Expert Advisors in the trading platform settings does not disable them completely. This operation only prohibits Expert Advisors from trading. 
+
+How to Run a Downloaded File of the MQ5 Source Code # 
+If you only have a source code file (*.MQ5), save it in a folder corresponding to the application type: 
+
+For Expert Advisors — /MQL5/Experts 
+
+For indicators — /MQL5/Indicators 
+
+For scripts — /MQL5/Scripts 
+
+To quickly navigate to the trading platform data folder, click " Open data folder" in the File menu. 
+
+To run a file in the trading platform, compile it in the MetaEditor : 
+
+Open MetaEditor by pressing F4. 
+
+In MetaEditor, open the source code file in the Navigator window by a double left-click on the file name. 
+
+Press F7 to compile it. 
+
+This creates an executable *.EX5 file that can be run in the trading platform. 
+
+Source files (*.MQ5) are not displayed in the Navigator window of the trading platform. 
+
+← Where to Find Trading Robots and Indicators 
+
+Strategy Testing → 
+
+Trading Platform 
+
+Mobile Trading 
+
+Market 
+
+Signals 
+
+Automated Trading 
+
+Download 
+
+For Brokers 
+
+Contacts 
+
+MetaQuotes is a software development company and does not provide investment or brokerage services 
+
+Copyright 2000-2026, MetaQuotes Ltd . Legal Information 
+
+This website uses cookies. Learn more about our Cookies Policy .
+
+
+===== /mnt/c/Users/pichau/Downloads/Event Handling - MQL5 Reference.html =====
+
+﻿ Event Handling - MQL5 Reference 
+
+Forum 
+
+Market 
+
+Signals 
+
+Freelance 
+
+VPS 
+
+Quotes 
+
+Articles 
+
+CodeBase 
+
+Algo Forge 
+
+Documentation 
+
+AlgoBook 
+
+NeuroBook 
+
+Calendar 
+
+WebTerminal 
+
+About 
+
+Download MetaTrader 5 
+
+Documentation Sections 
+
+Type / to search: @user, $symbol, ... 
+
+Log in 
+
+Create an account 
+
+English 
+
+Русский 
+
+中文 
+
+Español 
+
+Português 
+
+日本語 
+
+Deutsch 
+
+한국어 
+
+Français 
+
+Italiano 
+
+Türkçe 
+
+MQL5 Reference Event Handling 
+
+OnStart 
+
+OnInit 
+
+OnDeinit 
+
+OnTick 
+
+OnCalculate 
+
+OnTimer 
+
+OnTrade 
+
+OnTradeTransaction 
+
+OnBookEvent 
+
+OnChartEvent 
+
+OnTester 
+
+OnTesterInit 
+
+OnTesterDeinit 
+
+OnTesterPass 
+
+Event Handling 
+The MQL5 language provides handling of certain predefined events . The functions for handling these events should be defined in an MQL5 program: function name, return type, a set of parameters (if any) and their types should strictly correspond to the description of an event handling function. 
+
+The client terminal event handler uses the return and parameter types to identify functions processing an event. If a certain function has some parameters or a return type not corresponding to the descriptions below, such a function cannot be used for handling an event. 
+
+Function 
+
+Description 
+
+OnStart 
+
+The function is called when the Start event occurs to perform actions set in the script 
+
+OnInit 
+
+The function is called in indicators and EAs when the Init event occurs to initialize a launched MQL5 program 
+
+OnDeinit 
+
+The function is called in indicators and EAs when the Deinit event occurs to de-initialize a launched MQL5 program 
+
+OnTick 
+
+The function is called in EAs when the NewTick event occurs to handle a new quote 
+
+OnCalculate 
+
+The function is called in indicators when the Calculate event occurs to handle price data changes 
+
+OnTimer 
+
+The function is called in indicators and EAs during the Timer periodic event generated by the terminal at fixed time intervals 
+
+OnTrade 
+
+The function is called in EAs during the Trade event generated at the end of a trading operation on a trade server 
+
+OnTradeTransaction 
+
+The function is called in EAs when the TradeTransaction event occurs to process a trade request execution results 
+
+OnBookEvent 
+
+The function is called in EAs when the BookEvent event occurs to process changes in the market depth 
+
+OnChartEvent 
+
+The function is called in indicators and EAs when the ChartEvent event occurs to process chart changes made by a user or an MQL5 program 
+
+OnTester 
+
+The function is called in EAs when the Tester event occurs to perform necessary actions after testing an EA on history data 
+
+OnTesterInit 
+
+The function is called in EAs when the TesterInit event occurs to perform necessary actions before optimization in the strategy tester 
+
+OnTesterDeinit 
+
+The function is called in EAs when the TesterDeinit event occurs after EA optimization in the strategy tester 
+
+OnTesterPass 
+
+The function is called in EAs when the TesterPass even occurs to handle an arrival of a new data frame during EA optimization in the strategy tester 
+
+The client terminal sends incoming events to corresponding open charts. Also, events may be generated by charts ( chart events ) or mql5 programs ( custom events ). Generating graphical object creation/deletion events can be enabled/disabled by setting the CHART_EVENT_OBJECT_CREATE and CHART_EVENT_OBJECT_DELETE chart properties. Each mql5 application and chart have their own queue of events where all newly arrived events are placed. 
+
+A program gets events only from the chart it is running on. All events are handled one after another in the order of their receipt. If the queue already contains the NewTick event or this event is in the processing stage, then the new NewTick event is not added to mql5 application queue. Similarly, if the ChartEvent is already in an mql5 program queue or such an event is being handled, then a new event of this type is not placed into a queue. Timer event handling is processed in the same way – if the Timer event is already in the queue or is being handled, no new timer event is set into a queue. 
+
+Event queues have a limited but sufficient size, so the queue overflow is unlikely for a correctly developed program. When the queue overflows, new events are discarded without being set into a queue. 
+
+It is strongly recommended not to use infinite loops to handle events. Possible exceptions are scripts handling a single Start event. 
+
+Libraries do not handle any events. 
+
+Point 
+
+OnStart 
+
+MQL5.community 
+Online trading / WebTerminal 
+
+Free technical indicators and robots 
+
+Articles about programming and trading 
+
+Order trading robots on the Freelance 
+
+Market of Expert Advisors and applications 
+
+Follow forex signals 
+
+Low latency forex VPS 
+
+Traders forum 
+
+Trading blogs 
+
+Charts 
+
+Free widgets 
+
+MetaTrader 5 
+MetaTrader 5 Trading Platform 
+
+MetaTrader 5 latest updates 
+
+News, implementations and technology 
+
+MetaTrader 5 User Manual 
+
+MQL5 language of trading strategies 
+
+MQL5 Cloud Network 
+
+MQL5 Algo Forge 
+
+Download MetaTrader 5 
+
+Install Platform 
+
+Uninstall Platform 
+
+Website 
+About 
+
+Timeline 
+
+Terms and Conditions 
+
+Recurring Payment Agreement 
+
+Agency Agreement – Offer 
+
+Privacy and Data Protection Policy 
+
+Cookies Policy 
+
+Contacts and requests 
+
+MetaTrader 5 
+
+Download MetaTrader 5 for Windows 
+
+Download MetaTrader 5 for MacOS 
+
+Download MetaTrader 5 for Linux 
+
+Open MetaTrader 5 WebTerminal 
+
+Scan to install from App Store 
+
+Scan to install from Google Play 
+
+Scan to install from Huawei AppGallery 
+
+Scan to get Android APK file 
+
+MQL5 Channels 
+
+Scan to install from App Store 
+
+Scan to install from Google Play 
+
+Scan to install from Huawei AppGallery 
+
+Scan to get Android APK file 
+
+Economic Calendar 
+
+Scan to install from App Store 
+
+Scan to install from Google Play 
+
+Scan to install from Huawei AppGallery 
+
+Scan to get Android APK file 
+
+Follow us on socials for top articles and CodeBase updates 
+
+Not a broker, no real trading accounts 
+
+35 Dodekanisou str, Germasogeia, 4043, Limassol, Cyprus 
+
+Copyright 2000-2026, MetaQuotes Ltd
+
+
+===== /mnt/c/Users/pichau/Downloads/File Functions - MQL5 Reference.html =====
+
+﻿ File Functions - MQL5 Reference 
+
+Forum 
+
+Market 
+
+Signals 
+
+Freelance 
+
+VPS 
+
+Quotes 
+
+Articles 
+
+CodeBase 
+
+Algo Forge 
+
+Documentation 
+
+AlgoBook 
+
+NeuroBook 
+
+Calendar 
+
+WebTerminal 
+
+About 
+
+Start VPS Trial 
+
+Documentation Sections 
+
+Type / to search: @user, $symbol, ... 
+
+Log in 
+
+Create an account 
+
+English 
+
+Русский 
+
+中文 
+
+Español 
+
+Português 
+
+日本語 
+
+Deutsch 
+
+한국어 
+
+Français 
+
+Italiano 
+
+Türkçe 
+
+MQL5 Reference File Functions 
+
+FileSelectDialog 
+
+FileFindFirst 
+
+FileFindNext 
+
+FileFindClose 
+
+FileIsExist 
+
+FileOpen 
+
+FileClose 
+
+FileCopy 
+
+FileDelete 
+
+FileMove 
+
+FileFlush 
+
+FileGetInteger 
+
+FileIsEnding 
+
+FileIsLineEnding 
+
+FileReadArray 
+
+FileReadBool 
+
+FileReadDatetime 
+
+FileReadDouble 
+
+FileReadFloat 
+
+FileReadInteger 
+
+FileReadLong 
+
+FileReadNumber 
+
+FileReadString 
+
+FileReadStruct 
+
+FileSeek 
+
+FileSize 
+
+FileTell 
+
+FileWrite 
+
+FileWriteArray 
+
+FileWriteDouble 
+
+FileWriteFloat 
+
+FileWriteInteger 
+
+FileWriteLong 
+
+FileWriteString 
+
+FileWriteStruct 
+
+FileLoad 
+
+FileSave 
+
+FolderCreate 
+
+FolderDelete 
+
+FolderClean 
+
+File Functions 
+This is a group of functions for working with files. 
+
+For security reasons, work with files is strictly controlled in the MQL5 language. Files with which file operations are conducted using MQL5 means cannot be outside the file sandbox. 
+
+There are two directories (with subdirectories) in which working files can be located: 
+
+terminal_data_folder\MQL5\FILES\ (in the terminal menu select to view "File" - "Open the data directory"); 
+
+the common folder for all the terminals installed on a computer - usually located in the directory C:\Documents and Settings\All Users\Application Data\MetaQuotes\Terminal\Common\Files. 
+
+There is a program method to obtain names of these catalogs using the TerminalInfoString() function, using the ENUM_TERMINAL_INFO_STRING enumeration: 
+
+//--- Folder that stores the terminal data 
+string terminal_data_path= TerminalInfoString ( TERMINAL_DATA_PATH ); 
+//--- Common folder for all client terminals 
+string common_data_path= TerminalInfoString ( TERMINAL_COMMONDATA_PATH ); 
+
+Work with files from other directories is prohibited. 
+
+If the file is opened for writing using FileOpen() , all subfolders specified in the path will be created if there are no such ones. 
+
+File functions allow working with so-called "named pipes". To do this, simply call FileOpen() function with appropriate parameters. 
+
+Function 
+
+Action 
+
+FileSelectDialog 
+
+Create a file or folder opening/creation dialog 
+
+FileFindFirst 
+
+Starts the search of files in a directory in accordance with the specified filter 
+
+FileFindNext 
+
+Continues the search started by the FileFindFirst() function 
+
+FileFindClose 
+
+Closes search handle 
+
+FileOpen 
+
+Opens a file with a specified name and flag 
+
+FileDelete 
+
+Deletes a specified file 
+
+FileFlush 
+
+Writes to a disk all data remaining in the input/output file buffer 
+
+FileGetInteger 
+
+Gets an integer property of a file 
+
+FileIsEnding 
+
+Defines the end of a file in the process of reading 
+
+FileIsLineEnding 
+
+Defines the end of a line in a text file in the process of reading 
+
+FileClose 
+
+Closes a previously opened file 
+
+FileIsExist 
+
+Checks the existence of a file 
+
+FileCopy 
+
+Copies the original file from a local or shared folder to another file 
+
+FileMove 
+
+Moves or renames a file 
+
+FileReadArray 
+
+Reads arrays of any type except for string from the file of the BIN type 
+
+FileReadBool 
+
+Reads from the file of the CSV type a string from the current position till a delimiter (or till the end of a text line) and converts the read string to a value of bool type 
+
+FileReadDatetime 
+
+Reads from the file of the CSV type a string of one of the formats: "YYYY.MM.DD HH:MM:SS", "YYYY.MM.DD" or "HH:MM:SS" - and converts it into a datetime value 
+
+FileReadDouble 
+
+Reads a double value from the current position of the file pointer 
+
+FileReadFloat 
+
+Reads a float value from the current position of the file pointer 
+
+FileReadInteger 
+
+Reads int, short or char value from the current position of the file pointer 
+
+FileReadLong 
+
+Reads a long type value from the current position of the file pointer 
+
+FileReadNumber 
+
+Reads from the file of the CSV type a string from the current position till a delimiter (or til the end of a text line) and converts the read string into double value 
+
+FileReadString 
+
+Reads a string from the current position of a file pointer from a file 
+
+FileReadStruct 
+
+Reads the contents from a binary file  into a structure passed as a parameter, from the current position of the file pointer 
+
+FileSeek 
+
+Moves the position of the file pointer by a specified number of bytes relative to the specified position 
+
+FileSize 
+
+Returns the size of a corresponding open file 
+
+FileTell 
+
+Returns the current position of the file pointer of a corresponding open file 
+
+FileWrite 
+
+Writes data to a file of CSV or TXT type 
+
+FileWriteArray 
+
+Writes arrays of any type except for string into a file of BIN type 
+
+FileWriteDouble 
+
+Writes value of the double type from the current position of a file pointer into a binary file 
+
+FileWriteFloat 
+
+Writes value of the float type from the current position of a file pointer into a binary file 
+
+FileWriteInteger 
+
+Writes value of the int type from the current position of a file pointer into a binary file 
+
+FileWriteLong 
+
+Writes value of the long type from the current position of a file pointer into a binary file 
+
+FileWriteString 
+
+Writes the value of a string parameter into a BIN or TXT file starting from the current position of the file pointer 
+
+FileWriteStruct 
+
+Writes the contents of a structure passed as a parameter into a binary file, starting from the current position of the file pointer 
+
+FileLoad 
+
+Reads all data of a specified binary file into a passed array of numeric types or simple structures 
+
+FileSave 
+
+Writes to a binary file all elements of an array passed as a parameter 
+
+FolderCreate 
+
+Creates a folder in the Files directory 
+
+FolderDelete 
+
+Removes a selected directory. If the folder is not empty, then it can't be removed 
+
+FolderClean 
+
+Deletes all files in the specified folder 
+
+GlobalVariablesTotal 
+
+FileSelectDialog 
+
+MQL5.community 
+Online trading / WebTerminal 
+
+Free technical indicators and robots 
+
+Articles about programming and trading 
+
+Order trading robots on the Freelance 
+
+Market of Expert Advisors and applications 
+
+Follow forex signals 
+
+Low latency forex VPS 
+
+Traders forum 
+
+Trading blogs 
+
+Charts 
+
+Free widgets 
+
+MetaTrader 5 
+MetaTrader 5 Trading Platform 
+
+MetaTrader 5 latest updates 
+
+News, implementations and technology 
+
+MetaTrader 5 User Manual 
+
+MQL5 language of trading strategies 
+
+MQL5 Cloud Network 
+
+MQL5 Algo Forge 
+
+Download MetaTrader 5 
+
+Install Platform 
+
+Uninstall Platform 
+
+Website 
+About 
+
+Timeline 
+
+Terms and Conditions 
+
+Recurring Payment Agreement 
+
+Agency Agreement – Offer 
+
+Privacy and Data Protection Policy 
+
+Cookies Policy 
+
+Contacts and requests 
+
+MetaTrader 5 
+
+Download MetaTrader 5 for Windows 
+
+Download MetaTrader 5 for MacOS 
+
+Download MetaTrader 5 for Linux 
+
+Open MetaTrader 5 WebTerminal 
+
+Scan to install from App Store 
+
+Scan to install from Google Play 
+
+Scan to install from Huawei AppGallery 
+
+Scan to get Android APK file 
+
+MQL5 Channels 
+
+Scan to install from App Store 
+
+Scan to install from Google Play 
+
+Scan to install from Huawei AppGallery 
+
+Scan to get Android APK file 
+
+Economic Calendar 
+
+Scan to install from App Store 
+
+Scan to install from Google Play 
+
+Scan to install from Huawei AppGallery 
+
+Scan to get Android APK file 
+
+Follow us on socials for top articles and CodeBase updates 
+
+Not a broker, no real trading accounts 
+
+35 Dodekanisou str, Germasogeia, 4043, Limassol, Cyprus 
+
+Copyright 2000-2026, MetaQuotes Ltd
+
+
