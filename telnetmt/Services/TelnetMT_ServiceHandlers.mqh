@@ -30,6 +30,8 @@ string g_lastIndParams = ""; // k=v;k2=v2
 string g_lastIndSymbol = "";
 string g_lastIndTf = "";
 int    g_lastIndSub = 1;
+int    g_lastIndHandle = INVALID_HANDLE;
+string g_lastIndChartName = "";
 
 string g_lastEAName = "";
 string g_lastEAParams = "";
@@ -813,7 +815,17 @@ bool H_AttachInd(string &p[], string &m, string &d[])
   if(!ChartIndicatorAdd(cid, sub-1, handle)){
     return FailLast(m, "ChartIndicatorAdd", name);
   }
+  // tenta descobrir o nome real do indicador no chart
+  string chartName="";
+  int total=ChartIndicatorsTotal(cid, sub-1);
+  for(int i=0;i<total;i++)
+  {
+    string nm=ChartIndicatorName(cid, sub-1, i);
+    long hh=ChartIndicatorGet(cid, sub-1, nm);
+    if((int)hh==handle){ chartName=nm; break; }
+  }
   g_lastIndName=name; g_lastIndParams=pstr; g_lastIndSymbol=sym; g_lastIndTf=tfstr; g_lastIndSub=sub;
+  g_lastIndHandle=handle; g_lastIndChartName=chartName;
   m="indicator attached"; return true;
 }
 
@@ -906,6 +918,11 @@ bool H_IndSnapshot(string &p[], string &m, string &d[])
   if(cid==0){ m="ChartOpen"; return false; }
   int h=(int)ChartIndicatorGet(cid, sub-1, name);
   if(h==INVALID_HANDLE || h==0){
+    if(g_lastIndChartName!="" && g_lastIndSymbol==sym && g_lastIndTf==tfstr && g_lastIndSub==sub){
+      h=(int)ChartIndicatorGet(cid, sub-1, g_lastIndChartName);
+    }
+  }
+  if(h==INVALID_HANDLE || h==0){
     // tenta achar pelo nome "curto"
     string base=name;
     int p=StringFind(base, "\\", StringLen(base)-1);
@@ -923,9 +940,12 @@ bool H_IndSnapshot(string &p[], string &m, string &d[])
       if(StringFind(nml, basel)>=0)
       {
         h=(int)ChartIndicatorGet(cid, sub-1, nm);
-        if(h!=INVALID_HANDLE && h!=0) break;
+        if(h!=INVALID_HANDLE && h!=0){ g_lastIndChartName=nm; break; }
       }
     }
+  }
+  if((h==INVALID_HANDLE || h==0) && g_lastIndHandle!=INVALID_HANDLE && g_lastIndSymbol==sym && g_lastIndTf==tfstr && g_lastIndSub==sub){
+    h=g_lastIndHandle;
   }
   if(h==INVALID_HANDLE || h==0){ m="handle"; return false; }
 
