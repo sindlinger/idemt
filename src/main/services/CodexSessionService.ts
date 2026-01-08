@@ -300,15 +300,3 @@ const snapshotWorkspace = async (workspace: WorkspaceService) => {
 
   return snapshots;
 };
-
-const toWslPath = (value: string) => {
-  if (!value) return value;
-  if (value.startsWith("/mnt/")) return value.replace(/\\/g, "/");
-  const match = value.match(/^([A-Za-z]):[\\/](.*)$/);
-  if (match) {
-    const drive = match[1].toLowerCase();
-    const rest = match[2].replace(/\\/g, "/");
-    return `/mnt/${drive}/${rest}`;
-  }
-  return value.replace(/\\/g, "/");
-};
