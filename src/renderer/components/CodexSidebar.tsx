@@ -142,7 +142,8 @@ const CodexSidebar = ({
     };
     for (let i = codexEvents.length - 1; i >= 0; i -= 1) {
       const data = codexEvents[i]?.data ?? "";
-      const lines = data.split(/\r?\n/).filter(Boolean);
+      const normalized = sanitizeCodexOutput(data).replace(/\r/g, "\n");
+      const lines = normalized.split(/\n+/).filter(Boolean);
       for (let j = lines.length - 1; j >= 0; j -= 1) {
         const line = lines[j];
         if (matcher(line)) return line.trim();
