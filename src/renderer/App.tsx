@@ -283,7 +283,6 @@ const App = () => {
   const platform = api.platform ?? "unknown";
   const isWindows = platform === "win32";
   const codexRunTarget = isWindows ? (settings.codexRunTarget ?? "windows") : "windows";
-  const [newFileExt, setNewFileExt] = useState("mq5");
   const [layout, setLayout] = useState<LayoutState>(() => readLayoutState());
   const [viewport, setViewport] = useState(() => ({
     width: window.innerWidth,
@@ -912,18 +911,31 @@ const App = () => {
     return saved;
   };
 
+  const detectNewFileExtension = () => {
+    const current = openFiles.find((file) => file.path === activeFilePath);
+    const match = current?.path.match(/\\.([A-Za-z0-9]+)$/);
+    const ext = match?.[1]?.toLowerCase();
+    if (!ext) return "mq5";
+    if (["mq5", "mq4", "mqh", "py", "c", "cpp"].includes(ext)) return ext;
+    if (["cc", "cxx", "hpp", "hh", "h"].includes(ext)) return "cpp";
+    return "mq5";
+  };
+
   const handleNewFile = () => {
     const count = untitledCounterRef.current++;
-    const ext = newFileExt ? `.${newFileExt}` : "";
-    const path = `untitled:${count}${ext}`;
-    const language = getLanguageForExtension(newFileExt);
+    const ext = detectNewFileExtension();
+    const path = `untitled:${count}.${ext}`;
+    const language = getLanguageForExtension(ext);
     const workspaceId = activeWorkspaceId ?? LOCAL_WORKSPACE_ID;
-    openFile({
-      path,
-      content: "",
-      version: 1,
-      language
-    }, workspaceId);
+    openFile(
+      {
+        path,
+        content: "",
+        version: 1,
+        language
+      },
+      workspaceId
+    );
   };
 
   const handleToggleSetting = (key: "editorShowRulers" | "editorShowCursorPosition") => {
@@ -1161,8 +1173,6 @@ const App = () => {
         onSelectTab={setActiveFile}
         onCloseTab={handleCloseFile}
         onNewFile={handleNewFile}
-        newFileExtension={newFileExt}
-        onNewFileExtensionChange={setNewFileExt}
         showGuides={settings.editorShowRulers ?? false}
         showCursorPos={settings.editorShowCursorPosition ?? false}
         uiMode={settings.uiMode}

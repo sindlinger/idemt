@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Activity,
   Braces,
@@ -20,11 +20,6 @@ import {
   X,
   Play
 } from "lucide-react";
-import iconMt4 from "../assets/icons/mt4.png";
-import iconMt5 from "../assets/icons/mt5.svg";
-import iconPython from "../assets/icons/python.svg";
-import iconC from "../assets/icons/c.svg";
-import iconCpp from "../assets/icons/cpp.svg";
 import type { OpenFileState } from "@state/store";
 
 const TopBar = ({
@@ -42,8 +37,6 @@ const TopBar = ({
   onSelectTab,
   onCloseTab,
   onNewFile,
-  newFileExtension,
-  onNewFileExtensionChange,
   showGuides,
   showCursorPos,
   uiMode,
@@ -66,8 +59,6 @@ const TopBar = ({
   onSelectTab: (path: string) => void;
   onCloseTab: (path: string) => void;
   onNewFile?: () => void;
-  newFileExtension?: string;
-  onNewFileExtensionChange?: (value: string) => void;
   showGuides: boolean;
   showCursorPos: boolean;
   uiMode?: "dark" | "light";
@@ -77,8 +68,6 @@ const TopBar = ({
   onFiltersChange: (filters: { mql: boolean; python: boolean; cpp: boolean }) => void;
 }) => {
   const [maximized, setMaximized] = useState(false);
-  const [extMenuOpen, setExtMenuOpen] = useState(false);
-  const extMenuRef = useRef<HTMLDivElement | null>(null);
   const isClassic = uiTheme === "windowsClassic";
   const allSelected = filters.mql && filters.python && filters.cpp;
   const isDark = (uiMode ?? "dark") === "dark";
@@ -97,29 +86,6 @@ const TopBar = ({
     const unsub = window.api.onWindowState?.((state) => setMaximized(state.maximized));
     return () => unsub?.();
   }, []);
-
-  useEffect(() => {
-    const handleClick = (event: MouseEvent) => {
-      if (!extMenuRef.current) return;
-      if (!extMenuRef.current.contains(event.target as Node)) {
-        setExtMenuOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
-  }, []);
-
-  const extensionOptions = [
-    { id: "mq5", label: "MQL5", icon: iconMt5 },
-    { id: "mq4", label: "MQL4", icon: iconMt4 },
-    { id: "mqh", label: "MQL Header" },
-    { id: "py", label: "Python", icon: iconPython },
-    { id: "c", label: "C", icon: iconC },
-    { id: "cpp", label: "C++", icon: iconCpp }
-  ];
-
-  const currentExt =
-    extensionOptions.find((option) => option.id === newFileExtension) ?? extensionOptions[0];
 
   return (
     <>
@@ -257,45 +223,6 @@ const TopBar = ({
           <button className="toolbar-btn" onClick={onToggleTheme} title="Tema claro/escuro">
             {isDark ? <Sun size={14} /> : <Moon size={14} />}
           </button>
-          <div className="toolbar-ext" ref={extMenuRef}>
-            <button
-              className="ext-trigger"
-              onClick={() => setExtMenuOpen((open) => !open)}
-              onMouseDown={(event) => event.stopPropagation()}
-              type="button"
-              title={`New file extension: .${currentExt.id}`}
-            >
-              {currentExt.icon ? (
-                <span className="ext-icon">
-                  <img className="ext-icon-img" src={currentExt.icon} alt={currentExt.label} />
-                </span>
-              ) : (
-                <span className="ext-label">{currentExt.label}</span>
-              )}
-            </button>
-            {extMenuOpen ? (
-              <div className="ext-menu">
-                {extensionOptions.map((option) => (
-                  <button
-                    key={option.id}
-                    className={`ext-option ${newFileExtension === option.id ? "active" : ""}`}
-                    onClick={() => {
-                      onNewFileExtensionChange?.(option.id);
-                      setExtMenuOpen(false);
-                    }}
-                    type="button"
-                  >
-                    {option.icon ? (
-                      <span className="ext-icon">
-                        <img className="ext-icon-img" src={option.icon} alt={option.label} />
-                      </span>
-                    ) : null}
-                    <span className="ext-label">{option.label}</span>
-                  </button>
-                ))}
-              </div>
-            ) : null}
-          </div>
         </div>
       </div>
     </>
