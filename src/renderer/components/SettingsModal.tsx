@@ -310,13 +310,7 @@ const SettingsModal = ({
               {isWindows ? (
                 <div className="settings-field">
                   <label>Codex Runtime</label>
-                  <select
-                    value={local.codexRunTarget ?? "windows"}
-                    onChange={(event) => updateField("codexRunTarget", event.target.value)}
-                  >
-                    <option value="windows">Windows</option>
-                    <option value="wsl">WSL</option>
-                  </select>
+                  <div style={{ color: "var(--muted)", fontSize: 12 }}>WSL only</div>
                 </div>
               ) : null}
               {isWindows ? (

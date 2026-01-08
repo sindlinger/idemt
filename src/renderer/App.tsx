@@ -282,7 +282,7 @@ const App = () => {
   });
   const platform = api.platform ?? "unknown";
   const isWindows = platform === "win32";
-  const codexRunTarget = isWindows ? (settings.codexRunTarget ?? "windows") : "windows";
+  const codexRunTarget = isWindows ? "wsl" : "windows";
   const [layout, setLayout] = useState<LayoutState>(() => readLayoutState());
   const [viewport, setViewport] = useState(() => ({
     width: window.innerWidth,
@@ -345,7 +345,13 @@ const App = () => {
     }
     api.settingsGet().then((loaded) => {
       log("settings loaded", "renderer:startup");
-      setSettings(loaded);
+      if (isWindows && loaded.codexRunTarget !== "wsl") {
+        const next = { ...loaded, codexRunTarget: "wsl" };
+        setSettings(next);
+        api.settingsSet?.(next);
+      } else {
+        setSettings(loaded);
+      }
       const recent = (loaded.recentWorkspaces ?? []).filter(Boolean);
       const roots = recent.length
         ? recent
@@ -1271,8 +1277,8 @@ const App = () => {
             codexMessages={codexMessages}
             codexStatus={codexStatus}
             reviewChanges={reviewChanges}
-            runTarget={isWindows ? codexRunTarget : undefined}
-            onRunTargetChange={isWindows ? handleCodexRunTargetChange : undefined}
+            runTarget={undefined}
+            onRunTargetChange={undefined}
             models={codexModelsInfo.models}
             defaultModel={codexModelsInfo.defaultModel}
             defaultLevel={codexModelsInfo.defaultLevel}
