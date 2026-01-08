@@ -137,6 +137,11 @@ const CodexSidebar = ({
   const [reviewBase, setReviewBase] = useState("");
   const [reviewCommit, setReviewCommit] = useState("");
   const [reviewInstructions, setReviewInstructions] = useState("");
+  const [copyAnchor, setCopyAnchor] = useState<{
+    text: string;
+    x: number;
+    y: number;
+  } | null>(null);
   const chatRef = useRef<HTMLDivElement | null>(null);
   const parserRef = useRef<XTerm | null>(null);
   const serializeRef = useRef<SerializeAddon | null>(null);
@@ -235,6 +240,61 @@ const CodexSidebar = ({
     if (!el) return;
     el.scrollTop = el.scrollHeight;
   }, [codexEvents.length, codexMessages.length]);
+  useEffect(() => {
+    if (showTerminal) {
+      setCopyAnchor(null);
+      return;
+    }
+    const container = chatRef.current;
+    if (!container) return;
+
+    const updateSelection = () => {
+      const selection = window.getSelection();
+      if (!selection || selection.rangeCount === 0) {
+        setCopyAnchor(null);
+        return;
+      }
+      const text = selection.toString();
+      if (!text.trim()) {
+        setCopyAnchor(null);
+        return;
+      }
+      const anchor = selection.anchorNode;
+      const focus = selection.focusNode;
+      if (
+        !anchor ||
+        !focus ||
+        !container.contains(anchor) ||
+        !container.contains(focus)
+      ) {
+        setCopyAnchor(null);
+        return;
+      }
+      const range = selection.getRangeAt(0);
+      const rect = range.getBoundingClientRect();
+      const host = container.getBoundingClientRect();
+      const x = rect.left - host.left + rect.width / 2;
+      const y = rect.top - host.top - 28;
+      setCopyAnchor({ text, x, y });
+    };
+
+    const handleMouseUp = () => updateSelection();
+    const handleKeyUp = () => updateSelection();
+    const handleScroll = () => setCopyAnchor(null);
+    const handleBlur = () => setCopyAnchor(null);
+
+    container.addEventListener("mouseup", handleMouseUp);
+    container.addEventListener("keyup", handleKeyUp);
+    container.addEventListener("scroll", handleScroll);
+    window.addEventListener("blur", handleBlur);
+
+    return () => {
+      container.removeEventListener("mouseup", handleMouseUp);
+      container.removeEventListener("keyup", handleKeyUp);
+      container.removeEventListener("scroll", handleScroll);
+      window.removeEventListener("blur", handleBlur);
+    };
+  }, [showTerminal]);
   useEffect(() => {
     if (parserRef.current) return;
     const term = new XTerm({
@@ -462,6 +522,27 @@ const CodexSidebar = ({
                 />
               ))}
             </div>
+            {copyAnchor ? (
+              <button
+                className="codex-copy"
+                style={{
+                  left: Math.max(8, Math.min(copyAnchor.x, 280)),
+                  top: Math.max(6, copyAnchor.y)
+                }}
+                onClick={() => {
+                  const text = copyAnchor.text;
+                  if (!text) return;
+                  if (navigator.clipboard?.writeText) {
+                    navigator.clipboard.writeText(text).catch(() => undefined);
+                  } else {
+                    document.execCommand("copy");
+                  }
+                  setCopyAnchor(null);
+                }}
+              >
+                Copiar
+              </button>
+            ) : null}
             {userBubbles.length ? (
               <div className="codex-bubbles">
                 {userBubbles.map((entry) => (

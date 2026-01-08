@@ -1915,6 +1915,23 @@ button {
   line-height: 1.5;
 }
 
+.codex-copy {
+  position: absolute;
+  z-index: 5;
+  padding: 4px 8px;
+  font-size: 11px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: rgba(20, 24, 32, 0.95);
+  color: var(--text);
+  cursor: pointer;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
+}
+
+.codex-copy:hover {
+  background: rgba(28, 32, 40, 0.95);
+}
+
 .codex-log-line.status {
   color: var(--muted);
 }
