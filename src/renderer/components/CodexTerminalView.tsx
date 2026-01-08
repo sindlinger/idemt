@@ -35,6 +35,7 @@ const CodexTerminalView = ({ events, messages, running }: CodexTerminalViewProps
   useEffect(() => {
     const terminal = new Terminal({
       fontSize: 11,
+      convertEol: true,
       theme: { background: "#141a28", foreground: "#e7ecf4" },
       scrollback: 5000
     });
@@ -76,11 +77,8 @@ const CodexTerminalView = ({ events, messages, running }: CodexTerminalViewProps
         terminal.write(`\r\n> ${entry.text}\r\n`);
         continue;
       }
-      const lines = entry.text.split(/\r?\n/);
-      for (const line of lines) {
-        if (!line.length) continue;
-        terminal.write(`${line}\r\n`);
-      }
+      if (!entry.text) continue;
+      terminal.write(entry.text);
     }
     indexRef.current = streamItems.length;
     terminal.scrollToBottom();
