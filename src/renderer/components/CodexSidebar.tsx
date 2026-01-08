@@ -395,7 +395,6 @@ const CodexSidebar = ({
         {showTerminal ? (
           <CodexTerminalView
             events={codexEvents}
-            messages={codexMessages}
             running={codexStatus.running}
           />
         ) : (
