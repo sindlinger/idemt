@@ -149,7 +149,7 @@ export class CodexSessionService {
 
     try {
       const codexConfigPath = await resolveCodexConfigPath(this.logs, { target: runTarget });
-      const env = {
+      const env: NodeJS.ProcessEnv = {
         ...process.env,
         ...(codexConfigPath && !useWsl ? { CODEX_CONFIG: codexConfigPath } : {})
       };

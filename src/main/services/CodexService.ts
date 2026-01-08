@@ -129,7 +129,7 @@ export class CodexService {
     const commandArgs = useWsl ? ["--", codexPath, ...args] : args;
     this.logs.append("system", `Codex exec: ${command} ${commandArgs.join(" ")}`);
     const codexConfigPath = await resolveCodexConfigPath(this.logs, { target: runTarget });
-    const baseEnv = {
+    const baseEnv: NodeJS.ProcessEnv = {
       ...process.env,
       ...(codexConfigPath ? { CODEX_CONFIG: codexConfigPath } : {})
     };
@@ -221,7 +221,7 @@ export class CodexService {
     const commandArgs = useWsl ? ["--", codexPath, ...args] : args;
     this.logs.append("system", `Codex review: ${command} ${commandArgs.join(" ")}`);
     const codexConfigPath = await resolveCodexConfigPath(this.logs, { target: runTarget });
-    const baseEnv = {
+    const baseEnv: NodeJS.ProcessEnv = {
       ...process.env,
       ...(codexConfigPath ? { CODEX_CONFIG: codexConfigPath } : {})
     };
