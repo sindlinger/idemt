@@ -13,8 +13,6 @@ import {
 import type { CodexEvent, CodexRunStatus } from "@shared/ipc";
 import type { CodexMessage, ReviewChange } from "@state/store";
 import AnsiToHtml from "ansi-to-html";
-import { Terminal as XTerm } from "xterm";
-import { SerializeAddon } from "xterm-addon-serialize";
 import CodexTerminalView from "./CodexTerminalView";
 
 const stripAnsi = (text: string) => {
@@ -31,6 +29,16 @@ const stripAltScreen = (text: string) =>
     .replace(/\x1b\[\?1047l/g, "")
     .replace(/\x1b\[\?47h/g, "")
     .replace(/\x1b\[\?47l/g, "");
+
+const stripControl = (text: string) => {
+  let cleaned = stripAltScreen(text);
+  cleaned = cleaned.replace(/\x1b\][^\x07]*\x07/g, "");
+  cleaned = cleaned.replace(/\x1b\[[0-9;?]*[A-Za-z]/g, (match) =>
+    match.endsWith("m") || match.endsWith("K") ? match : ""
+  );
+  cleaned = cleaned.replace(/\x1b[@-Z\\-_]/g, "");
+  return cleaned;
+};
 
 const NOISY_FRAGMENTS = [
   "UtilTranslatePathList",
@@ -128,10 +136,10 @@ const CodexSidebar = ({
   const [reviewCommit, setReviewCommit] = useState("");
   const [reviewInstructions, setReviewInstructions] = useState("");
   const chatRef = useRef<HTMLDivElement | null>(null);
-  const parserRef = useRef<Terminal | null>(null);
-  const serializeRef = useRef<SerializeAddon | null>(null);
-  const parserIndexRef = useRef(0);
-  const [parserTick, setParserTick] = useState(0);
+  const logLinesRef = useRef<string[]>([]);
+  const logCarryRef = useRef("");
+  const logIndexRef = useRef(0);
+  const [logTick, setLogTick] = useState(0);
   const recentUserMessages = useMemo(
     () =>
       codexMessages
@@ -156,25 +164,20 @@ const CodexSidebar = ({
     });
   }, []);
   const graphicLines = useMemo(() => {
-    const serializer = serializeRef.current;
-    if (!serializer) return [];
-    const ansi = serializer.serialize({ scrollback: true });
-    const lines = ansi.split(/\r?\n/);
-    const filtered: string[] = [];
-    for (const line of lines) {
+    const filtered = logLinesRef.current.filter((line) => {
       const plain = stripAnsi(line).trim();
-      if (!plain) continue;
-      if (isNoisyLine(plain)) continue;
+      if (!plain) return false;
+      if (isNoisyLine(plain)) return false;
       if (
         recentUserMessages.includes(plain) ||
         recentUserMessages.includes(plain.replace(/^>\s*/, ""))
       ) {
-        continue;
+        return false;
       }
-      filtered.push(line);
-    }
+      return true;
+    });
     return filtered.map((line) => ansiToHtml.toHtml(line));
-  }, [ansiToHtml, parserTick, recentUserMessages]);
+  }, [ansiToHtml, logTick, recentUserMessages]);
 
   const changes = Object.values(reviewChanges);
   const modelOptions = useMemo(() => models.filter(Boolean), [models]);
@@ -225,35 +228,46 @@ const CodexSidebar = ({
     el.scrollTop = el.scrollHeight;
   }, [codexEvents.length, codexMessages.length]);
   useEffect(() => {
-    if (parserRef.current) return;
-    const term = new XTerm({
-      cols: 120,
-      rows: 200,
-      convertEol: true,
-      scrollback: 2000
-    });
-    const serializer = new SerializeAddon();
-    term.loadAddon(serializer);
-    parserRef.current = term;
-    serializeRef.current = serializer;
-    return () => term.dispose();
-  }, []);
-  useEffect(() => {
-    const term = parserRef.current;
-    if (!term) return;
-    if (parserIndexRef.current > codexEvents.length) {
-      term.reset();
-      parserIndexRef.current = 0;
+    if (logIndexRef.current > codexEvents.length) {
+      logLinesRef.current = [];
+      logCarryRef.current = "";
+      logIndexRef.current = 0;
     }
-    const slice = codexEvents.slice(parserIndexRef.current);
-    const batch = slice
-      .filter((entry) => entry.type === "stdout" || entry.type === "stderr")
-      .map((entry) => entry.data ?? "")
-      .join("");
-    if (batch) {
-      term.write(stripAltScreen(batch), () => setParserTick((value) => value + 1));
+    const slice = codexEvents.slice(logIndexRef.current);
+    let current = logCarryRef.current;
+    const lines = logLinesRef.current;
+    const pushLine = () => {
+      if (current.length > 0) {
+        lines.push(current);
+      }
+      current = "";
+    };
+    for (const entry of slice) {
+      if (entry.type !== "stdout" && entry.type !== "stderr") continue;
+      if (!entry.data) continue;
+      const cleaned = stripControl(entry.data);
+      for (let i = 0; i < cleaned.length; i += 1) {
+        const char = cleaned[i];
+        if (char === "\r") {
+          current = "";
+          continue;
+        }
+        if (char === "\n") {
+          pushLine();
+          continue;
+        }
+        if (char < " " && char !== "\t") continue;
+        current += char;
+      }
     }
-    parserIndexRef.current = codexEvents.length;
+    if (current) {
+      logCarryRef.current = current;
+    } else {
+      logCarryRef.current = "";
+    }
+    logLinesRef.current = lines.slice(-2000);
+    logIndexRef.current = codexEvents.length;
+    setLogTick((value) => value + 1);
   }, [codexEvents]);
   const toggleReviewItem = (path: string) => {
     setExpandedReview((prev) => {
