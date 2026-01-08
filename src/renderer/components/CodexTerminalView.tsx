@@ -50,6 +50,21 @@ const CodexTerminalView = ({ events, running }: CodexTerminalViewProps) => {
   }, []);
 
   useEffect(() => {
+    const fit = () => {
+      const fitAddon = fitAddonRef.current;
+      if (!fitAddon) return;
+      fitAddon.fit();
+      const dims = fitAddon.proposeDimensions();
+      if (dims && window.api?.codexSessionResize) {
+        window.api.codexSessionResize({ cols: dims.cols, rows: dims.rows });
+      }
+    };
+    fit();
+    window.addEventListener("resize", fit);
+    return () => window.removeEventListener("resize", fit);
+  }, []);
+
+  useEffect(() => {
     const terminal = terminalRef.current;
     if (!terminal) return;
 
@@ -60,6 +75,7 @@ const CodexTerminalView = ({ events, running }: CodexTerminalViewProps) => {
     for (let i = indexRef.current; i < events.length; i += 1) {
       const entry = events[i];
       if (!entry?.data) continue;
+      if (entry.type !== "stdout" && entry.type !== "stderr") continue;
       terminal.write(entry.data);
     }
     indexRef.current = events.length;

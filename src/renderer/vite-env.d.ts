@@ -46,6 +46,7 @@ declare global {
       codexReviewRun: (request: CodexReviewRequest) => Promise<CodexRunStatus>;
       codexSessionSend: (request: CodexRunRequest) => Promise<CodexRunStatus>;
       codexSessionStop: () => void;
+      codexSessionResize: (payload: { cols: number; rows: number }) => void;
       codexModelsGet: () => Promise<CodexModelsInfo>;
       codexProfilesGet: () => Promise<CodexProfilesInfo>;
       codexProfileSetActive: (id: string) => Promise<CodexProfilesInfo>;

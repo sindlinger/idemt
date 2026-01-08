@@ -33,6 +33,7 @@ type SessionState = {
   lastOutputAt: number;
   idleTimer?: NodeJS.Timeout;
   readyTimer?: NodeJS.Timeout;
+  acknowledged?: boolean;
   snapshots?: Map<string, string>;
   runId?: string;
   status: CodexRunStatus;
@@ -98,6 +99,15 @@ export class CodexSessionService {
       if (this.session.readyTimer) clearTimeout(this.session.readyTimer);
       this.session.pty.kill();
       this.session = null;
+    }
+  }
+
+  resizeSession(cols: number, rows: number) {
+    if (!this.session) return;
+    try {
+      this.session.pty.resize(cols, rows);
+    } catch {
+      // ignore resize errors
     }
   }
 
@@ -182,6 +192,17 @@ export class CodexSessionService {
     session.lastOutputAt = Date.now();
     if (!session.ready) {
       this.markReady(session);
+    }
+    if (!session.acknowledged) {
+      const normalized = data.toLowerCase();
+      if (
+        normalized.includes("press enter to continue") ||
+        normalized.includes("allowcodex") ||
+        normalized.includes("require approval")
+      ) {
+        session.acknowledged = true;
+        session.pty.write("\r");
+      }
     }
     this.window.webContents.send("codex:run:event", {
       type: "stdout",

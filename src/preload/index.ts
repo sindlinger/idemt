@@ -60,6 +60,8 @@ contextBridge.exposeInMainWorld("api", {
   codexSessionSend: (request: CodexRunRequest): Promise<CodexRunStatus> =>
     ipcRenderer.invoke("codex:session:send", request),
   codexSessionStop: (): void => ipcRenderer.send("codex:session:stop"),
+  codexSessionResize: (payload: { cols: number; rows: number }) =>
+    ipcRenderer.send("codex:session:resize", payload),
   codexModelsGet: (): Promise<CodexModelsInfo> => ipcRenderer.invoke("codex:models:get"),
   codexProfilesGet: (): Promise<CodexProfilesInfo> =>
     ipcRenderer.invoke("codex:profiles:get"),

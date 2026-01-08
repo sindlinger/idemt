@@ -199,6 +199,10 @@ export const registerIpc = async (window: BrowserWindow, settingsService: Settin
     codexSessionService.stopSession();
   });
 
+  ipcMain.on("codex:session:resize", (_event, payload: { cols: number; rows: number }) => {
+    codexSessionService.resizeSession(payload.cols, payload.rows);
+  });
+
   ipcMain.on("codex:run:cancel", () => {
     logLine("ipc", "codex:run:cancel");
     codexService.cancel();

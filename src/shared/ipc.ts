@@ -168,6 +168,7 @@ export const IPC_CHANNELS = {
   codexReviewRun: "codex:review:run",
   codexSessionSend: "codex:session:send",
   codexSessionStop: "codex:session:stop",
+  codexSessionResize: "codex:session:resize",
   codexRunEvent: "codex:run:event",
   codexRunDone: "codex:run:done",
   codexRunCancel: "codex:run:cancel",
