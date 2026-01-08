@@ -1867,6 +1867,8 @@ button {
   position: relative;
   flex: 1;
   min-height: 120px;
+  display: flex;
+  flex-direction: column;
 }
 
 .codex-terminal .xterm-viewport {
