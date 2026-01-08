@@ -211,11 +211,25 @@ export class CodexSessionService {
     } satisfies CodexEvent);
 
     if (session.running) {
+      if (this.isPromptReady(data)) {
+        if (session.idleTimer) clearTimeout(session.idleTimer);
+        void this.finishRun(session);
+        return;
+      }
       if (session.idleTimer) clearTimeout(session.idleTimer);
       session.idleTimer = setTimeout(() => {
         void this.finishRun(session);
       }, IDLE_MS);
     }
+  }
+
+  private isPromptReady(data: string) {
+    const plain = data.replace(/\x1b\][^\x07]*\x07/g, "").replace(/\x1b\[[0-9;?]*[A-Za-z]/g, "");
+    const normalized = plain.replace(/\r/g, "");
+    if (!normalized) return false;
+    if (/(^|\n)>\s*$/.test(normalized)) return true;
+    if (normalized.endsWith("\n> ") || normalized.includes("\n> ")) return true;
+    return false;
   }
 
   private markReady(session: SessionState) {
