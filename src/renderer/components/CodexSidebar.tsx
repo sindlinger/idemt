@@ -18,7 +18,8 @@ const sanitizeCodexOutput = (text: string) => {
   const withoutOsc = text.replace(/\x1b\][^\x07]*\x07/g, "");
   const withoutCsi = withoutOsc.replace(/\x1b\[[0-9;?]*[A-Za-z]/g, "");
   const withoutOther = withoutCsi.replace(/\x1b[@-Z\\-_]/g, "");
-  return withoutOther.replace(/\r/g, "");
+  const withoutCtrl = withoutOther.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, "");
+  return withoutCtrl.replace(/\r/g, "").replace(/\uFFFD/g, "");
 };
 
 const stripCodexMetadata = (text: string) => {
@@ -39,7 +40,9 @@ const stripCodexMetadata = (text: string) => {
       "[wsl-interop-fix]",
       "WSL (",
       "WSL_DISTRO_NAME",
-      "powershell.exe disponível"
+      "powershell.exe disponível",
+      "Codex session message sent",
+      "Codex run started"
     ];
     if (noisy.some((frag) => t.includes(frag))) return false;
     const prefixes = [
