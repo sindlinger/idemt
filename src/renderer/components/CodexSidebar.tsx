@@ -23,6 +23,15 @@ const stripAnsi = (text: string) => {
   return withoutCsi.replace(/\x1b[@-Z\\-_]/g, "");
 };
 
+const stripAltScreen = (text: string) =>
+  text
+    .replace(/\x1b\[\?1049h/g, "")
+    .replace(/\x1b\[\?1049l/g, "")
+    .replace(/\x1b\[\?1047h/g, "")
+    .replace(/\x1b\[\?1047l/g, "")
+    .replace(/\x1b\[\?47h/g, "")
+    .replace(/\x1b\[\?47l/g, "");
+
 const NOISY_FRAGMENTS = [
   "UtilTranslatePathList",
   "Failed to translate",
@@ -242,7 +251,7 @@ const CodexSidebar = ({
       .map((entry) => entry.data ?? "")
       .join("");
     if (batch) {
-      term.write(batch, () => setParserTick((value) => value + 1));
+      term.write(stripAltScreen(batch), () => setParserTick((value) => value + 1));
     }
     parserIndexRef.current = codexEvents.length;
   }, [codexEvents]);
