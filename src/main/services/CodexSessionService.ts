@@ -295,7 +295,8 @@ export class CodexSessionService {
       session.queue.unshift({ prompt, settings });
       return;
     }
-    session.pty.write(`${prompt}\r\n`);
+    const bracketed = `\x1b[200~${prompt}\x1b[201~`;
+    session.pty.write(`${bracketed}\r\n`);
   }
 
   private async emitFileChanges(
