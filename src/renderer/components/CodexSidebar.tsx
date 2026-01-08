@@ -13,22 +13,14 @@ import {
 import type { CodexEvent, CodexRunStatus } from "@shared/ipc";
 import type { CodexMessage, ReviewChange } from "@state/store";
 import AnsiToHtml from "ansi-to-html";
+import { Terminal } from "xterm";
+import { SerializeAddon } from "xterm-addon-serialize";
 import CodexTerminalView from "./CodexTerminalView";
 
 const stripAnsi = (text: string) => {
   const withoutOsc = text.replace(/\x1b\][^\x07]*\x07/g, "");
   const withoutCsi = withoutOsc.replace(/\x1b\[[0-9;?]*[A-Za-z]/g, "");
   return withoutCsi.replace(/\x1b[@-Z\\-_]/g, "");
-};
-
-const sanitizeAnsiForHtml = (text: string) => {
-  // Drop OSC sequences and any non-SGR CSI sequences to avoid leaking control codes.
-  let cleaned = text.replace(/\x1b\][^\x07]*\x07/g, "");
-  cleaned = cleaned.replace(/\x1b\[[0-9;?]*[A-Za-z]/g, (match) =>
-    match.endsWith("m") ? match : ""
-  );
-  cleaned = cleaned.replace(/\x1b[@-Z\\-_]/g, "");
-  return cleaned;
 };
 
 const NOISY_FRAGMENTS = [
@@ -127,6 +119,10 @@ const CodexSidebar = ({
   const [reviewCommit, setReviewCommit] = useState("");
   const [reviewInstructions, setReviewInstructions] = useState("");
   const chatRef = useRef<HTMLDivElement | null>(null);
+  const parserRef = useRef<Terminal | null>(null);
+  const serializeRef = useRef<SerializeAddon | null>(null);
+  const parserIndexRef = useRef(0);
+  const [parserTick, setParserTick] = useState(0);
   const recentUserMessages = useMemo(
     () =>
       codexMessages
@@ -151,40 +147,25 @@ const CodexSidebar = ({
     });
   }, []);
   const graphicLines = useMemo(() => {
-    const lines: string[] = [""];
-    const appendLine = (chunk: string) => {
-      let buffer = sanitizeAnsiForHtml(chunk);
-      buffer = buffer.replace(/\uFFFD/g, "");
-      for (let i = 0; i < buffer.length; i += 1) {
-        const char = buffer[i];
-        if (char === "\r") {
-          lines[lines.length - 1] = "";
-          continue;
-        }
-        if (char === "\n") {
-          lines.push("");
-          continue;
-        }
-        lines[lines.length - 1] += char;
-      }
-    };
-    for (const entry of codexEvents) {
-      if (entry.type !== "stdout" && entry.type !== "stderr") continue;
-      if (!entry.data) continue;
-      appendLine(entry.data);
-    }
+    const serializer = serializeRef.current;
+    if (!serializer) return [];
+    const ansi = serializer.serialize({ scrollback: true });
+    const lines = ansi.split(/\r?\n/);
     const filtered: string[] = [];
     for (const line of lines) {
-      const plain = stripAnsi(line).replace(/\r/g, "").trim();
+      const plain = stripAnsi(line).trim();
       if (!plain) continue;
       if (isNoisyLine(plain)) continue;
-      if (recentUserMessages.includes(plain) || recentUserMessages.includes(plain.replace(/^>\s*/, ""))) {
+      if (
+        recentUserMessages.includes(plain) ||
+        recentUserMessages.includes(plain.replace(/^>\s*/, ""))
+      ) {
         continue;
       }
       filtered.push(line);
     }
     return filtered.map((line) => ansiToHtml.toHtml(line));
-  }, [ansiToHtml, codexEvents, recentUserMessages]);
+  }, [ansiToHtml, parserTick, recentUserMessages]);
 
   const changes = Object.values(reviewChanges);
   const modelOptions = useMemo(() => models.filter(Boolean), [models]);
@@ -234,6 +215,37 @@ const CodexSidebar = ({
     if (!el) return;
     el.scrollTop = el.scrollHeight;
   }, [codexEvents.length, codexMessages.length]);
+  useEffect(() => {
+    if (parserRef.current) return;
+    const term = new Terminal({
+      cols: 120,
+      rows: 200,
+      convertEol: true,
+      scrollback: 2000
+    });
+    const serializer = new SerializeAddon();
+    term.loadAddon(serializer);
+    parserRef.current = term;
+    serializeRef.current = serializer;
+    return () => term.dispose();
+  }, []);
+  useEffect(() => {
+    const term = parserRef.current;
+    if (!term) return;
+    if (parserIndexRef.current > codexEvents.length) {
+      term.reset();
+      parserIndexRef.current = 0;
+    }
+    const slice = codexEvents.slice(parserIndexRef.current);
+    const batch = slice
+      .filter((entry) => entry.type === "stdout" || entry.type === "stderr")
+      .map((entry) => entry.data ?? "")
+      .join("");
+    if (batch) {
+      term.write(batch, () => setParserTick((value) => value + 1));
+    }
+    parserIndexRef.current = codexEvents.length;
+  }, [codexEvents]);
   const toggleReviewItem = (path: string) => {
     setExpandedReview((prev) => {
       const next = new Set(prev);
