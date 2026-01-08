@@ -6,13 +6,70 @@ import type { CodexEvent } from "@shared/ipc";
 type CodexTerminalViewProps = {
   events: CodexEvent[];
   running: boolean;
+  mode?: "raw" | "clean";
+  className?: string;
+  filterUserMessages?: string[];
 };
 
-const CodexTerminalView = ({ events, running }: CodexTerminalViewProps) => {
+const stripAnsi = (text: string) => {
+  const withoutOsc = text.replace(/\x1b\][^\x07]*\x07/g, "");
+  const withoutCsi = withoutOsc.replace(/\x1b\[[0-9;?]*[A-Za-z]/g, "");
+  return withoutCsi.replace(/\x1b[@-Z\\-_]/g, "");
+};
+
+const NOISY_FRAGMENTS = [
+  "UtilTranslatePathList",
+  "Failed to translate",
+  "[wsl-interop-fix]",
+  "WSL (",
+  "WSL_DISTRO_NAME",
+  "powershell.exe disponível",
+  "Codex session message sent",
+  "Codex run started",
+  "You are running Codex in",
+  "AllowCodex",
+  "Require approval",
+  "Press enter to continue"
+];
+
+const METADATA_PREFIXES = [
+  "workdir:",
+  "model:",
+  "provider:",
+  "approval:",
+  "sandbox:",
+  "reasoning effort:",
+  "reasoning summaries:",
+  "session id:",
+  "UserMessage:",
+  "ActiveFile:",
+  "# Diagnostics",
+  "# Recent Logs",
+  "# Relevant Files",
+  "# Codex Request",
+  "--------"
+];
+
+const isNoisyLine = (line: string) => {
+  if (!line) return true;
+  if (line === "user") return true;
+  if (line.startsWith("## ")) return true;
+  if (METADATA_PREFIXES.some((prefix) => line.startsWith(prefix))) return true;
+  return NOISY_FRAGMENTS.some((frag) => line.includes(frag));
+};
+
+const CodexTerminalView = ({
+  events,
+  running,
+  mode = "raw",
+  className,
+  filterUserMessages = []
+}: CodexTerminalViewProps) => {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const terminalRef = useRef<Terminal | null>(null);
   const fitAddonRef = useRef<FitAddon | null>(null);
   const indexRef = useRef(0);
+  const bufferRef = useRef("");
 
   useEffect(() => {
     const terminal = new Terminal({
@@ -72,24 +129,70 @@ const CodexTerminalView = ({ events, running }: CodexTerminalViewProps) => {
       terminal.clear();
       indexRef.current = 0;
     }
+    const matchesUserMessage = (line: string) => {
+      if (!filterUserMessages.length) return false;
+      const trimmed = line.trim();
+      if (!trimmed) return false;
+      return filterUserMessages.some((msg) => {
+        const clean = msg.trim();
+        if (!clean) return false;
+        return trimmed === clean || trimmed === `> ${clean}` || trimmed === `> ${clean}\r`;
+      });
+    };
+    const writeFiltered = (data: string) => {
+      if (mode === "raw") {
+        terminal.write(data);
+        return;
+      }
+      let buffer = bufferRef.current + data;
+      let start = 0;
+      let idx = buffer.indexOf("\n", start);
+      while (idx !== -1) {
+        const chunk = buffer.slice(start, idx + 1);
+        const clean = stripAnsi(chunk).replace(/\r/g, "").trim();
+        if (!isNoisyLine(clean) && !matchesUserMessage(clean)) {
+          terminal.write(chunk);
+        }
+        start = idx + 1;
+        idx = buffer.indexOf("\n", start);
+      }
+      bufferRef.current = buffer.slice(start);
+      if (bufferRef.current.includes("\r")) {
+        terminal.write(bufferRef.current);
+        bufferRef.current = "";
+      }
+    };
+
     for (let i = indexRef.current; i < events.length; i += 1) {
       const entry = events[i];
       if (!entry?.data) continue;
       if (entry.type !== "stdout" && entry.type !== "stderr") continue;
-      terminal.write(entry.data);
+      writeFiltered(entry.data);
     }
     indexRef.current = events.length;
     terminal.scrollToBottom();
-  }, [events]);
+  }, [events, mode, filterUserMessages]);
 
   useEffect(() => {
     const terminal = terminalRef.current;
     const fitAddon = fitAddonRef.current;
     if (!terminal || !fitAddon) return;
     fitAddon.fit();
+    if (!running && bufferRef.current) {
+      terminal.write(bufferRef.current);
+      bufferRef.current = "";
+    }
   }, [running]);
 
-  return <div ref={containerRef} className="codex-terminal" />;
+  useEffect(() => {
+    const terminal = terminalRef.current;
+    if (!terminal) return;
+    terminal.clear();
+    indexRef.current = 0;
+    bufferRef.current = "";
+  }, [mode]);
+
+  return <div ref={containerRef} className={className ?? "codex-terminal"} />;
 };
 
 export default CodexTerminalView;

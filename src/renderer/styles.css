@@ -1832,6 +1832,36 @@ button {
   text-transform: none;
 }
 
+.codex-chat-terminal {
+  position: relative;
+  padding: 0;
+  overflow: hidden;
+  gap: 0;
+}
+
+.codex-terminal-embedded {
+  flex: 1;
+  min-height: 120px;
+  border: none;
+  border-radius: var(--radius-md);
+  background: transparent;
+}
+
+.codex-terminal-embedded .xterm {
+  padding: 10px;
+}
+
+.codex-bubbles {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: flex-end;
+  pointer-events: none;
+}
+
 .codex-terminal {
   flex: 1;
   min-height: 120px;

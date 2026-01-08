@@ -14,68 +14,6 @@ import type { CodexEvent, CodexRunStatus } from "@shared/ipc";
 import type { CodexMessage, ReviewChange } from "@state/store";
 import CodexTerminalView from "./CodexTerminalView";
 
-const sanitizeCodexOutput = (text: string) => {
-  const withoutOsc = text.replace(/\x1b\][^\x07]*\x07/g, "");
-  const withoutCsi = withoutOsc.replace(/\x1b\[[0-9;?]*[A-Za-z]/g, "");
-  const withoutOther = withoutCsi.replace(/\x1b[@-Z\\-_]/g, "");
-  const withoutCtrl = withoutOther.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, "");
-  return withoutCtrl.replace(/\r/g, "").replace(/\uFFFD/g, "");
-};
-
-const stripCodexMetadata = (text: string) => {
-  const markers = ["OpenAI Codex", "# Codex Request", "tokens used"];
-  let cutoff = text.length;
-  for (const marker of markers) {
-    const idx = text.indexOf(marker);
-    if (idx !== -1) cutoff = Math.min(cutoff, idx);
-  }
-  const trimmed = text.slice(0, cutoff);
-  const lines = trimmed.split(/\r?\n/);
-  const filtered = lines.filter((line) => {
-    const t = line.trim();
-    if (!t) return false;
-    const noisy = [
-      "UtilTranslatePathList",
-      "Failed to translate",
-      "[wsl-interop-fix]",
-      "WSL (",
-      "WSL_DISTRO_NAME",
-      "powershell.exe disponível",
-      "Codex session message sent",
-      "Codex run started",
-      "You are running Codex in",
-      "AllowCodex",
-      "Require approval",
-      "Press enter to continue"
-    ];
-    if (noisy.some((frag) => t.includes(frag))) return false;
-    if (/^\[?[0-9;?<>]*[A-Za-z]$/.test(t)) return false;
-    if (/^\[?[0-9;?<>]*u$/.test(t)) return false;
-    if (/^\[?[0-9;?<>]*$/.test(t) && t.length <= 6) return false;
-    const prefixes = [
-      "workdir:",
-      "model:",
-      "provider:",
-      "approval:",
-      "sandbox:",
-      "reasoning effort:",
-      "reasoning summaries:",
-      "session id:",
-      "UserMessage:",
-      "ActiveFile:",
-      "# Diagnostics",
-      "# Recent Logs",
-      "# Relevant Files",
-      "# Codex Request",
-      "--------"
-    ];
-    if (t === "user") return false;
-    if (t.startsWith("## ")) return false;
-    return !prefixes.some((prefix) => t.startsWith(prefix));
-  });
-  return filtered.join("\n");
-};
-
 type CodexSidebarProps = {
   codexEvents: CodexEvent[];
   codexMessages: CodexMessage[];
@@ -131,59 +69,23 @@ const CodexSidebar = ({
   const [reviewCommit, setReviewCommit] = useState("");
   const [reviewInstructions, setReviewInstructions] = useState("");
   const chatRef = useRef<HTMLDivElement | null>(null);
-  const statusLine = useMemo(() => {
-    const matcher = (line: string) => {
-      const t = line.trim();
-      if (!t) return false;
-      if (/^[•*·]\s+/.test(t)) return true;
-      if (/(esc to interrupt|esc to stop)/i.test(t)) return true;
-      if (/^(Starting|Navigating|Adding)\b/i.test(t)) return true;
-      return false;
-    };
-    for (let i = codexEvents.length - 1; i >= 0; i -= 1) {
-      const data = codexEvents[i]?.data ?? "";
-      const normalized = sanitizeCodexOutput(data).replace(/\r/g, "\n");
-      const lines = normalized.split(/\n+/).filter(Boolean);
-      for (let j = lines.length - 1; j >= 0; j -= 1) {
-        const line = lines[j];
-        if (matcher(line)) return line.trim();
-      }
-    }
-    return "";
-  }, [codexEvents]);
-  const recentUserMessages = useMemo(() => {
-    return new Set(
+  const recentUserMessages = useMemo(
+    () =>
       codexMessages
         .filter((entry) => entry.role === "user")
-        .slice(-6)
+        .slice(-12)
         .map((entry) => entry.text.trim())
-        .filter(Boolean)
-    );
-  }, [codexMessages]);
-  const streamItems = useMemo(() => {
-    const messageItems = codexMessages.map((entry) => {
-      if (entry.role === "user") {
-        return {
-          kind: "user" as const,
-          timestamp: entry.timestamp,
-          text: entry.text
-        };
-      }
-      return {
-        kind: "event" as const,
-        timestamp: entry.timestamp,
-        text: entry.text,
-        eventType: "codex" as const
-      };
-    });
-    const eventItems = codexEvents.map((entry) => ({
-      kind: "event" as const,
-      timestamp: entry.timestamp,
-      text: entry.data,
-      eventType: entry.type
-    }));
-    return [...messageItems, ...eventItems].sort((a, b) => a.timestamp - b.timestamp);
-  }, [codexEvents, codexMessages]);
+        .filter(Boolean),
+    [codexMessages]
+  );
+  const userBubbles = useMemo(
+    () =>
+      codexMessages
+        .filter((entry) => entry.role === "user")
+        .slice(-3)
+        .map((entry) => ({ id: entry.timestamp, text: entry.text })),
+    [codexMessages]
+  );
 
   const changes = Object.values(reviewChanges);
   const modelOptions = useMemo(() => models.filter(Boolean), [models]);
@@ -232,7 +134,7 @@ const CodexSidebar = ({
     const el = chatRef.current;
     if (!el) return;
     el.scrollTop = el.scrollHeight;
-  }, [streamItems.length]);
+  }, [codexEvents.length, codexMessages.length]);
   const toggleReviewItem = (path: string) => {
     setExpandedReview((prev) => {
       const next = new Set(prev);
@@ -412,45 +314,24 @@ const CodexSidebar = ({
             )}
           </div>
         ) : null}
-        {statusLine ? (
-          <div className={`codex-status-line ${codexStatus.running ? "running" : ""}`}>
-            <span className="codex-status-dotline" />
-            <span className="codex-status-textline">{statusLine}</span>
-          </div>
-        ) : null}
-        {showTerminal ? (
+        <div className="codex-chat codex-chat-terminal" ref={chatRef}>
           <CodexTerminalView
             events={codexEvents}
             running={codexStatus.running}
+            mode={showTerminal ? "raw" : "clean"}
+            className="codex-terminal codex-terminal-embedded"
+            filterUserMessages={recentUserMessages}
           />
-        ) : (
-          <div className="codex-chat" ref={chatRef}>
-            {streamItems.map((entry) => {
-              if (entry.kind === "user") {
-                return (
-                  <div key={`user-${entry.timestamp}`} className="codex-message user">
-                    <div className="codex-text">{entry.text}</div>
-                  </div>
-                );
-              }
-              const cleaned = stripCodexMetadata(sanitizeCodexOutput(entry.text));
-              if (!cleaned) return null;
-              const lines = cleaned
-                .split(/\r?\n/)
-                .filter((line) => line.length > 0)
-                .filter((line) => !recentUserMessages.has(line.trim()));
-              if (lines.length === 0) return null;
-              return lines.map((line, idx) => (
-                <div
-                  key={`event-${entry.timestamp}-${idx}`}
-                  className={`codex-log-line ${entry.eventType}`}
-                >
-                  {line}
+          {userBubbles.length ? (
+            <div className="codex-bubbles">
+              {userBubbles.map((entry) => (
+                <div key={entry.id} className="codex-message user">
+                  <div className="codex-text">{entry.text}</div>
                 </div>
-              ));
-            })}
-          </div>
-        )}
+              ))}
+            </div>
+          ) : null}
+        </div>
         {changes.length > 0 ? (
           <div className="codex-panels">
             <div className="codex-panel codex-review">
