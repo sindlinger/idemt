@@ -313,6 +313,21 @@ const SettingsModal = ({
                   <div style={{ color: "var(--muted)", fontSize: 12 }}>WSL only</div>
                 </div>
               ) : null}
+              <div className="settings-field">
+                <label>Codex Transport</label>
+                <select
+                  value={local.codexTransport ?? "pty"}
+                  onChange={(event) =>
+                    updateField("codexTransport", event.target.value as Settings["codexTransport"])
+                  }
+                >
+                  <option value="pty">PTY (interactive)</option>
+                  <option value="stdio">STDIN (one-shot)</option>
+                </select>
+                <span style={{ color: "var(--muted)", fontSize: 11 }}>
+                  PTY keeps a live session. STDIN runs a single command and exits.
+                </span>
+              </div>
               {isWindows ? (
                 <div className="settings-field">
                   <label>Codex Path (WSL)</label>

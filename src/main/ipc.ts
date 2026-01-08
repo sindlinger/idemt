@@ -191,7 +191,11 @@ export const registerIpc = async (window: BrowserWindow, settingsService: Settin
 
   ipcMain.handle("codex:session:send", async (_event, request: CodexRunRequest) => {
     logLine("ipc", "codex:session:send");
-    return codexSessionService.sendMessage(request, settingsService.get());
+    const settings = settingsService.get();
+    if (settings.codexTransport === "stdio") {
+      return codexService.run({ ...request, sessionActive: false }, settings);
+    }
+    return codexSessionService.sendMessage(request, settings);
   });
 
   ipcMain.on("codex:session:stop", () => {

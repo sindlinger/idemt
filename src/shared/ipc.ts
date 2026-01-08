@@ -130,6 +130,7 @@ export type Settings = {
   codexArgsWindows?: string;
   codexArgsWsl?: string;
   codexRunTarget?: "windows" | "wsl";
+  codexTransport?: "pty" | "stdio";
   mtDataDir?: string;
   reportsDir?: string;
   uiTheme?: "windows11" | "windowsClassic" | "macos" | "metatrader";

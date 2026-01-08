@@ -14,6 +14,7 @@ const DEFAULTS: Settings = {
   codexArgsWindows: "",
   codexArgsWsl: "",
   codexRunTarget: "windows",
+  codexTransport: "pty",
   mtDataDir: "",
   reportsDir: "",
   uiTheme: "windows11",
