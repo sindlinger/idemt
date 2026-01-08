@@ -132,8 +132,16 @@ export class CodexSessionService {
       const instructionsPath = useWsl ? toWslPath(instructionsPathWin) : instructionsPathWin;
       const agentArgs = buildCodexAgentArgs(instructionsPath);
       const command = useWsl ? "wsl.exe" : codexPath;
+      const shellEscape = (value: string) => `'${value.replace(/'/g, `'\"'\"'`)}'`;
       const args = useWsl
-        ? ["--", codexPath, "--cd", toWslPath(cwd), ...agentArgs]
+        ? [
+            "--",
+            "bash",
+            "-lc",
+            `cd ${shellEscape(toWslPath(cwd))} && ${shellEscape(codexPath)} ${agentArgs
+              .map(shellEscape)
+              .join(" ")}`
+          ]
         : [...agentArgs];
       const pty = spawn(command, args, {
         name: "xterm-color",

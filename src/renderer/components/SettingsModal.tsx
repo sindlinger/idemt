@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { CheckCircle2, FolderOpen, Save, Trash2 } from "lucide-react";
-import type { Settings } from "@shared/ipc";
+import type { CodexProfilesInfo, Settings } from "@shared/ipc";
 
 const SettingsModal = ({
   open,
@@ -19,6 +19,9 @@ const SettingsModal = ({
     "ui"
   );
   const [position, setPosition] = useState({ x: 0, y: 0 });
+  const [codexProfiles, setCodexProfiles] = useState<CodexProfilesInfo | null>(null);
+  const [codexProfileContent, setCodexProfileContent] = useState("");
+  const [codexProfileId, setCodexProfileId] = useState("");
   const isWindows = window.api?.platform === "win32";
   const dragRef = useRef<{ startX: number; startY: number; originX: number; originY: number } | null>(
     null
@@ -28,6 +31,16 @@ const SettingsModal = ({
     setLocal(settings);
     setValidation({});
   }, [settings]);
+
+  useEffect(() => {
+    if (!open) return;
+    if (typeof window.api?.codexProfilesGet !== "function") return;
+    window.api.codexProfilesGet().then((info) => {
+      setCodexProfiles(info);
+      setCodexProfileContent(info.content);
+      setCodexProfileId(info.activeId);
+    });
+  }, [open]);
 
   if (!open) return null;
 
@@ -96,6 +109,27 @@ const SettingsModal = ({
     if (typeof window.api?.settingsValidate !== "function") return;
     const result = await window.api.settingsValidate(local);
     setValidation(result);
+  };
+
+  const handleProfileChange = async (id: string) => {
+    if (typeof window.api?.codexProfileSetActive !== "function") return;
+    const next = await window.api.codexProfileSetActive(id);
+    setCodexProfiles(next);
+    setCodexProfileContent(next.content);
+    setCodexProfileId(next.activeId);
+    window.api.codexSessionStop?.();
+  };
+
+  const handleProfileSave = async () => {
+    if (typeof window.api?.codexProfileSave !== "function") return;
+    const next = await window.api.codexProfileSave({
+      id: codexProfileId,
+      content: codexProfileContent
+    });
+    setCodexProfiles(next);
+    setCodexProfileContent(next.content);
+    setCodexProfileId(next.activeId);
+    window.api.codexSessionStop?.();
   };
 
   return (
@@ -243,6 +277,36 @@ const SettingsModal = ({
           ) : null}
           {activeTab === "codex" ? (
             <>
+              <div className="settings-field">
+                <label>Agent Profile</label>
+                <select
+                  value={codexProfileId || codexProfiles?.activeId || ""}
+                  onChange={(event) => handleProfileChange(event.target.value)}
+                >
+                  {(codexProfiles?.profiles ?? []).map((profile) => (
+                    <option key={profile.id} value={profile.id}>
+                      {profile.label}
+                    </option>
+                  ))}
+                </select>
+                <span style={{ color: "var(--muted)", fontSize: 11 }}>
+                  Changing profile applies on the next Codex message.
+                </span>
+              </div>
+              <div className="settings-field">
+                <label>Agent Instructions</label>
+                <textarea
+                  rows={8}
+                  value={codexProfileContent}
+                  onChange={(event) => setCodexProfileContent(event.target.value)}
+                />
+                <div style={{ display: "flex", gap: 8 }}>
+                  <button className="button" type="button" onClick={handleProfileSave}>
+                    <Save size={12} />
+                    Save Profile
+                  </button>
+                </div>
+              </div>
               {isWindows ? (
                 <div className="settings-field">
                   <label>Codex Runtime</label>

@@ -42,7 +42,11 @@ const stripCodexMetadata = (text: string) => {
       "WSL_DISTRO_NAME",
       "powershell.exe disponível",
       "Codex session message sent",
-      "Codex run started"
+      "Codex run started",
+      "You are running Codex in",
+      "AllowCodex",
+      "Require approval",
+      "Press enter to continue"
     ];
     if (noisy.some((frag) => t.includes(frag))) return false;
     if (/^\[?[0-9;?<>]*[A-Za-z]$/.test(t)) return false;

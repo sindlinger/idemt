@@ -51,6 +51,17 @@ export type CodexModelsInfo = {
   source: "config" | "empty";
 };
 
+export type CodexProfileSummary = {
+  id: string;
+  label: string;
+};
+
+export type CodexProfilesInfo = {
+  profiles: CodexProfileSummary[];
+  activeId: string;
+  content: string;
+};
+
 export type CodexEvent = {
   type: "stdout" | "stderr" | "json" | "status" | "timeline" | "log";
   data: string;
@@ -151,6 +162,9 @@ export const IPC_CHANNELS = {
   fileSave: "file:save",
   fileChanged: "file:changed",
   codexRunStart: "codex:run:start",
+  codexProfilesGet: "codex:profiles:get",
+  codexProfileSetActive: "codex:profiles:set",
+  codexProfileSave: "codex:profiles:save",
   codexReviewRun: "codex:review:run",
   codexSessionSend: "codex:session:send",
   codexSessionStop: "codex:session:stop",

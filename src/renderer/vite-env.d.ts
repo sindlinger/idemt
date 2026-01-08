@@ -4,6 +4,7 @@ import type {
   BuildResult,
   CodexEvent,
   CodexModelsInfo,
+  CodexProfilesInfo,
   CodexRunRequest,
   CodexRunStatus,
   CodexReviewRequest,
@@ -46,6 +47,9 @@ declare global {
       codexSessionSend: (request: CodexRunRequest) => Promise<CodexRunStatus>;
       codexSessionStop: () => void;
       codexModelsGet: () => Promise<CodexModelsInfo>;
+      codexProfilesGet: () => Promise<CodexProfilesInfo>;
+      codexProfileSetActive: (id: string) => Promise<CodexProfilesInfo>;
+      codexProfileSave: (payload: { id: string; content: string }) => Promise<CodexProfilesInfo>;
       codexConfigPathGet: () => Promise<string | null>;
       cancelCodex: () => void;
       onCodexEvent: (handler: (event: CodexEvent) => void) => () => void;

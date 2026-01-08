@@ -4,6 +4,7 @@ import type {
   BuildResult,
   CodexEvent,
   CodexModelsInfo,
+  CodexProfilesInfo,
   CodexRunRequest,
   CodexRunStatus,
   CodexReviewRequest,
@@ -60,6 +61,12 @@ contextBridge.exposeInMainWorld("api", {
     ipcRenderer.invoke("codex:session:send", request),
   codexSessionStop: (): void => ipcRenderer.send("codex:session:stop"),
   codexModelsGet: (): Promise<CodexModelsInfo> => ipcRenderer.invoke("codex:models:get"),
+  codexProfilesGet: (): Promise<CodexProfilesInfo> =>
+    ipcRenderer.invoke("codex:profiles:get"),
+  codexProfileSetActive: (id: string): Promise<CodexProfilesInfo> =>
+    ipcRenderer.invoke("codex:profiles:set", { id }),
+  codexProfileSave: (payload: { id: string; content: string }): Promise<CodexProfilesInfo> =>
+    ipcRenderer.invoke("codex:profiles:save", payload),
   codexConfigPathGet: (): Promise<string | null> => ipcRenderer.invoke("codex:config:path"),
   cancelCodex: (): void => ipcRenderer.send("codex:run:cancel"),
   onCodexEvent: (handler: (event: CodexEvent) => void) => on("codex:run:event", handler),

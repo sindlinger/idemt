@@ -2434,6 +2434,15 @@ button {
   color: var(--text);
 }
 
+.settings-field textarea {
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px;
+  color: var(--text);
+  resize: vertical;
+}
+
 .status-pill {
   font-size: 11px;
   padding: 2px 6px;

@@ -13,6 +13,7 @@ import { CodexService } from "./services/CodexService";
 import { CodexSessionService } from "./services/CodexSessionService";
 import { getCodexModelsInfo } from "./services/CodexModelsService";
 import { resolveCodexConfigPath } from "./services/CodexConfigService";
+import { getProfilesInfo, saveProfileContent, setActiveProfile } from "./services/CodexInstructionsService";
 import { LogsService } from "./services/LogsService";
 import type { SettingsService } from "./services/SettingsService";
 import { TerminalService } from "./services/TerminalService";
@@ -163,6 +164,24 @@ export const registerIpc = async (window: BrowserWindow, settingsService: Settin
   ipcMain.handle("codex:run:start", async (_event, request: CodexRunRequest) => {
     logLine("ipc", "codex:run:start");
     return codexService.run(request, settingsService.get());
+  });
+
+  ipcMain.handle("codex:profiles:get", async () => {
+    logLine("ipc", "codex:profiles:get");
+    const root = workspaceService.getRoot() ?? process.cwd();
+    return getProfilesInfo(root, logsService);
+  });
+
+  ipcMain.handle("codex:profiles:set", async (_event, payload: { id: string }) => {
+    logLine("ipc", `codex:profiles:set ${payload.id}`);
+    const root = workspaceService.getRoot() ?? process.cwd();
+    return setActiveProfile(root, payload.id, logsService);
+  });
+
+  ipcMain.handle("codex:profiles:save", async (_event, payload: { id: string; content: string }) => {
+    logLine("ipc", `codex:profiles:save ${payload.id}`);
+    const root = workspaceService.getRoot() ?? process.cwd();
+    return saveProfileContent(root, payload.id, payload.content, logsService);
   });
 
   ipcMain.handle("codex:review:run", async (_event, request: CodexReviewRequest) => {
