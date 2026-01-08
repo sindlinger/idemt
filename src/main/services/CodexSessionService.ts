@@ -148,6 +148,8 @@ export class CodexSessionService {
         ? [
             "--",
             "bash",
+            "--noprofile",
+            "--norc",
             "-lc",
             `cd ${shellEscape(toWslPath(cwd))} && ${shellEscape(codexPath)} ${agentArgs
               .map(shellEscape)

@@ -23,6 +23,14 @@ const stripAnsi = (text: string) => {
   return withoutCsi.replace(/\x1b[@-Z\\-_]/g, "");
 };
 
+const sanitizeAnsiForHtml = (text: string) => {
+  let out = text.replace(/\r/g, "");
+  out = out.replace(/\x1b\][^\x07]*\x07/g, "");
+  out = out.replace(/\x1b\[(?![0-9;]*m)[0-9;?]*[A-Za-z]/g, "");
+  out = out.replace(/\x1b[@-Z\\-_]/g, "");
+  return out;
+};
+
 const stripAltScreen = (text: string) =>
   text
     .replace(/\x1b\[\?1049h/g, "")
@@ -35,6 +43,8 @@ const stripAltScreen = (text: string) =>
 const NOISY_FRAGMENTS = [
   "UtilTranslatePathList",
   "Failed to translate",
+  "mqlPython",
+  "venvScripts",
   "[wsl-interop-fix]",
   "WSL (",
   "WSL_DISTRO_NAME",
@@ -162,7 +172,8 @@ const CodexSidebar = ({
     const lines = ansi.split(/\r?\n/);
     const filtered: string[] = [];
     for (const line of lines) {
-      const plain = stripAnsi(line).trim();
+      const sanitized = sanitizeAnsiForHtml(line);
+      const plain = stripAnsi(sanitized).trim();
       if (!plain) continue;
       if (isNoisyLine(plain)) continue;
       if (
@@ -171,7 +182,7 @@ const CodexSidebar = ({
       ) {
         continue;
       }
-      filtered.push(line);
+      filtered.push(sanitized);
     }
     return filtered.map((line) => ansiToHtml.toHtml(line));
   }, [ansiToHtml, parserTick, recentUserMessages]);
