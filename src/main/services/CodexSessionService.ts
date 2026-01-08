@@ -44,6 +44,21 @@ type SessionState = {
 const IDLE_MS = 900;
 const READY_FALLBACK_MS = 800;
 
+const sanitizeWindowsPath = (value?: string) => {
+  if (!value) return value;
+  const cleaned = value
+    .split(";")
+    .map((part) => part.trim())
+    .filter((part) => {
+      if (!part) return false;
+      if (/^[A-Za-z]:\\/.test(part)) return true;
+      if (part.startsWith("\\\\")) return true;
+      return false;
+    })
+    .join(";");
+  return cleaned || "C:\\\\Windows\\\\System32";
+};
+
 export class CodexSessionService {
   private window: BrowserWindow;
   private logs: LogsService;
@@ -138,6 +153,9 @@ export class CodexSessionService {
         ...process.env,
         ...(codexConfigPath && !useWsl ? { CODEX_CONFIG: codexConfigPath } : {})
       };
+      if (useWsl) {
+        env.PATH = sanitizeWindowsPath(env.PATH);
+      }
 
       const instructionsPathWin = await ensureInstructionsFile(cwd, this.logs);
       const instructionsPath = useWsl ? toWslPath(instructionsPathWin) : instructionsPathWin;

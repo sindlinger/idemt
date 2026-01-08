@@ -198,7 +198,7 @@ const CodexSidebar = ({
   }, [defaultLevel]);
   const sendMessage = () => {
     if (!message.trim()) return;
-    onRun(message.trim(), { model, level });
+    onRun(message, { model, level });
     setMessage("");
   };
   const resolvedDefaultModel = defaultModel ?? modelOptions[0];

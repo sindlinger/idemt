@@ -32,6 +32,21 @@ const parseArgs = (value?: string): string[] => {
     .filter(Boolean);
 };
 
+const sanitizeWindowsPath = (value?: string) => {
+  if (!value) return value;
+  const cleaned = value
+    .split(";")
+    .map((part) => part.trim())
+    .filter((part) => {
+      if (!part) return false;
+      if (/^[A-Za-z]:\\/.test(part)) return true;
+      if (part.startsWith("\\\\")) return true;
+      return false;
+    })
+    .join(";");
+  return cleaned || "C:\\\\Windows\\\\System32";
+};
+
 export class CodexService {
   private window: BrowserWindow;
   private logs: LogsService;
@@ -114,12 +129,16 @@ export class CodexService {
     const commandArgs = useWsl ? ["--", codexPath, ...args] : args;
     this.logs.append("system", `Codex exec: ${command} ${commandArgs.join(" ")}`);
     const codexConfigPath = await resolveCodexConfigPath(this.logs, { target: runTarget });
+    const baseEnv = {
+      ...process.env,
+      ...(codexConfigPath ? { CODEX_CONFIG: codexConfigPath } : {})
+    };
+    if (useWsl) {
+      baseEnv.PATH = sanitizeWindowsPath(baseEnv.PATH);
+    }
     const child = spawn(command, commandArgs, {
       cwd: workspaceRoot,
-      env: {
-        ...process.env,
-        ...(codexConfigPath ? { CODEX_CONFIG: codexConfigPath } : {})
-      }
+      env: baseEnv
     });
 
     this.currentProcess = child;
@@ -202,12 +221,16 @@ export class CodexService {
     const commandArgs = useWsl ? ["--", codexPath, ...args] : args;
     this.logs.append("system", `Codex review: ${command} ${commandArgs.join(" ")}`);
     const codexConfigPath = await resolveCodexConfigPath(this.logs, { target: runTarget });
+    const baseEnv = {
+      ...process.env,
+      ...(codexConfigPath ? { CODEX_CONFIG: codexConfigPath } : {})
+    };
+    if (useWsl) {
+      baseEnv.PATH = sanitizeWindowsPath(baseEnv.PATH);
+    }
     const child = spawn(command, commandArgs, {
       cwd: workspaceRoot,
-      env: {
-        ...process.env,
-        ...(codexConfigPath ? { CODEX_CONFIG: codexConfigPath } : {})
-      }
+      env: baseEnv
     });
 
     this.currentProcess = child;
