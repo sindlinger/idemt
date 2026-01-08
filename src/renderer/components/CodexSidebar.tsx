@@ -30,16 +30,6 @@ const stripAltScreen = (text: string) =>
     .replace(/\x1b\[\?47h/g, "")
     .replace(/\x1b\[\?47l/g, "");
 
-const stripControl = (text: string) => {
-  let cleaned = stripAltScreen(text);
-  cleaned = cleaned.replace(/\x1b\][^\x07]*\x07/g, "");
-  cleaned = cleaned.replace(/\x1b\[[0-9;?]*[A-Za-z]/g, (match) =>
-    match.endsWith("m") || match.endsWith("K") ? match : ""
-  );
-  cleaned = cleaned.replace(/\x1b[@-Z\\-_]/g, "");
-  return cleaned;
-};
-
 const NOISY_FRAGMENTS = [
   "UtilTranslatePathList",
   "Failed to translate",
@@ -138,6 +128,7 @@ const CodexSidebar = ({
   const chatRef = useRef<HTMLDivElement | null>(null);
   const logLinesRef = useRef<string[]>([]);
   const logCarryRef = useRef("");
+  const escCarryRef = useRef("");
   const logIndexRef = useRef(0);
   const [logTick, setLogTick] = useState(0);
   const recentUserMessages = useMemo(
@@ -245,9 +236,50 @@ const CodexSidebar = ({
     for (const entry of slice) {
       if (entry.type !== "stdout" && entry.type !== "stderr") continue;
       if (!entry.data) continue;
-      const cleaned = stripControl(entry.data);
-      for (let i = 0; i < cleaned.length; i += 1) {
-        const char = cleaned[i];
+      let buffer = stripAltScreen(escCarryRef.current + entry.data);
+      escCarryRef.current = "";
+      for (let i = 0; i < buffer.length; i += 1) {
+        const char = buffer[i];
+        if (char === "\x1b") {
+          const next = buffer[i + 1];
+          if (next === "[") {
+            let j = i + 2;
+            while (j < buffer.length) {
+              const ch = buffer[j];
+              if ((ch >= "A" && ch <= "Z") || (ch >= "a" && ch <= "z")) {
+                const seq = buffer.slice(i, j + 1);
+                if (ch === "m") {
+                  current += seq;
+                }
+                i = j;
+                break;
+              }
+              j += 1;
+            }
+            if (j >= buffer.length) {
+              escCarryRef.current = buffer.slice(i);
+              break;
+            }
+            continue;
+          }
+          if (next === "]") {
+            let j = i + 2;
+            while (j < buffer.length) {
+              if (buffer[j] === "\x07") {
+                j += 1;
+                break;
+              }
+              j += 1;
+            }
+            if (j >= buffer.length) {
+              escCarryRef.current = buffer.slice(i);
+              break;
+            }
+            i = j - 1;
+            continue;
+          }
+          continue;
+        }
         if (char === "\r") {
           current = "";
           continue;
