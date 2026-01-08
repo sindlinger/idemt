@@ -67,6 +67,14 @@ const CodexTerminalView = ({ events, messages, running }: CodexTerminalViewProps
     return () => container.removeEventListener("contextmenu", handleContextMenu);
   }, []);
 
+  const sanitize = (text: string) => {
+    const withoutOsc = text.replace(/\x1b\][^\x07]*\x07/g, "");
+    const withoutCsi = withoutOsc.replace(/\x1b\[[0-9;?]*[A-Za-z]/g, "");
+    const withoutOther = withoutCsi.replace(/\x1b[@-Z\\-_]/g, "");
+    const withoutCtrl = withoutOther.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, "");
+    return withoutCtrl.replace(/\r/g, "\n").replace(/\uFFFD/g, "");
+  };
+
   useEffect(() => {
     const terminal = terminalRef.current;
     if (!terminal) return;
@@ -78,7 +86,7 @@ const CodexTerminalView = ({ events, messages, running }: CodexTerminalViewProps
         continue;
       }
       if (!entry.text) continue;
-      terminal.write(entry.text);
+      terminal.write(sanitize(entry.text));
     }
     indexRef.current = streamItems.length;
     terminal.scrollToBottom();
