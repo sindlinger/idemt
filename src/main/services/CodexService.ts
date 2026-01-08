@@ -32,20 +32,17 @@ const parseArgs = (value?: string): string[] => {
     .filter(Boolean);
 };
 
-const sanitizeWindowsPath = (value?: string) => {
-  if (!value) return value;
-  const cleaned = value
-    .split(";")
-    .map((part) => part.trim())
-    .filter((part) => {
-      if (!part) return false;
-      if (/^[A-Za-z]:\\/.test(part)) return true;
-      if (part.startsWith("\\\\")) return true;
-      return false;
-    })
-    .join(";");
-  return cleaned || "C:\\\\Windows\\\\System32";
-};
+const buildWslHostEnv = (source: NodeJS.ProcessEnv): NodeJS.ProcessEnv => ({
+  SystemRoot: source.SystemRoot ?? "C:\\\\Windows",
+  WINDIR: source.WINDIR ?? "C:\\\\Windows",
+  COMSPEC: source.COMSPEC ?? "C:\\\\Windows\\\\System32\\\\cmd.exe",
+  PATH: "C:\\\\Windows\\\\System32",
+  TEMP: source.TEMP,
+  TMP: source.TMP,
+  USERNAME: source.USERNAME,
+  USERDOMAIN: source.USERDOMAIN,
+  WSLENV: ""
+});
 
 export class CodexService {
   private window: BrowserWindow;
@@ -129,13 +126,12 @@ export class CodexService {
     const commandArgs = useWsl ? ["--", codexPath, ...args] : args;
     this.logs.append("system", `Codex exec: ${command} ${commandArgs.join(" ")}`);
     const codexConfigPath = await resolveCodexConfigPath(this.logs, { target: runTarget });
-    const baseEnv: NodeJS.ProcessEnv = {
-      ...process.env,
-      ...(codexConfigPath ? { CODEX_CONFIG: codexConfigPath } : {})
-    };
-    if (useWsl) {
-      baseEnv.PATH = sanitizeWindowsPath(baseEnv.PATH);
-    }
+    const baseEnv: NodeJS.ProcessEnv = useWsl
+      ? buildWslHostEnv(process.env)
+      : {
+          ...process.env,
+          ...(codexConfigPath ? { CODEX_CONFIG: codexConfigPath } : {})
+        };
     const child = spawn(command, commandArgs, {
       cwd: workspaceRoot,
       env: baseEnv
@@ -221,13 +217,12 @@ export class CodexService {
     const commandArgs = useWsl ? ["--", codexPath, ...args] : args;
     this.logs.append("system", `Codex review: ${command} ${commandArgs.join(" ")}`);
     const codexConfigPath = await resolveCodexConfigPath(this.logs, { target: runTarget });
-    const baseEnv: NodeJS.ProcessEnv = {
-      ...process.env,
-      ...(codexConfigPath ? { CODEX_CONFIG: codexConfigPath } : {})
-    };
-    if (useWsl) {
-      baseEnv.PATH = sanitizeWindowsPath(baseEnv.PATH);
-    }
+    const baseEnv: NodeJS.ProcessEnv = useWsl
+      ? buildWslHostEnv(process.env)
+      : {
+          ...process.env,
+          ...(codexConfigPath ? { CODEX_CONFIG: codexConfigPath } : {})
+        };
     const child = spawn(command, commandArgs, {
       cwd: workspaceRoot,
       env: baseEnv

@@ -44,20 +44,17 @@ type SessionState = {
 const IDLE_MS = 900;
 const READY_FALLBACK_MS = 800;
 
-const sanitizeWindowsPath = (value?: string) => {
-  if (!value) return value;
-  const cleaned = value
-    .split(";")
-    .map((part) => part.trim())
-    .filter((part) => {
-      if (!part) return false;
-      if (/^[A-Za-z]:\\/.test(part)) return true;
-      if (part.startsWith("\\\\")) return true;
-      return false;
-    })
-    .join(";");
-  return cleaned || "C:\\\\Windows\\\\System32";
-};
+const buildWslHostEnv = (source: NodeJS.ProcessEnv): NodeJS.ProcessEnv => ({
+  SystemRoot: source.SystemRoot ?? "C:\\\\Windows",
+  WINDIR: source.WINDIR ?? "C:\\\\Windows",
+  COMSPEC: source.COMSPEC ?? "C:\\\\Windows\\\\System32\\\\cmd.exe",
+  PATH: "C:\\\\Windows\\\\System32",
+  TEMP: source.TEMP,
+  TMP: source.TMP,
+  USERNAME: source.USERNAME,
+  USERDOMAIN: source.USERDOMAIN,
+  WSLENV: ""
+});
 
 export class CodexSessionService {
   private window: BrowserWindow;
@@ -149,13 +146,12 @@ export class CodexSessionService {
 
     try {
       const codexConfigPath = await resolveCodexConfigPath(this.logs, { target: runTarget });
-      const env: NodeJS.ProcessEnv = {
-        ...process.env,
-        ...(codexConfigPath && !useWsl ? { CODEX_CONFIG: codexConfigPath } : {})
-      };
-      if (useWsl) {
-        env.PATH = sanitizeWindowsPath(env.PATH);
-      }
+      const env: NodeJS.ProcessEnv = useWsl
+        ? buildWslHostEnv(process.env)
+        : {
+            ...process.env,
+            ...(codexConfigPath && !useWsl ? { CODEX_CONFIG: codexConfigPath } : {})
+          };
 
       const instructionsPathWin = await ensureInstructionsFile(cwd, this.logs);
       const instructionsPath = useWsl ? toWslPath(instructionsPathWin) : instructionsPathWin;
