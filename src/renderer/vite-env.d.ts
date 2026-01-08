@@ -6,6 +6,7 @@ import type {
   CodexModelsInfo,
   CodexRunRequest,
   CodexRunStatus,
+  CodexReviewRequest,
   FileChangePayload,
   LogsAppendPayload,
   OpenFile,
@@ -41,6 +42,7 @@ declare global {
       onWorkspaceDirUpdate: (handler: (payload: WorkspaceDirUpdate) => void) => () => void;
       onFileChanged: (handler: (payload: FileChangePayload) => void) => () => void;
       runCodex: (request: CodexRunRequest) => Promise<CodexRunStatus>;
+      codexReviewRun: (request: CodexReviewRequest) => Promise<CodexRunStatus>;
       codexSessionSend: (request: CodexRunRequest) => Promise<CodexRunStatus>;
       codexSessionStop: () => void;
       codexModelsGet: () => Promise<CodexModelsInfo>;

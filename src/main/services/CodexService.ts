@@ -3,7 +3,14 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
 import type { BrowserWindow } from "electron";
-import type { CodexEvent, CodexRunRequest, CodexRunStatus, ReviewChangePayload, Settings } from "../../shared/ipc";
+import type {
+  CodexEvent,
+  CodexReviewRequest,
+  CodexRunRequest,
+  CodexRunStatus,
+  ReviewChangePayload,
+  Settings
+} from "../../shared/ipc";
 import { LogsService } from "./LogsService";
 import { WorkspaceService } from "./WorkspaceService";
 import { BuildService } from "./BuildService";
@@ -150,6 +157,85 @@ export class CodexService {
 
     child.stdin.write(prompt);
     child.stdin.end();
+
+    return this.status;
+  }
+
+  async review(request: CodexReviewRequest, settings: Settings): Promise<CodexRunStatus> {
+    if (this.currentProcess) return this.status;
+
+    await fs.mkdir(CODEX_LOG_DIR, { recursive: true });
+    const runId = randomUUID();
+    const logPath = path.join(CODEX_LOG_DIR, `codex-review-${Date.now()}-${runId}.log`);
+
+    const runTarget = settings.codexRunTarget ?? "windows";
+    const useWsl = runTarget === "wsl" && process.platform === "win32";
+    const codexPath = useWsl ? settings.codexPathWsl || "codex" : settings.codexPath || "codex";
+
+    const args: string[] = ["review"];
+    if (request.preset === "uncommitted") {
+      args.push("--uncommitted");
+    } else if (request.preset === "base") {
+      if (request.baseBranch) args.push("--base", request.baseBranch);
+    } else if (request.preset === "commit") {
+      if (request.commitSha) args.push("--commit", request.commitSha);
+    }
+    if (request.instructions) {
+      args.push(request.instructions);
+    }
+
+    const command = useWsl ? "wsl.exe" : codexPath;
+    const commandArgs = useWsl ? ["--", codexPath, ...args] : args;
+    this.logs.append("system", `Codex review: ${command} ${commandArgs.join(" ")}`);
+    const codexConfigPath = await resolveCodexConfigPath(this.logs, { target: runTarget });
+    const child = spawn(command, commandArgs, {
+      cwd: this.workspace.getRoot() ?? process.cwd(),
+      env: {
+        ...process.env,
+        ...(codexConfigPath ? { CODEX_CONFIG: codexConfigPath } : {})
+      }
+    });
+
+    this.currentProcess = child;
+    this.status = { running: true, startedAt: Date.now() };
+    this.window.webContents.send("codex:run:start", this.status);
+    this.window.webContents.send("codex:run:event", {
+      type: "status",
+      data: "Codex review started",
+      timestamp: Date.now()
+    } satisfies CodexEvent);
+
+    const logHandle = await fs.open(logPath, "w");
+
+    const handleOutput = (type: "stdout" | "stderr") => (chunk: Buffer) => {
+      const text = chunk.toString();
+      text.split(/\r?\n/).forEach((line) => line && this.logs.append("codex", line));
+      this.window.webContents.send("codex:run:event", {
+        type,
+        data: text,
+        timestamp: Date.now()
+      } satisfies CodexEvent);
+      logHandle.write(text);
+    };
+
+    child.stdout.on("data", handleOutput("stdout"));
+    child.stderr.on("data", handleOutput("stderr"));
+
+    child.on("error", (error) => {
+      this.logs.append("codex", `Codex review spawn failed: ${error.message}`);
+    });
+
+    child.on("close", async (exitCode) => {
+      await logHandle.close();
+      this.status = {
+        running: false,
+        startedAt: this.status.startedAt,
+        endedAt: Date.now(),
+        exitCode: exitCode ?? undefined
+      };
+      this.currentProcess = null;
+      this.window.webContents.send("codex:run:done", this.status);
+    });
 
     return this.status;
   }

@@ -6,6 +6,7 @@ import type {
   CodexModelsInfo,
   CodexRunRequest,
   CodexRunStatus,
+  CodexReviewRequest,
   FileChangePayload,
   LogsAppendPayload,
   OpenFile,
@@ -53,6 +54,8 @@ contextBridge.exposeInMainWorld("api", {
   onFileChanged: (handler: (payload: FileChangePayload) => void) => on("file:changed", handler),
   runCodex: (request: CodexRunRequest): Promise<CodexRunStatus> =>
     ipcRenderer.invoke("codex:run:start", request),
+  codexReviewRun: (request: CodexReviewRequest): Promise<CodexRunStatus> =>
+    ipcRenderer.invoke("codex:review:run", request),
   codexSessionSend: (request: CodexRunRequest): Promise<CodexRunStatus> =>
     ipcRenderer.invoke("codex:session:send", request),
   codexSessionStop: (): void => ipcRenderer.send("codex:session:stop"),

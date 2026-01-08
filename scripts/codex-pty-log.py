@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 import os
 import pty
-import select
 import shlex
 import sys
 import time
@@ -31,26 +30,20 @@ def main() -> int:
     log_file = open(log_path, "a", buffering=1, encoding="utf-8", errors="replace")
     write_log(log_file, "SYS", f"START cmd={cmd} cwd={os.getcwd()}\n")
 
-    pid, fd = pty.fork()
-    if pid == 0:
-        os.execvp(argv[0], argv)
+    def read_master(fd):
+        data = os.read(fd, 1024)
+        if data:
+            write_log(log_file, "OUT", data.decode("utf-8", errors="replace"))
+        return data
+
+    def read_stdin(fd):
+        data = os.read(fd, 1024)
+        if data:
+            write_log(log_file, "IN", data.decode("utf-8", errors="replace"))
+        return data
 
     try:
-        while True:
-            rlist, _, _ = select.select([sys.stdin, fd], [], [])
-            for r in rlist:
-                if r == sys.stdin:
-                    data = os.read(sys.stdin.fileno(), 1024)
-                    if not data:
-                        return 0
-                    os.write(fd, data)
-                    write_log(log_file, "IN", data.decode("utf-8", errors="replace"))
-                else:
-                    data = os.read(fd, 1024)
-                    if not data:
-                        return 0
-                    os.write(sys.stdout.fileno(), data)
-                    write_log(log_file, "OUT", data.decode("utf-8", errors="replace"))
+        return pty.spawn(argv, master_read=read_master, stdin_read=read_stdin)
     finally:
         write_log(log_file, "SYS", "END\n")
         log_file.close()

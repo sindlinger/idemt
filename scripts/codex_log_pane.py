@@ -6,6 +6,8 @@ import subprocess
 import sys
 import time
 
+ANSI_RE = re.compile(r"\x1b\\[[0-9;?]*[ -/]*[@-~]")
+
 
 def tmux_capture(pane: str) -> str:
     result = subprocess.run(
@@ -19,36 +21,73 @@ def tmux_capture(pane: str) -> str:
 
 
 def follow_file(path: str):
+    pos = 0
+    buffer = ""
     while True:
         try:
             with open(path, "r", encoding="utf-8", errors="replace") as f:
+                f.seek(pos)
                 while True:
-                    line = f.readline()
-                    if line:
-                        yield line
+                    data = f.read(1024)
+                    if data:
+                        pos = f.tell()
+                        buffer += data
+                        line_buf = ""
+                        i = 0
+                        while i < len(buffer):
+                            ch = buffer[i]
+                            if ch == "\r":
+                                line_buf = ""
+                            elif ch == "\n":
+                                yield line_buf + "\n"
+                                line_buf = ""
+                            else:
+                                line_buf += ch
+                            i += 1
+                        buffer = line_buf
                     else:
                         time.sleep(0.1)
+                        try:
+                            if os.path.getsize(path) < pos:
+                                pos = 0
+                                buffer = ""
+                                break
+                        except FileNotFoundError:
+                            pos = 0
+                            buffer = ""
+                            break
         except FileNotFoundError:
             time.sleep(0.2)
 
 
+def is_prompt(line: str) -> bool:
+    return bool(re.match(r"^\s*(?:[A-Za-z0-9_.-]+@[^:]+:.*\\$\\s|PS\\s+.+>\\s)", line))
+
+
+def sanitize(line: str) -> str:
+    return ANSI_RE.sub("", line)
+
+
 def colorize(line: str) -> str:
-    if "] SYS " in line:
-        return f"\x1b[38;5;244m{line}\x1b[0m"
-    if "] IN " in line:
-        return f"\x1b[38;5;75m{line}\x1b[0m"
-    if "] OUT " in line:
-        return f"\x1b[38;5;214m{line}\x1b[0m"
     if re.search(r"ERROR|Error|error", line):
         return f"\x1b[38;5;196m{line}\x1b[0m"
+    if is_prompt(line):
+        return f"\x1b[38;5;81m{line}\x1b[0m"
+    if re.search(r"codex", line, re.IGNORECASE):
+        return f"\x1b[38;5;120m{line}\x1b[0m"
     return line
 
 
 def run_tail(path: str, deep: bool) -> int:
-    for line in follow_file(path):
-        sys.stdout.write(colorize(line) if deep else line)
-        sys.stdout.flush()
-    return 0
+    while True:
+        try:
+            for line in follow_file(path):
+                line = sanitize(line)
+                sys.stdout.write(colorize(line) if deep else line)
+                sys.stdout.flush()
+        except Exception:
+            time.sleep(0.2)
+            continue
 
 
 def run_mirror(

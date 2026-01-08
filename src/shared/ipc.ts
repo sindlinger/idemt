@@ -37,6 +37,13 @@ export type CodexRunRequest = {
   sessionActive?: boolean;
 };
 
+export type CodexReviewRequest = {
+  preset: "base" | "uncommitted" | "commit" | "custom";
+  baseBranch?: string;
+  commitSha?: string;
+  instructions?: string;
+};
+
 export type CodexModelsInfo = {
   models: string[];
   defaultModel?: string;
@@ -144,6 +151,7 @@ export const IPC_CHANNELS = {
   fileSave: "file:save",
   fileChanged: "file:changed",
   codexRunStart: "codex:run:start",
+  codexReviewRun: "codex:review:run",
   codexSessionSend: "codex:session:send",
   codexSessionStop: "codex:session:stop",
   codexRunEvent: "codex:run:event",

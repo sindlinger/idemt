@@ -23,8 +23,11 @@ type SessionState = {
   runTarget: "windows" | "wsl";
   codexPath: string;
   running: boolean;
+  ready: boolean;
+  queue: string[];
   lastOutputAt: number;
   idleTimer?: NodeJS.Timeout;
+  readyTimer?: NodeJS.Timeout;
   snapshots?: Map<string, string>;
   runId?: string;
   status: CodexRunStatus;
@@ -32,6 +35,7 @@ type SessionState = {
 };
 
 const IDLE_MS = 900;
+const READY_FALLBACK_MS = 800;
 
 export class CodexSessionService {
   private window: BrowserWindow;
@@ -73,11 +77,11 @@ export class CodexSessionService {
     session.running = true;
     session.status = { running: true, startedAt: Date.now() };
     this.window.webContents.send("codex:run:start", session.status);
-    this.window.webContents.send("codex:run:event", {
-      type: "status",
-      data: "Codex session message sent",
-      timestamp: Date.now()
-    } satisfies CodexEvent);
+
+    if (!session.ready) {
+      session.queue.push(prompt);
+      return session.status;
+    }
 
     session.pty.write(`${prompt}\r`);
     return session.status;
@@ -85,6 +89,8 @@ export class CodexSessionService {
 
   stopSession() {
     if (this.session) {
+      if (this.session.idleTimer) clearTimeout(this.session.idleTimer);
+      if (this.session.readyTimer) clearTimeout(this.session.readyTimer);
       this.session.pty.kill();
       this.session = null;
     }
@@ -134,6 +140,8 @@ export class CodexSessionService {
         runTarget,
         codexPath,
         running: false,
+        ready: false,
+        queue: [],
         lastOutputAt: Date.now(),
         status: { running: false, startedAt: 0 }
       };
@@ -144,6 +152,9 @@ export class CodexSessionService {
         }
       });
       this.session = session;
+      session.readyTimer = setTimeout(() => {
+        this.markReady(session);
+      }, READY_FALLBACK_MS);
       return session;
     } catch (error) {
       this.logs.append("codex", `Codex session start failed: ${String(error)}`);
@@ -153,6 +164,9 @@ export class CodexSessionService {
 
   private handleOutput(session: SessionState, data: string) {
     session.lastOutputAt = Date.now();
+    if (!session.ready) {
+      this.markReady(session);
+    }
     this.window.webContents.send("codex:run:event", {
       type: "stdout",
       data,
@@ -164,6 +178,23 @@ export class CodexSessionService {
       session.idleTimer = setTimeout(() => {
         void this.finishRun(session);
       }, IDLE_MS);
+    }
+  }
+
+  private markReady(session: SessionState) {
+    if (session.ready) return;
+    session.ready = true;
+    if (session.readyTimer) {
+      clearTimeout(session.readyTimer);
+      session.readyTimer = undefined;
+    }
+    if (session.queue.length && session.running) {
+      const next = session.queue.shift();
+      if (next) {
+        session.pty.write(`${next}\r`);
+      }
+    } else {
+      session.queue = [];
     }
   }
 

@@ -1,6 +1,13 @@
 import { app, dialog, ipcMain } from "electron";
 import type { BrowserWindow } from "electron";
-import type { BuildRequest, CodexRunRequest, FileFilters, Settings, TestRequest } from "../shared/ipc";
+import type {
+  BuildRequest,
+  CodexReviewRequest,
+  CodexRunRequest,
+  FileFilters,
+  Settings,
+  TestRequest
+} from "../shared/ipc";
 import { BuildService } from "./services/BuildService";
 import { CodexService } from "./services/CodexService";
 import { CodexSessionService } from "./services/CodexSessionService";
@@ -156,6 +163,11 @@ export const registerIpc = async (window: BrowserWindow, settingsService: Settin
   ipcMain.handle("codex:run:start", async (_event, request: CodexRunRequest) => {
     logLine("ipc", "codex:run:start");
     return codexService.run(request, settingsService.get());
+  });
+
+  ipcMain.handle("codex:review:run", async (_event, request: CodexReviewRequest) => {
+    logLine("ipc", "codex:review:run");
+    return codexService.review(request, settingsService.get());
   });
 
   ipcMain.handle("codex:session:send", async (_event, request: CodexRunRequest) => {

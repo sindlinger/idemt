@@ -10,6 +10,7 @@ let mainWindow: BrowserWindow | null = null;
 let isQuitting = false;
 let saveBoundsTimer: NodeJS.Timeout | null = null;
 let devReloadTimer: NodeJS.Timeout | null = null;
+const resetBounds = process.env.MT5IDE_RESET_BOUNDS === "1";
 
 const settingsService = new SettingsService();
 let settingsReady = false;
@@ -84,6 +85,17 @@ const resolveWindowBounds = (saved?: WindowBounds) => {
   return { x: safeX, y: safeY, width: safeWidth, height: safeHeight };
 };
 
+const isBoundsVisible = (bounds: { x: number; y: number; width: number; height: number }) => {
+  return screen.getAllDisplays().some((display) => {
+    const area = display.workArea;
+    const right = bounds.x + bounds.width;
+    const bottom = bounds.y + bounds.height;
+    const areaRight = area.x + area.width;
+    const areaBottom = area.y + area.height;
+    return bounds.x < areaRight && right > area.x && bounds.y < areaBottom && bottom > area.y;
+  });
+};
+
 const scheduleWindowBoundsSave = () => {
   if (!mainWindow || !settingsReady) return;
   if (saveBoundsTimer) clearTimeout(saveBoundsTimer);
@@ -99,7 +111,10 @@ const scheduleWindowBoundsSave = () => {
 const createWindow = async () => {
   logLine("main", "createWindow start");
   await ensureSettingsLoaded();
-  const savedBounds = resolveWindowBounds(settingsService.get().windowBounds);
+  if (resetBounds) {
+    await settingsService.set({ windowBounds: undefined });
+  }
+  const savedBounds = resetBounds ? null : resolveWindowBounds(settingsService.get().windowBounds);
   const isLinux = process.platform === "linux";
   const useTransparentWindow = isLinux && !useNativeFrame;
   const titleBarOverlayConfig =
@@ -168,6 +183,14 @@ const createWindow = async () => {
   mainWindow.on("close", scheduleWindowBoundsSave);
   mainWindow.on("maximize", scheduleWindowBoundsSave);
   mainWindow.on("unmaximize", scheduleWindowBoundsSave);
+  mainWindow.on("ready-to-show", () => {
+    if (!mainWindow) return;
+    if (!isBoundsVisible(mainWindow.getBounds())) {
+      mainWindow.center();
+    }
+    mainWindow.show();
+    mainWindow.focus();
+  });
 
   mainWindow.webContents.on("did-fail-load", (_event, code, desc, validatedURL) => {
     logLine("main", `did-fail-load code=${code} desc=${desc} url=${validatedURL}`);
@@ -255,6 +278,13 @@ app.whenReady().then(async () => {
   logLine("main", "app ready");
   await ensureSettingsLoaded();
   void createWindow();
+});
+
+process.on("uncaughtException", (error) => {
+  logLine("main", `uncaughtException ${String(error)}`);
+});
+process.on("unhandledRejection", (reason) => {
+  logLine("main", `unhandledRejection ${String(reason)}`);
 });
 
 app.on("before-quit", () => {

@@ -81,10 +81,15 @@ def ensure_session(
         run_tmux(["attach", "-t", session])
         return
 
-    if log_mode == "deep":
-        codex_run = f"CODEX_LOG_PATH={shlex.quote(log_path)} CODEX_CMD={shlex.quote(codex_cmd)} python3 {shlex.quote(os.path.join(script_dir, 'codex-pty-log.py'))}"
-    else:
-        codex_run = f"script -q -f -a {shlex.quote(log_path)} -c {shlex.quote(codex_cmd)}"
+    inner = f"script -q -f -a {shlex.quote(log_path)} -c {shlex.quote(codex_cmd)}"
+    codex_run = f"bash -lc {shlex.quote(inner)}"
+
+    os.makedirs(os.path.dirname(log_path), exist_ok=True)
+    try:
+        with open(log_path, "a", encoding="utf-8") as log_file:
+            log_file.write(f"[SYS] start session={session} cmd={codex_cmd}\n")
+    except OSError:
+        pass
 
     run_tmux(["new-session", "-d", "-s", session, "-n", "main", "bash"])
     base_index = tmux_get("base-index", "0")
@@ -112,11 +117,14 @@ def ensure_session(
 
     popup_cmd = f"python3 {shlex.quote(os.path.join(script_dir, 'codex_tmux.py'))} --popup"
     run_tmux(["bind-key", "-T", "prefix", "L", "run-shell", popup_cmd])
+    run_tmux(["bind-key", "-n", "F9", "run-shell", popup_cmd])
     tmux_set("@codex_popup_cmd", popup_cmd)
 
     if not no_popup:
         hook_cmd = f"run-shell {shlex.quote(popup_cmd)}"
         run_tmux(["set-hook", "-g", "client-attached", hook_cmd])
+    else:
+        run_tmux(["set-hook", "-g", "-u", "client-attached"])
 
     run_tmux(["attach", "-t", session])
 
@@ -153,18 +161,8 @@ def open_popup(script_dir):
         mirror_x + mirror_w,
         mirror_interval,
     )
-
-    run_tmux(
-        [
-            "display-popup",
-            "-E",
-            "-w",
-            str(log_w),
-            "-h",
-            str(log_h),
-            log_cmd,
-        ]
-    )
+    loop_cmd = f"bash -lc {shlex.quote(f'while true; do {log_cmd}; sleep 0.2; done')}"
+    run_tmux(["display-popup", "-w", str(log_w), "-h", str(log_h), loop_cmd])
     return 0
 
 

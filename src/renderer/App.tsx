@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type {
   CodexModelsInfo,
+  CodexReviewRequest,
   CodexRunStatus,
   Diagnostic,
   FileChangePayload,
@@ -231,13 +232,13 @@ const App = () => {
     setDiagnostics,
     addOutputLog,
     addCodexEvent,
+    setCodexEvents,
     addCodexMessage,
     setCodexMessages,
     setCodexHistory,
     addCodexHistoryItem,
     setCodexStatus,
     setCodexSessionActive,
-    clearCodexSession,
     addReviewChange,
     removeReviewChange,
     setTestStatus,
@@ -429,17 +430,14 @@ const App = () => {
       if (!raw) return;
       const parsed = JSON.parse(raw) as {
         messages?: typeof codexMessages;
-        sessionActive?: boolean;
       };
       if (parsed.messages && Array.isArray(parsed.messages)) {
         setCodexMessages(parsed.messages, workspaceId);
       }
-      if (typeof parsed.sessionActive === "boolean") {
-        setCodexSessionActive(parsed.sessionActive, workspaceId);
-      }
     } catch {
       return;
     }
+    setCodexSessionActive(true, workspaceId);
   }, [activeWorkspaceId, setCodexMessages, setCodexSessionActive]);
 
   useEffect(() => {
@@ -455,12 +453,19 @@ const App = () => {
     try {
       window.localStorage.setItem(
         getCodexStorageKey(workspaceId),
-        JSON.stringify({ messages: codexMessages, sessionActive: codexSessionActive })
+        JSON.stringify({ messages: codexMessages })
       );
     } catch {
       return;
     }
-  }, [activeWorkspaceId, codexMessages, codexSessionActive]);
+  }, [activeWorkspaceId, codexMessages]);
+
+  useEffect(() => {
+    const workspaceId = activeWorkspaceId ?? LOCAL_WORKSPACE_ID;
+    if (!codexSessionActive) {
+      setCodexSessionActive(true, workspaceId);
+    }
+  }, [activeWorkspaceId, codexSessionActive, setCodexSessionActive]);
 
   useEffect(() => {
     const workspaceId = activeWorkspaceId ?? LOCAL_WORKSPACE_ID;
@@ -978,12 +983,12 @@ const App = () => {
     addCodexMessage({ role: "user", text: message, timestamp: Date.now() }, workspaceId);
     codexWorkspaceRef.current = workspaceId;
     codexRunStartIndexRef.current[workspaceId] = codexEvents.length;
-    if (codexSessionActive && typeof api.codexSessionSend === "function") {
+    if (typeof api.codexSessionSend === "function") {
       const status = await api.codexSessionSend({
         userMessage: message,
         activeFilePath,
         selection,
-        contextBundle: buildCodexContextBundle(codexMessages),
+        contextBundle: undefined,
         model: options?.model,
         level: options?.level,
         sessionActive: true
@@ -996,12 +1001,45 @@ const App = () => {
       userMessage: message,
       activeFilePath,
       selection,
-      contextBundle: codexSessionActive ? buildCodexContextBundle(codexMessages) : undefined,
+      contextBundle: undefined,
       model: options?.model,
       level: options?.level,
-      sessionActive: codexSessionActive
+      sessionActive: true
     });
     setCodexStatus(status, workspaceId);
+  };
+
+  const handleCodexReview = async (request: CodexReviewRequest) => {
+    const workspaceId = activeWorkspaceId ?? LOCAL_WORKSPACE_ID;
+    const labelMap: Record<CodexReviewRequest["preset"], string> = {
+      base: "Review against base branch",
+      uncommitted: "Review uncommitted changes",
+      commit: "Review a commit",
+      custom: "Custom review"
+    };
+    const parts = [labelMap[request.preset]];
+    if (request.baseBranch) parts.push(`base=${request.baseBranch}`);
+    if (request.commitSha) parts.push(`commit=${request.commitSha}`);
+    if (request.instructions) parts.push("instructions");
+    codexRunMessageIndexRef.current[workspaceId] = codexMessages.length;
+    addCodexMessage({ role: "user", text: parts.join(" · "), timestamp: Date.now() }, workspaceId);
+    codexWorkspaceRef.current = workspaceId;
+    codexRunStartIndexRef.current[workspaceId] = codexEvents.length;
+    if (typeof api.codexReviewRun !== "function") return;
+    const status = await api.codexReviewRun(request);
+    setCodexStatus(status, workspaceId);
+  };
+
+  const handleCodexNewSession = () => {
+    const workspaceId = activeWorkspaceId ?? LOCAL_WORKSPACE_ID;
+    api.codexSessionStop?.();
+    setCodexMessages([], workspaceId);
+    setCodexEvents([], workspaceId);
+    setCodexStatus({ running: false, startedAt: 0 }, workspaceId);
+    setCodexSessionActive(true, workspaceId);
+    delete codexRunStartIndexRef.current[workspaceId];
+    delete codexRunMessageIndexRef.current[workspaceId];
+    codexWorkspaceRef.current = null;
   };
 
   const resolveWorkspaceForPath = (filePath: string) => {
@@ -1222,7 +1260,6 @@ const App = () => {
             codexEvents={codexEvents}
             codexMessages={codexMessages}
             codexStatus={codexStatus}
-            sessionActive={codexSessionActive}
             reviewChanges={reviewChanges}
             runTarget={isWindows ? codexRunTarget : undefined}
             onRunTargetChange={isWindows ? handleCodexRunTargetChange : undefined}
@@ -1230,13 +1267,9 @@ const App = () => {
             defaultModel={codexModelsInfo.defaultModel}
             defaultLevel={codexModelsInfo.defaultLevel}
             onRun={handleCodexRun}
+            onReview={handleCodexReview}
             onCancel={() => api.cancelCodex?.()}
-            onToggleSession={(active) => {
-              const workspaceId = activeWorkspaceId ?? LOCAL_WORKSPACE_ID;
-              setCodexSessionActive(active, workspaceId);
-              if (!active) clearCodexSession(workspaceId);
-              if (!active) api.codexSessionStop?.();
-            }}
+            onNewSession={handleCodexNewSession}
             onAcceptChange={handleAcceptChange}
             onRevertChange={handleRevertChange}
             collapsed={layout.rightCollapsed}

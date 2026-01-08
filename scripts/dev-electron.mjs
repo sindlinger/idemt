@@ -95,6 +95,7 @@ const launchWindowsElectron = async () => {
   const electronArgs = [".", "--disable-gpu-shader-disk-cache"].join(" ");
   const cmdEnv = [
     devUrl ? `set MT5IDE_DEV_URL=${devUrl}` : null,
+    env.MT5IDE_RESET_BOUNDS ? "set MT5IDE_RESET_BOUNDS=1" : null,
     "set NODE_ENV=development",
     "set ELECTRON_DISABLE_SECURITY_WARNINGS=1"
   ]
@@ -115,6 +116,7 @@ const launchWindowsElectron = async () => {
           "-Command",
           [
             devUrl ? `$env:MT5IDE_DEV_URL='${devUrl}';` : null,
+            env.MT5IDE_RESET_BOUNDS ? "$env:MT5IDE_RESET_BOUNDS='1';" : null,
             "$env:NODE_ENV='development';",
             "$env:ELECTRON_DISABLE_SECURITY_WARNINGS='1';",
             `Set-Location -LiteralPath '${winRoot}';`,

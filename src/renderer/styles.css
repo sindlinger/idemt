@@ -1681,6 +1681,87 @@ button {
   background: rgba(255, 255, 255, 0.04);
 }
 
+.codex-review-picker {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--panel-2);
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.codex-review-title {
+  font-size: 12px;
+  color: var(--text);
+}
+
+.codex-review-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.codex-review-option {
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text);
+  border-radius: 6px;
+  padding: 6px 8px;
+  text-align: left;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.codex-review-option:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.codex-review-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.codex-review-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.codex-review-form input,
+.codex-review-form textarea {
+  border: 1px solid var(--border);
+  background: var(--panel);
+  color: var(--text);
+  border-radius: 6px;
+  padding: 6px 8px;
+  font-size: 11px;
+  resize: vertical;
+}
+
+.codex-review-picker-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.codex-review-picker-action {
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text);
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.codex-review-picker-action.ghost {
+  background: transparent;
+  color: var(--muted);
+}
+
 .codex-chat {
   flex: 1;
   min-height: 120px;
@@ -1696,6 +1777,24 @@ button {
   letter-spacing: normal;
   word-spacing: normal;
   text-transform: none;
+}
+
+.codex-terminal {
+  flex: 1;
+  min-height: 120px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: #141a28;
+  overflow: hidden;
+}
+
+.codex-terminal .xterm-viewport {
+  scrollbar-width: none;
+}
+
+.codex-terminal .xterm-viewport::-webkit-scrollbar {
+  width: 0;
+  height: 0;
 }
 
 .codex-chat,
