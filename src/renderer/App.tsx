@@ -1016,7 +1016,7 @@ const App = () => {
       contextBundle: undefined,
       model: options?.model,
       level: options?.level,
-      sessionActive: true
+      sessionActive: false
     });
     setCodexStatus(status, workspaceId);
   };
