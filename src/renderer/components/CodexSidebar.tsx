@@ -13,7 +13,7 @@ import {
 import type { CodexEvent, CodexRunStatus } from "@shared/ipc";
 import type { CodexMessage, ReviewChange } from "@state/store";
 import AnsiToHtml from "ansi-to-html";
-import { Terminal } from "xterm";
+import { Terminal as XTerm } from "xterm";
 import { SerializeAddon } from "xterm-addon-serialize";
 import CodexTerminalView from "./CodexTerminalView";
 
@@ -217,7 +217,7 @@ const CodexSidebar = ({
   }, [codexEvents.length, codexMessages.length]);
   useEffect(() => {
     if (parserRef.current) return;
-    const term = new Terminal({
+    const term = new XTerm({
       cols: 120,
       rows: 200,
       convertEol: true,
