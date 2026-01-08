@@ -12,7 +12,55 @@ import {
 } from "lucide-react";
 import type { CodexEvent, CodexRunStatus } from "@shared/ipc";
 import type { CodexMessage, ReviewChange } from "@state/store";
+import AnsiToHtml from "ansi-to-html";
 import CodexTerminalView from "./CodexTerminalView";
+
+const stripAnsi = (text: string) => {
+  const withoutOsc = text.replace(/\x1b\][^\x07]*\x07/g, "");
+  const withoutCsi = withoutOsc.replace(/\x1b\[[0-9;?]*[A-Za-z]/g, "");
+  return withoutCsi.replace(/\x1b[@-Z\\-_]/g, "");
+};
+
+const NOISY_FRAGMENTS = [
+  "UtilTranslatePathList",
+  "Failed to translate",
+  "[wsl-interop-fix]",
+  "WSL (",
+  "WSL_DISTRO_NAME",
+  "powershell.exe disponível",
+  "Codex session message sent",
+  "Codex run started",
+  "You are running Codex in",
+  "AllowCodex",
+  "Require approval",
+  "Press enter to continue"
+];
+
+const METADATA_PREFIXES = [
+  "workdir:",
+  "model:",
+  "provider:",
+  "approval:",
+  "sandbox:",
+  "reasoning effort:",
+  "reasoning summaries:",
+  "session id:",
+  "UserMessage:",
+  "ActiveFile:",
+  "# Diagnostics",
+  "# Recent Logs",
+  "# Relevant Files",
+  "# Codex Request",
+  "--------"
+];
+
+const isNoisyLine = (line: string) => {
+  if (!line) return true;
+  if (line === "user") return true;
+  if (line.startsWith("## ")) return true;
+  if (METADATA_PREFIXES.some((prefix) => line.startsWith(prefix))) return true;
+  return NOISY_FRAGMENTS.some((frag) => line.includes(frag));
+};
 
 type CodexSidebarProps = {
   codexEvents: CodexEvent[];
@@ -78,14 +126,56 @@ const CodexSidebar = ({
         .filter(Boolean),
     [codexMessages]
   );
-  const userBubbles = useMemo(
-    () =>
-      codexMessages
-        .filter((entry) => entry.role === "user")
-        .slice(-3)
-        .map((entry) => ({ id: entry.timestamp, text: entry.text })),
-    [codexMessages]
-  );
+  const userBubbles = useMemo(() => {
+    return codexMessages
+      .filter((entry) => entry.role === "user")
+      .slice(-3)
+      .map((entry) => ({ id: entry.timestamp, text: entry.text }));
+  }, [codexMessages]);
+  const ansiToHtml = useMemo(() => {
+    return new AnsiToHtml({
+      fg: "#d7dce6",
+      bg: "transparent",
+      newline: false,
+      escapeXML: true
+    });
+  }, []);
+  const graphicLines = useMemo(() => {
+    const lines: string[] = [""];
+    const appendLine = (chunk: string) => {
+      let buffer = chunk;
+      buffer = buffer.replace(/\uFFFD/g, "");
+      buffer = buffer.replace(/\x1b\[[0-9;]*K/g, "");
+      for (let i = 0; i < buffer.length; i += 1) {
+        const char = buffer[i];
+        if (char === "\r") {
+          lines[lines.length - 1] = "";
+          continue;
+        }
+        if (char === "\n") {
+          lines.push("");
+          continue;
+        }
+        lines[lines.length - 1] += char;
+      }
+    };
+    for (const entry of codexEvents) {
+      if (entry.type !== "stdout" && entry.type !== "stderr") continue;
+      if (!entry.data) continue;
+      appendLine(entry.data);
+    }
+    const filtered: string[] = [];
+    for (const line of lines) {
+      const plain = stripAnsi(line).replace(/\r/g, "").trim();
+      if (!plain) continue;
+      if (isNoisyLine(plain)) continue;
+      if (recentUserMessages.includes(plain) || recentUserMessages.includes(plain.replace(/^>\s*/, ""))) {
+        continue;
+      }
+      filtered.push(line);
+    }
+    return filtered.map((line) => ansiToHtml.toHtml(line));
+  }, [ansiToHtml, codexEvents, recentUserMessages]);
 
   const changes = Object.values(reviewChanges);
   const modelOptions = useMemo(() => models.filter(Boolean), [models]);
@@ -314,24 +404,34 @@ const CodexSidebar = ({
             )}
           </div>
         ) : null}
-        <div className="codex-chat codex-chat-terminal" ref={chatRef}>
+        {showTerminal ? (
           <CodexTerminalView
             events={codexEvents}
             running={codexStatus.running}
-            mode={showTerminal ? "raw" : "clean"}
-            className="codex-terminal codex-terminal-embedded"
-            filterUserMessages={recentUserMessages}
+            mode="raw"
           />
-          {userBubbles.length ? (
-            <div className="codex-bubbles">
-              {userBubbles.map((entry) => (
-                <div key={entry.id} className="codex-message user">
-                  <div className="codex-text">{entry.text}</div>
-                </div>
+        ) : (
+          <div className="codex-chat" ref={chatRef}>
+            <div className="codex-output">
+              {graphicLines.map((line, idx) => (
+                <div
+                  key={`codex-line-${idx}`}
+                  className="codex-log-line codex"
+                  dangerouslySetInnerHTML={{ __html: line }}
+                />
               ))}
             </div>
-          ) : null}
-        </div>
+            {userBubbles.length ? (
+              <div className="codex-bubbles">
+                {userBubbles.map((entry) => (
+                  <div key={entry.id} className="codex-message user">
+                    <div className="codex-text">{entry.text}</div>
+                  </div>
+                ))}
+              </div>
+            ) : null}
+          </div>
+        )}
         {changes.length > 0 ? (
           <div className="codex-panels">
             <div className="codex-panel codex-review">

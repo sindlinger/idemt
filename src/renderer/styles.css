@@ -1830,25 +1830,17 @@ button {
   letter-spacing: normal;
   word-spacing: normal;
   text-transform: none;
-}
-
-.codex-chat-terminal {
   position: relative;
-  padding: 0;
-  overflow: hidden;
-  gap: 0;
 }
 
-.codex-terminal-embedded {
-  flex: 1;
-  min-height: 120px;
-  border: none;
-  border-radius: var(--radius-md);
-  background: transparent;
-}
-
-.codex-terminal-embedded .xterm {
-  padding: 10px;
+.codex-output {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-family: var(--mono);
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--text);
 }
 
 .codex-bubbles {
