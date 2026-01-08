@@ -131,6 +131,25 @@ const CodexSidebar = ({
   const [reviewCommit, setReviewCommit] = useState("");
   const [reviewInstructions, setReviewInstructions] = useState("");
   const chatRef = useRef<HTMLDivElement | null>(null);
+  const statusLine = useMemo(() => {
+    const matcher = (line: string) => {
+      const t = line.trim();
+      if (!t) return false;
+      if (/^[•*·]\s+/.test(t)) return true;
+      if (/(esc to interrupt|esc to stop)/i.test(t)) return true;
+      if (/^(Starting|Navigating|Adding)\b/i.test(t)) return true;
+      return false;
+    };
+    for (let i = codexEvents.length - 1; i >= 0; i -= 1) {
+      const data = codexEvents[i]?.data ?? "";
+      const lines = data.split(/\r?\n/).filter(Boolean);
+      for (let j = lines.length - 1; j >= 0; j -= 1) {
+        const line = lines[j];
+        if (matcher(line)) return line.trim();
+      }
+    }
+    return "";
+  }, [codexEvents]);
   const recentUserMessages = useMemo(() => {
     return new Set(
       codexMessages
@@ -390,6 +409,12 @@ const CodexSidebar = ({
                 </div>
               </div>
             )}
+          </div>
+        ) : null}
+        {statusLine ? (
+          <div className={`codex-status-line ${codexStatus.running ? "running" : ""}`}>
+            <span className="codex-status-dotline" />
+            <span className="codex-status-textline">{statusLine}</span>
           </div>
         ) : null}
         {showTerminal ? (

@@ -1624,6 +1624,57 @@ button {
   gap: 6px;
 }
 
+.codex-status-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--panel-2);
+  font-size: 11px;
+  color: var(--muted);
+  overflow: hidden;
+}
+
+.codex-status-dotline {
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--muted);
+  flex: 0 0 auto;
+}
+
+.codex-status-textline {
+  position: relative;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--text);
+}
+
+.codex-status-line.running .codex-status-textline {
+  background-image: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.35) 0%,
+    rgba(255, 255, 255, 0.9) 45%,
+    rgba(255, 255, 255, 0.35) 90%
+  );
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  color: transparent;
+  animation: codex-shimmer 2.4s ease-in-out infinite;
+}
+
+@keyframes codex-shimmer {
+  0% {
+    background-position: 0% 0%;
+  }
+  100% {
+    background-position: 200% 0%;
+  }
+}
+
 .codex-target-toggle {
   display: inline-flex;
   gap: 4px;
