@@ -45,6 +45,9 @@ const stripCodexMetadata = (text: string) => {
       "Codex run started"
     ];
     if (noisy.some((frag) => t.includes(frag))) return false;
+    if (/^\[?[0-9;?<>]*[A-Za-z]$/.test(t)) return false;
+    if (/^\[?[0-9;?<>]*u$/.test(t)) return false;
+    if (/^\[?[0-9;?<>]*$/.test(t) && t.length <= 6) return false;
     const prefixes = [
       "workdir:",
       "model:",
@@ -124,6 +127,15 @@ const CodexSidebar = ({
   const [reviewCommit, setReviewCommit] = useState("");
   const [reviewInstructions, setReviewInstructions] = useState("");
   const chatRef = useRef<HTMLDivElement | null>(null);
+  const recentUserMessages = useMemo(() => {
+    return new Set(
+      codexMessages
+        .filter((entry) => entry.role === "user")
+        .slice(-6)
+        .map((entry) => entry.text.trim())
+        .filter(Boolean)
+    );
+  }, [codexMessages]);
   const streamItems = useMemo(() => {
     const messageItems = codexMessages.map((entry) => {
       if (entry.role === "user") {
@@ -394,7 +406,10 @@ const CodexSidebar = ({
               }
               const cleaned = stripCodexMetadata(sanitizeCodexOutput(entry.text));
               if (!cleaned) return null;
-              const lines = cleaned.split(/\r?\n/).filter((line) => line.length > 0);
+              const lines = cleaned
+                .split(/\r?\n/)
+                .filter((line) => line.length > 0)
+                .filter((line) => !recentUserMessages.has(line.trim()));
               if (lines.length === 0) return null;
               return lines.map((line, idx) => (
                 <div

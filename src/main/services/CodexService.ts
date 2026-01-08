@@ -17,6 +17,11 @@ import { BuildService } from "./BuildService";
 import { buildContext } from "./ContextBuilder";
 import type { ReviewStoreService } from "./ReviewStoreService";
 import { resolveCodexConfigPath } from "./CodexConfigService";
+import {
+  buildCodexAgentArgs,
+  ensureInstructionsFile,
+  toWslPath
+} from "./CodexInstructionsService";
 
 const CODEX_LOG_DIR = path.join(process.cwd(), "logs", "codex");
 const parseArgs = (value?: string): string[] => {
@@ -60,6 +65,10 @@ export class CodexService {
     const runTarget = settings.codexRunTarget ?? "windows";
     const useWsl = runTarget === "wsl" && process.platform === "win32";
     const pathMapper = useWsl ? toWslPath : undefined;
+    const workspaceRoot = this.workspace.getRoot() ?? process.cwd();
+    const instructionsPathWin = await ensureInstructionsFile(workspaceRoot, this.logs);
+    const instructionsPath = useWsl ? toWslPath(instructionsPathWin) : instructionsPathWin;
+    const agentArgs = buildCodexAgentArgs(instructionsPath);
 
     const promptBase = await buildContext({
       requestMessage: request.userMessage,
@@ -90,7 +99,7 @@ export class CodexService {
         "Resume mode ignores model/level/extra args (Codex CLI resume does not accept those flags)."
       );
     }
-    const args = useResume
+    const execArgs = useResume
       ? ["exec", "resume", "--last", "-"]
       : [
           "exec",
@@ -100,12 +109,13 @@ export class CodexService {
           ...extraArgs,
           "-"
         ];
+    const args = [...agentArgs, ...execArgs];
     const command = useWsl ? "wsl.exe" : codexPath;
     const commandArgs = useWsl ? ["--", codexPath, ...args] : args;
     this.logs.append("system", `Codex exec: ${command} ${commandArgs.join(" ")}`);
     const codexConfigPath = await resolveCodexConfigPath(this.logs, { target: runTarget });
     const child = spawn(command, commandArgs, {
-      cwd: this.workspace.getRoot() ?? process.cwd(),
+      cwd: workspaceRoot,
       env: {
         ...process.env,
         ...(codexConfigPath ? { CODEX_CONFIG: codexConfigPath } : {})
@@ -170,9 +180,13 @@ export class CodexService {
 
     const runTarget = settings.codexRunTarget ?? "windows";
     const useWsl = runTarget === "wsl" && process.platform === "win32";
+    const workspaceRoot = this.workspace.getRoot() ?? process.cwd();
+    const instructionsPathWin = await ensureInstructionsFile(workspaceRoot, this.logs);
+    const instructionsPath = useWsl ? toWslPath(instructionsPathWin) : instructionsPathWin;
+    const agentArgs = buildCodexAgentArgs(instructionsPath);
     const codexPath = useWsl ? settings.codexPathWsl || "codex" : settings.codexPath || "codex";
 
-    const args: string[] = ["review"];
+    const args: string[] = [...agentArgs, "review"];
     if (request.preset === "uncommitted") {
       args.push("--uncommitted");
     } else if (request.preset === "base") {
@@ -189,7 +203,7 @@ export class CodexService {
     this.logs.append("system", `Codex review: ${command} ${commandArgs.join(" ")}`);
     const codexConfigPath = await resolveCodexConfigPath(this.logs, { target: runTarget });
     const child = spawn(command, commandArgs, {
-      cwd: this.workspace.getRoot() ?? process.cwd(),
+      cwd: workspaceRoot,
       env: {
         ...process.env,
         ...(codexConfigPath ? { CODEX_CONFIG: codexConfigPath } : {})
@@ -283,18 +297,6 @@ export class CodexService {
     }
   }
 }
-
-const toWslPath = (value: string) => {
-  if (!value) return value;
-  if (value.startsWith("/mnt/")) return value.replace(/\\/g, "/");
-  const match = value.match(/^([A-Za-z]):[\\/](.*)$/);
-  if (match) {
-    const drive = match[1].toLowerCase();
-    const rest = match[2].replace(/\\/g, "/");
-    return `/mnt/${drive}/${rest}`;
-  }
-  return value.replace(/\\/g, "/");
-};
 
 const snapshotWorkspace = async (workspace: WorkspaceService) => {
   const files = await workspace.listWorkspaceFiles([

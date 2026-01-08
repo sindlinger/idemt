@@ -15,6 +15,11 @@ import { LogsService } from "./LogsService";
 import { WorkspaceService } from "./WorkspaceService";
 import type { ReviewStoreService } from "./ReviewStoreService";
 import { resolveCodexConfigPath } from "./CodexConfigService";
+import {
+  buildCodexAgentArgs,
+  ensureInstructionsFile,
+  toWslPath
+} from "./CodexInstructionsService";
 
 type SessionState = {
   id: string;
@@ -123,10 +128,13 @@ export class CodexSessionService {
         ...(codexConfigPath && !useWsl ? { CODEX_CONFIG: codexConfigPath } : {})
       };
 
+      const instructionsPathWin = await ensureInstructionsFile(cwd, this.logs);
+      const instructionsPath = useWsl ? toWslPath(instructionsPathWin) : instructionsPathWin;
+      const agentArgs = buildCodexAgentArgs(instructionsPath);
       const command = useWsl ? "wsl.exe" : codexPath;
       const args = useWsl
-        ? ["--", "bash", "-lc", `cd "${toWslPath(cwd)}" && ${codexPath}`]
-        : [];
+        ? ["--", codexPath, "--cd", toWslPath(cwd), ...agentArgs]
+        : [...agentArgs];
       const pty = spawn(command, args, {
         name: "xterm-color",
         cwd,

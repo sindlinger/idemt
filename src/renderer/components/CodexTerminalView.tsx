@@ -52,6 +52,21 @@ const CodexTerminalView = ({ events, messages, running }: CodexTerminalViewProps
   }, []);
 
   useEffect(() => {
+    const container = containerRef.current;
+    const terminal = terminalRef.current;
+    if (!container || !terminal) return;
+    const handleContextMenu = (event: MouseEvent) => {
+      event.preventDefault();
+      const selection = terminal.getSelection();
+      if (selection && navigator.clipboard) {
+        void navigator.clipboard.writeText(selection);
+      }
+    };
+    container.addEventListener("contextmenu", handleContextMenu);
+    return () => container.removeEventListener("contextmenu", handleContextMenu);
+  }, []);
+
+  useEffect(() => {
     const terminal = terminalRef.current;
     if (!terminal) return;
 
