@@ -526,7 +526,7 @@ const CodexSidebar = ({
               <button
                 className="codex-copy"
                 style={{
-                  left: Math.max(8, Math.min(copyAnchor.x, 280)),
+                  left: Math.max(8, Math.min(copyAnchor.x, (chatRef.current?.clientWidth ?? 0) - 60)),
                   top: Math.max(6, copyAnchor.y)
                 }}
                 onClick={() => {

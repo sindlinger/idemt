@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Terminal } from "xterm";
 import { FitAddon } from "xterm-addon-fit";
 import "xterm/css/xterm.css";
@@ -70,6 +70,12 @@ const CodexTerminalView = ({
   const fitAddonRef = useRef<FitAddon | null>(null);
   const indexRef = useRef(0);
   const bufferRef = useRef("");
+  const [copyAnchor, setCopyAnchor] = useState<{
+    text: string;
+    x: number;
+    y: number;
+  } | null>(null);
+  const lastMouseRef = useRef<{ x: number; y: number } | null>(null);
 
   useEffect(() => {
     const terminal = new Terminal({
@@ -95,6 +101,10 @@ const CodexTerminalView = ({
     const container = containerRef.current;
     const terminal = terminalRef.current;
     if (!container || !terminal) return;
+    const handleMouseUp = (event: MouseEvent) => {
+      const bounds = container.getBoundingClientRect();
+      lastMouseRef.current = { x: event.clientX - bounds.left, y: event.clientY - bounds.top };
+    };
     const handleContextMenu = (event: MouseEvent) => {
       event.preventDefault();
       const selection = terminal.getSelection();
@@ -102,8 +112,35 @@ const CodexTerminalView = ({
         void navigator.clipboard.writeText(selection);
       }
     };
+    const handleSelection = () => {
+      const selection = terminal.getSelection();
+      if (!selection || !selection.trim()) {
+        setCopyAnchor(null);
+        return;
+      }
+      const bounds = container.getBoundingClientRect();
+      const last = lastMouseRef.current;
+      const x = last ? last.x : bounds.width / 2;
+      const y = last ? last.y - 28 : 6;
+      setCopyAnchor({
+        text: selection,
+        x,
+        y
+      });
+    };
+    const handleScroll = () => setCopyAnchor(null);
+    const handleBlur = () => setCopyAnchor(null);
     container.addEventListener("contextmenu", handleContextMenu);
-    return () => container.removeEventListener("contextmenu", handleContextMenu);
+    container.addEventListener("mouseup", handleMouseUp);
+    container.addEventListener("scroll", handleScroll);
+    window.addEventListener("blur", handleBlur);
+    terminal.onSelectionChange(handleSelection);
+    return () => {
+      container.removeEventListener("contextmenu", handleContextMenu);
+      container.removeEventListener("mouseup", handleMouseUp);
+      container.removeEventListener("scroll", handleScroll);
+      window.removeEventListener("blur", handleBlur);
+    };
   }, []);
 
   useEffect(() => {
@@ -192,7 +229,33 @@ const CodexTerminalView = ({
     bufferRef.current = "";
   }, [mode]);
 
-  return <div ref={containerRef} className={className ?? "codex-terminal"} />;
+  return (
+    <div className="codex-terminal-wrap">
+      <div ref={containerRef} className={className ?? "codex-terminal"} />
+      {copyAnchor ? (
+        <button
+          className="codex-copy codex-copy-terminal"
+          style={{
+            left: Math.max(8, Math.min(copyAnchor.x, (containerRef.current?.clientWidth ?? 0) - 60)),
+            top: Math.max(6, copyAnchor.y)
+          }}
+          onClick={() => {
+            const text = copyAnchor.text;
+            if (!text) return;
+            if (navigator.clipboard?.writeText) {
+              navigator.clipboard.writeText(text).catch(() => undefined);
+            } else {
+              document.execCommand("copy");
+            }
+            setCopyAnchor(null);
+            terminalRef.current?.clearSelection?.();
+          }}
+        >
+          Copiar
+        </button>
+      ) : null}
+    </div>
+  );
 };
 
 export default CodexTerminalView;

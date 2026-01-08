@@ -1863,6 +1863,12 @@ button {
   overflow: hidden;
 }
 
+.codex-terminal-wrap {
+  position: relative;
+  flex: 1;
+  min-height: 120px;
+}
+
 .codex-terminal .xterm-viewport {
   scrollbar-width: thin;
 }
