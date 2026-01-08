@@ -33,7 +33,7 @@
   --line-highlight: rgba(49, 208, 154, 0.12);
   --line-highlight-border: #31d09a;
   --window-radius: 8px;
-  --window-outline: rgba(255, 255, 255, 0.12);
+  --window-outline: rgba(255, 255, 255, 0.18);
   --statusbar-height: 26px;
 }
 
@@ -96,7 +96,7 @@ button {
   width: 100%;
   margin: 0;
   border: none;
-  box-shadow: none;
+  box-shadow: inset 0 0 0 1px var(--window-outline);
   border-radius: var(--window-radius);
   clip-path: inset(0 round var(--window-radius));
   overflow: hidden;
@@ -114,7 +114,7 @@ button {
   border-radius: var(--window-radius);
   border: 1px solid var(--window-outline);
   pointer-events: none;
-  z-index: 6;
+  z-index: 9999;
 }
 
 .app[data-theme="windows11"] {
@@ -679,7 +679,7 @@ button {
   --app-bg: #f1f4f8;
   --line-highlight: rgba(47, 143, 115, 0.16);
   --line-highlight-border: #2f8f73;
-  --window-outline: rgba(0, 0, 0, 0.16);
+  --window-outline: rgba(0, 0, 0, 0.22);
 }
 
 .app[data-mode="light"] .workspace-chip.active,
