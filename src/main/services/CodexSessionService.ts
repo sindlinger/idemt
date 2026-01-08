@@ -31,6 +31,7 @@ type SessionState = {
   ready: boolean;
   queue: string[];
   lastOutputAt: number;
+  promptBuffer?: string;
   idleTimer?: NodeJS.Timeout;
   readyTimer?: NodeJS.Timeout;
   acknowledged?: boolean;
@@ -211,7 +212,8 @@ export class CodexSessionService {
     } satisfies CodexEvent);
 
     if (session.running) {
-      if (this.isPromptReady(data)) {
+      session.promptBuffer = this.updatePromptBuffer(session.promptBuffer ?? "", data);
+      if (this.isPromptReady(session.promptBuffer)) {
         if (session.idleTimer) clearTimeout(session.idleTimer);
         void this.finishRun(session);
         return;
@@ -223,12 +225,25 @@ export class CodexSessionService {
     }
   }
 
-  private isPromptReady(data: string) {
-    const plain = data.replace(/\x1b\][^\x07]*\x07/g, "").replace(/\x1b\[[0-9;?]*[A-Za-z]/g, "");
-    const normalized = plain.replace(/\r/g, "");
-    if (!normalized) return false;
-    if (/(^|\n)>\s*$/.test(normalized)) return true;
-    if (normalized.endsWith("\n> ") || normalized.includes("\n> ")) return true;
+  private updatePromptBuffer(existing: string, data: string) {
+    const sanitized = data
+      .replace(/\x1b\][^\x07]*\x07/g, "")
+      .replace(/\x1b\[[0-9;?]*[A-Za-z]/g, "")
+      .replace(/\x1b[@-Z\\-_]/g, "")
+      .replace(/\r/g, "");
+    const combined = `${existing}${sanitized}`;
+    return combined.length > 800 ? combined.slice(-800) : combined;
+  }
+
+  private isPromptReady(buffer: string) {
+    if (!buffer) return false;
+    const lines = buffer.split(/\n/).slice(-6);
+    for (const line of lines) {
+      const cleaned = line.replace(/[│┃║╎┊┆┇┋]/g, "").trim();
+      if (/^[>❯›»]\s*$/.test(cleaned)) return true;
+      if (/^PS\s.+>\s*$/.test(cleaned)) return true;
+    }
+    if (/(^|\n)[│┃║╎┊┆┇┋\s]*[>❯›»]\s*$/.test(buffer)) return true;
     return false;
   }
 
