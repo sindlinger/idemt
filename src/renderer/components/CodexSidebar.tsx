@@ -21,6 +21,16 @@ const stripAnsi = (text: string) => {
   return withoutCsi.replace(/\x1b[@-Z\\-_]/g, "");
 };
 
+const sanitizeAnsiForHtml = (text: string) => {
+  // Drop OSC sequences and any non-SGR CSI sequences to avoid leaking control codes.
+  let cleaned = text.replace(/\x1b\][^\x07]*\x07/g, "");
+  cleaned = cleaned.replace(/\x1b\[[0-9;?]*[A-Za-z]/g, (match) =>
+    match.endsWith("m") ? match : ""
+  );
+  cleaned = cleaned.replace(/\x1b[@-Z\\-_]/g, "");
+  return cleaned;
+};
+
 const NOISY_FRAGMENTS = [
   "UtilTranslatePathList",
   "Failed to translate",
@@ -143,9 +153,8 @@ const CodexSidebar = ({
   const graphicLines = useMemo(() => {
     const lines: string[] = [""];
     const appendLine = (chunk: string) => {
-      let buffer = chunk;
+      let buffer = sanitizeAnsiForHtml(chunk);
       buffer = buffer.replace(/\uFFFD/g, "");
-      buffer = buffer.replace(/\x1b\[[0-9;]*K/g, "");
       for (let i = 0; i < buffer.length; i += 1) {
         const char = buffer[i];
         if (char === "\r") {
