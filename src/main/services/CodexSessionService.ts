@@ -29,7 +29,7 @@ type SessionState = {
   codexPath: string;
   running: boolean;
   ready: boolean;
-  queue: string[];
+  queue: Array<{ prompt: string; settings: Settings }>;
   lastOutputAt: number;
   promptBuffer?: string;
   idleTimer?: NodeJS.Timeout;
@@ -80,29 +80,16 @@ export class CodexSessionService {
     if (!session) {
       return { running: false, startedAt: Date.now(), endedAt: Date.now(), exitCode: -1 };
     }
-    if (session.running) {
-      this.logs.append("codex", "Codex session busy, message ignored.");
-      return session.status;
-    }
-
     const selection = request.selection?.trim();
     const prompt = selection
       ? `${request.userMessage}\n\n${selection}`
       : request.userMessage;
-
-    session.snapshots = await snapshotWorkspace(this.workspace);
-    session.runId = randomUUID();
-    session.lastSettings = settings;
-    session.running = true;
-    session.status = { running: true, startedAt: Date.now() };
-    this.window.webContents.send("codex:run:start", session.status);
-
-    if (!session.ready) {
-      session.queue.push(prompt);
+    if (session.running || !session.ready) {
+      session.queue.push({ prompt, settings });
       return session.status;
     }
 
-    session.pty.write(`${prompt}\r`);
+    await this.startRun(session, prompt, settings);
     return session.status;
   }
 
@@ -270,13 +257,11 @@ export class CodexSessionService {
       clearTimeout(session.readyTimer);
       session.readyTimer = undefined;
     }
-    if (session.queue.length && session.running) {
+    if (!session.running && session.queue.length) {
       const next = session.queue.shift();
       if (next) {
-        session.pty.write(`${next}\r`);
+        void this.startRun(session, next.prompt, next.settings);
       }
-    } else {
-      session.queue = [];
     }
   }
 
@@ -291,6 +276,26 @@ export class CodexSessionService {
     };
     await this.emitFileChanges(session.snapshots, session.runId, session.lastSettings);
     this.window.webContents.send("codex:run:done", session.status);
+    if (session.queue.length) {
+      const next = session.queue.shift();
+      if (next) {
+        await this.startRun(session, next.prompt, next.settings);
+      }
+    }
+  }
+
+  private async startRun(session: SessionState, prompt: string, settings: Settings) {
+    session.snapshots = await snapshotWorkspace(this.workspace);
+    session.runId = randomUUID();
+    session.lastSettings = settings;
+    session.running = true;
+    session.status = { running: true, startedAt: Date.now() };
+    this.window.webContents.send("codex:run:start", session.status);
+    if (!session.ready) {
+      session.queue.unshift({ prompt, settings });
+      return;
+    }
+    session.pty.write(`${prompt}\r\n`);
   }
 
   private async emitFileChanges(
