@@ -3,7 +3,7 @@ import path from "node:path";
 import fs from "node:fs/promises";
 import type { BrowserWindow } from "electron";
 import type { BuildResult, Diagnostic, Settings } from "../../shared/ipc";
-import { LogsService } from "./LogsService";
+import { LogsService } from "../logging/LogsService";
 
 const LOG_DIR = path.join(process.cwd(), "logs", "build");
 

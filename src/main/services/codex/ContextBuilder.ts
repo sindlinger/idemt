@@ -1,8 +1,8 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import type { Diagnostic, Settings } from "../../shared/ipc";
-import type { LogsService } from "./LogsService";
-import type { WorkspaceService } from "./WorkspaceService";
+import type { LogsService } from "../logging/LogsService";
+import type { WorkspaceService } from "../workspace/WorkspaceService";
 
 const MAX_FILE_CHARS = 12000;
 const MAX_LOG_LINES = 300;

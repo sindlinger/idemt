@@ -2,7 +2,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { createHash } from "node:crypto";
 import { app } from "electron";
-import type { LogsService } from "./LogsService";
+import type { LogsService } from "../logging/LogsService";
 
 const DEFAULT_PROFILES = [
   {

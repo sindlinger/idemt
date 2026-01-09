@@ -11,11 +11,11 @@ import type {
   ReviewChangePayload,
   Settings
 } from "../../shared/ipc";
-import { LogsService } from "./LogsService";
-import { WorkspaceService } from "./WorkspaceService";
-import { BuildService } from "./BuildService";
+import { LogsService } from "../logging/LogsService";
+import { WorkspaceService } from "../workspace/WorkspaceService";
+import { BuildService } from "../build/BuildService";
 import { buildContext } from "./ContextBuilder";
-import type { ReviewStoreService } from "./ReviewStoreService";
+import type { ReviewStoreService } from "../review/ReviewStoreService";
 import { resolveCodexConfigPath } from "./CodexConfigService";
 import {
   buildCodexAgentArgs,

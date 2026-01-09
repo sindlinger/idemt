@@ -8,18 +8,18 @@ import type {
   Settings,
   TestRequest
 } from "../shared/ipc";
-import { BuildService } from "./services/BuildService";
-import { CodexService } from "./services/CodexService";
-import { CodexSessionService } from "./services/CodexSessionService";
-import { getCodexModelsInfo } from "./services/CodexModelsService";
-import { resolveCodexConfigPath } from "./services/CodexConfigService";
-import { getProfilesInfo, saveProfileContent, setActiveProfile } from "./services/CodexInstructionsService";
-import { LogsService } from "./services/LogsService";
-import type { SettingsService } from "./services/SettingsService";
-import { TerminalService } from "./services/TerminalService";
-import { TestService } from "./services/TestService";
-import { WorkspaceService } from "./services/WorkspaceService";
-import { ReviewStoreService } from "./services/ReviewStoreService";
+import { BuildService } from "./services/build/BuildService";
+import { CodexService } from "./services/codex/CodexService";
+import { CodexSessionService } from "./services/codex/CodexSessionService";
+import { getCodexModelsInfo } from "./services/codex/CodexModelsService";
+import { resolveCodexConfigPath } from "./services/codex/CodexConfigService";
+import { getProfilesInfo, saveProfileContent, setActiveProfile } from "./services/codex/CodexInstructionsService";
+import { LogsService } from "./services/logging/LogsService";
+import type { SettingsService } from "./services/settings/SettingsService";
+import { TerminalService } from "./services/terminal/TerminalService";
+import { TestService } from "./services/test/TestService";
+import { WorkspaceService } from "./services/workspace/WorkspaceService";
+import { ReviewStoreService } from "./services/review/ReviewStoreService";
 import { logLine } from "./logger";
 import fs from "node:fs/promises";
 import path from "node:path";

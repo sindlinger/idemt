@@ -3,7 +3,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import type { BrowserWindow } from "electron";
 import type { Settings, TestRequest, TestStatus } from "../../shared/ipc";
-import { LogsService } from "./LogsService";
+import { LogsService } from "../logging/LogsService";
 
 export class TestService {
   private window: BrowserWindow;

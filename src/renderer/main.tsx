@@ -2,7 +2,7 @@ import "./monaco/setup";
 import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App";
-import "./styles.css";
+import "./styles/app.css";
 
 const log = (message: string, scope = "renderer") => {
   if (typeof window?.api?.log === "function") {

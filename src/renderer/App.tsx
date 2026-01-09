@@ -12,12 +12,12 @@ import type {
 } from "@shared/ipc";
 import { useAppStore } from "@state/store";
 import { calculateChangedLines, createUnifiedDiff } from "@state/diff";
-import TopBar from "./components/TopBar";
-import LeftSidebar from "./components/LeftSidebar";
-import EditorPane from "./components/EditorPane";
-import CodexSidebar from "./components/CodexSidebar";
-import BottomPanel from "./components/BottomPanel";
-import SettingsModal from "./components/SettingsModal";
+import TopBar from "./app/TopBar";
+import LeftSidebar from "./workspace/LeftSidebar";
+import EditorPane from "./editor/EditorPane";
+import CodexSidebar from "./codex/CodexSidebar";
+import BottomPanel from "./panels/BottomPanel";
+import SettingsModal from "./settings/SettingsModal";
 
 const defaultTestConfig: TestRequest = {
   expertPath: "",

@@ -2,7 +2,7 @@ import { app, BrowserWindow, screen } from "electron";
 import path from "node:path";
 import { registerIpc } from "./ipc";
 import { logLine } from "./logger";
-import { SettingsService } from "./services/SettingsService";
+import { SettingsService } from "./services/settings/SettingsService";
 import type { WindowBounds } from "../shared/ipc";
 import { applyWindowsFrameTweaks } from "./windows/dwm";
 

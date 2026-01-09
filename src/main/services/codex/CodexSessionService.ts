@@ -11,9 +11,9 @@ import type {
   ReviewChangePayload,
   Settings
 } from "../../shared/ipc";
-import { LogsService } from "./LogsService";
-import { WorkspaceService } from "./WorkspaceService";
-import type { ReviewStoreService } from "./ReviewStoreService";
+import { LogsService } from "../logging/LogsService";
+import { WorkspaceService } from "../workspace/WorkspaceService";
+import type { ReviewStoreService } from "../review/ReviewStoreService";
 import { resolveCodexConfigPath } from "./CodexConfigService";
 import {
   buildCodexAgentArgs,

@@ -3,7 +3,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { createSign, randomUUID } from "node:crypto";
 import type { ReviewChangePayload, Settings } from "../../shared/ipc";
-import type { LogsService } from "./LogsService";
+import type { LogsService } from "../logging/LogsService";
 
 type GoogleCredentials = {
   client_email?: string;

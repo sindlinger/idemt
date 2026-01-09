@@ -2,7 +2,7 @@ import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { app } from "electron";
-import type { LogsService } from "./LogsService";
+import type { LogsService } from "../logging/LogsService";
 
 const ALLOWED_LEVELS = new Set(["minimal", "low", "medium", "high"]);
 const EFFORT_REGEX = /(^\s*model_reasoning_effort\s*=\s*["'])([^"']+)(["'].*$)/m;
