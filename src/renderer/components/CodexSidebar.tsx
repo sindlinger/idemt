@@ -157,7 +157,7 @@ const CodexSidebar = ({
     () =>
       codexMessages
         .filter((entry) => entry.role === "user")
-        .slice(-12)
+        .slice(-20)
         .map((entry) => entry.text.trim())
         .filter(Boolean),
     [codexMessages]
@@ -186,6 +186,7 @@ const CodexSidebar = ({
     const ansi = serializer.serialize({ scrollback: true });
     const lines = ansi.split(/\r?\n/);
     const filtered: string[] = [];
+    let lastNormalized = "";
     for (const line of lines) {
       const sanitized = sanitizeAnsiForHtml(line);
       const plain = stripAnsi(sanitized).trim();
@@ -195,6 +196,10 @@ const CodexSidebar = ({
       if (normalized && normalizedUserMessages.has(normalized)) {
         continue;
       }
+      if (normalized && normalized === lastNormalized) {
+        continue;
+      }
+      lastNormalized = normalized;
       filtered.push(sanitized);
     }
     return filtered.map((line) => ansiToHtml.toHtml(line));
