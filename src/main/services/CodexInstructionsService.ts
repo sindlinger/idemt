@@ -183,7 +183,5 @@ export const toWslPath = (value: string) => {
 };
 
 export const buildCodexAgentArgs = (instructionsPath: string) => {
-  const tomlString = (value: string) => JSON.stringify(value);
-  const configArg = `experimental_instructions_file=${tomlString(instructionsPath)}`;
-  return ["-a", "never", "-s", "workspace-write", "-c", configArg];
+  return ["-a", "never", "-s", "workspace-write", "--instructions", instructionsPath];
 };
