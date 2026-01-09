@@ -182,6 +182,6 @@ export const toWslPath = (value: string) => {
   return value.replace(/\\/g, "/");
 };
 
-export const buildCodexAgentArgs = (instructionsPath: string) => {
-  return ["-a", "never", "-s", "workspace-write", "--instructions", instructionsPath];
+export const buildCodexAgentArgs = (_instructionsPath: string) => {
+  return ["-a", "never", "-s", "workspace-write"];
 };
