@@ -14,6 +14,8 @@ import type { CodexMessage, ReviewChange } from "@state/store";
 import AnsiToHtml from "ansi-to-html";
 import { Terminal as XTerm } from "xterm";
 import { SerializeAddon } from "xterm-addon-serialize";
+// Note: CodexTerminalView component is kept in the codebase for future re-enable.
+// To restore: add a toggle button and render <CodexTerminalView /> instead of the graphic view.
 
 const stripAnsi = (text: string) => {
   const withoutOsc = text.replace(/\x1b\][^\x07]*\x07/g, "");
