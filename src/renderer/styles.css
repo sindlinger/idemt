@@ -1844,14 +1844,13 @@ button {
 }
 
 .codex-bubbles {
-  position: absolute;
-  right: 12px;
-  bottom: 12px;
+  position: static;
+  margin-top: 8px;
   display: flex;
   flex-direction: column;
   gap: 6px;
   align-items: flex-end;
-  pointer-events: none;
+  pointer-events: auto;
 }
 
 .codex-terminal {

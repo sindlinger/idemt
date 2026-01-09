@@ -75,6 +75,13 @@ const METADATA_PREFIXES = [
   "--------"
 ];
 
+const normalizeForMatch = (value: string) =>
+  value
+    .toLowerCase()
+    .replace(/^[>›»❯]\s*/g, "")
+    .replace(/\s+/g, "")
+    .trim();
+
 const isNoisyLine = (line: string) => {
   if (!line) return true;
   if (line === "user") return true;
@@ -155,6 +162,10 @@ const CodexSidebar = ({
         .filter(Boolean),
     [codexMessages]
   );
+  const normalizedUserMessages = useMemo(
+    () => new Set(recentUserMessages.map((text) => normalizeForMatch(text))),
+    [recentUserMessages]
+  );
   const userBubbles = useMemo(() => {
     return codexMessages
       .filter((entry) => entry.role === "user")
@@ -180,16 +191,14 @@ const CodexSidebar = ({
       const plain = stripAnsi(sanitized).trim();
       if (!plain) continue;
       if (isNoisyLine(plain)) continue;
-      if (
-        recentUserMessages.includes(plain) ||
-        recentUserMessages.includes(plain.replace(/^>\s*/, ""))
-      ) {
+      const normalized = normalizeForMatch(plain);
+      if (normalized && normalizedUserMessages.has(normalized)) {
         continue;
       }
       filtered.push(sanitized);
     }
     return filtered.map((line) => ansiToHtml.toHtml(line));
-  }, [ansiToHtml, parserTick, recentUserMessages]);
+  }, [ansiToHtml, parserTick, normalizedUserMessages]);
 
   const changes = Object.values(reviewChanges);
   const modelOptions = useMemo(() => models.filter(Boolean), [models]);
