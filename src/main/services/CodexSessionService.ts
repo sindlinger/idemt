@@ -152,9 +152,9 @@ export class CodexSessionService {
             "--noprofile",
             "--norc",
             "-lc",
-            `cd ${shellEscape(toWslPath(cwd))} && ${shellEscape(codexPath)} ${agentArgs
-              .map(shellEscape)
-              .join(" ")}`
+            `stty -echo 2>/dev/null || true; cd ${shellEscape(
+              toWslPath(cwd)
+            )} && ${shellEscape(codexPath)} ${agentArgs.map(shellEscape).join(" ")}`
           ]
         : [...agentArgs];
       const pty = spawn(command, args, {

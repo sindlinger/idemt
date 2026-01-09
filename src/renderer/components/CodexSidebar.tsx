@@ -40,55 +40,6 @@ const stripAltScreen = (text: string) =>
     .replace(/\x1b\[\?47h/g, "")
     .replace(/\x1b\[\?47l/g, "");
 
-const NOISY_FRAGMENTS = [
-  "UtilTranslatePathList",
-  "Failed to translate",
-  "mqlPython",
-  "venvScripts",
-  "[wsl-interop-fix]",
-  "WSL (",
-  "WSL_DISTRO_NAME",
-  "powershell.exe disponível",
-  "Codex session message sent",
-  "Codex run started",
-  "You are running Codex in",
-  "AllowCodex",
-  "Require approval",
-  "Press enter to continue"
-];
-
-const METADATA_PREFIXES = [
-  "workdir:",
-  "model:",
-  "provider:",
-  "approval:",
-  "sandbox:",
-  "reasoning effort:",
-  "reasoning summaries:",
-  "session id:",
-  "UserMessage:",
-  "ActiveFile:",
-  "# Diagnostics",
-  "# Recent Logs",
-  "# Relevant Files",
-  "# Codex Request",
-  "--------"
-];
-
-const normalizeForMatch = (value: string) =>
-  value
-    .toLowerCase()
-    .replace(/^[>›»❯]\s*/g, "")
-    .replace(/\s+/g, "")
-    .trim();
-
-const isNoisyLine = (line: string) => {
-  if (!line) return true;
-  if (line === "user") return true;
-  if (line.startsWith("## ")) return true;
-  if (METADATA_PREFIXES.some((prefix) => line.startsWith(prefix))) return true;
-  return NOISY_FRAGMENTS.some((frag) => line.includes(frag));
-};
 
 type CodexSidebarProps = {
   codexEvents: CodexEvent[];
@@ -153,19 +104,6 @@ const CodexSidebar = ({
   const serializeRef = useRef<SerializeAddon | null>(null);
   const parserIndexRef = useRef(0);
   const [parserTick, setParserTick] = useState(0);
-  const recentUserMessages = useMemo(
-    () =>
-      codexMessages
-        .filter((entry) => entry.role === "user")
-        .slice(-20)
-        .map((entry) => entry.text.trim())
-        .filter(Boolean),
-    [codexMessages]
-  );
-  const normalizedUserMessages = useMemo(
-    () => new Set(recentUserMessages.map((text) => normalizeForMatch(text))),
-    [recentUserMessages]
-  );
   const userBubbles = useMemo(() => {
     return codexMessages
       .filter((entry) => entry.role === "user")
@@ -185,25 +123,8 @@ const CodexSidebar = ({
     if (!serializer) return [];
     const ansi = serializer.serialize({ scrollback: true });
     const lines = ansi.split(/\r?\n/);
-    const filtered: string[] = [];
-    let lastNormalized = "";
-    for (const line of lines) {
-      const sanitized = sanitizeAnsiForHtml(line);
-      const plain = stripAnsi(sanitized).trim();
-      if (!plain) continue;
-      if (isNoisyLine(plain)) continue;
-      const normalized = normalizeForMatch(plain);
-      if (normalized && normalizedUserMessages.has(normalized)) {
-        continue;
-      }
-      if (normalized && normalized === lastNormalized) {
-        continue;
-      }
-      lastNormalized = normalized;
-      filtered.push(sanitized);
-    }
-    return filtered.map((line) => ansiToHtml.toHtml(line));
-  }, [ansiToHtml, parserTick, normalizedUserMessages]);
+    return lines.map((line) => ansiToHtml.toHtml(sanitizeAnsiForHtml(line)));
+  }, [ansiToHtml, parserTick]);
 
   const changes = Object.values(reviewChanges);
   const modelOptions = useMemo(() => models.filter(Boolean), [models]);
