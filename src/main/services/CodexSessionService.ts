@@ -289,6 +289,7 @@ export class CodexSessionService {
       session.queue.unshift({ prompt, settings });
       return;
     }
+    session.promptBuffer = "";
     session.snapshots = await snapshotWorkspace(this.workspace);
     session.runId = randomUUID();
     session.lastSettings = settings;
@@ -296,7 +297,9 @@ export class CodexSessionService {
     session.status = { running: true, startedAt: Date.now() };
     this.window.webContents.send("codex:run:start", session.status);
     const safePrompt = prompt.replace(/\x1b/g, "");
-    session.pty.write(`${safePrompt}\r\n`);
+    session.pty.write("\r");
+    session.pty.write(safePrompt);
+    session.pty.write("\r");
   }
 
   private async emitFileChanges(
