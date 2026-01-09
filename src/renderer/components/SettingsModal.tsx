@@ -315,17 +315,11 @@ const SettingsModal = ({
               ) : null}
               <div className="settings-field">
                 <label>Codex Transport</label>
-                <select
-                  value={local.codexTransport ?? "pty"}
-                  onChange={(event) =>
-                    updateField("codexTransport", event.target.value as Settings["codexTransport"])
-                  }
-                >
+                <select value="pty" disabled>
                   <option value="pty">PTY (interactive)</option>
-                  <option value="stdio">STDIN (one-shot)</option>
                 </select>
                 <span style={{ color: "var(--muted)", fontSize: 11 }}>
-                  PTY keeps a live session. STDIN runs a single command and exits.
+                  Chat always uses PTY to keep a live session.
                 </span>
               </div>
               {isWindows ? (
