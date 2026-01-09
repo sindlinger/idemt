@@ -29,29 +29,4 @@ Remove-IfExists (Join-Path $svc "OficialTelnetServiceBootstrap.mq5")
 # Junction for TelnetMT folder
 New-Item -ItemType Junction -Path (Join-Path $svc "TelnetMT") -Target (Join-Path $RepoRoot "telnetmt") | Out-Null
 
-# Hardlinks for required files
-$filesToLink = @(
-  "TelnetMT_OficialTelnetServiceBootstrap.mq5",
-  "TelnetMT_SocketTelnetService.mq5",
-  "TelnetMT_SocketTelnetService.ex5"
-)
-
-foreach ($name in $filesToLink) {
-  $target = Join-Path $repoServices $name
-  $dest = Join-Path $svc $name
-  if (Test-Path $target) {
-    Remove-IfExists $dest
-    New-Item -ItemType HardLink -Path $dest -Target $target | Out-Null
-  } else {
-    Write-Warning "Missing target file: $target"
-  }
-}
-
-# Link all .mqh helpers so MetaEditor resolves includes cleanly
-Get-ChildItem $repoServices -Filter "*.mqh" | ForEach-Object {
-  $dest = Join-Path $svc $_.Name
-  if (Test-Path $dest) { Remove-Item $dest -Force }
-  New-Item -ItemType HardLink -Path $dest -Target $_.FullName | Out-Null
-}
-
-Write-Host "Done. TelnetMT junction + hardlinks installed for $TerminalHash."
+Write-Host "Done. TelnetMT junction installed for $TerminalHash."
