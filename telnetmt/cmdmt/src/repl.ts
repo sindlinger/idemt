@@ -9,6 +9,7 @@ import type { ResolvedConfig } from "./lib/config.js";
 import { runTester } from "./lib/tester.js";
 import { createExpertTemplate } from "./lib/template.js";
 import { buildAttachReport, formatAttachReport, DEFAULT_ATTACH_META, findLatestLogFile } from "./lib/attach_report.js";
+import { renderBanner } from "./lib/banner.js";
 
 export type ReplOpts = TransportOpts & { json?: boolean; quiet?: boolean };
 
@@ -166,7 +167,14 @@ async function handleCommand(tokens: string[], ctx: Ctx, opts: ReplOpts, resolve
 export async function runRepl(opts: ReplOpts, ctx: Ctx, resolved: ResolvedConfig) {
   if (!opts.quiet) {
     const hosts = opts.hosts.join(",");
-    process.stdout.write(`MT5 CLI (socket) ${hosts}:${opts.port}\n`);
+    const label = (process.env.CMDMT_INVOKE_AS?.trim() || "cmdmt").toUpperCase();
+    process.stdout.write(
+      renderBanner({
+        label,
+        owner: "Eduardo Candeiro Goncalves",
+        socket: `${hosts}:${opts.port}`
+      })
+    );
     process.stdout.write("Dica: digite help\n");
   }
   const rl = readline.createInterface({
