@@ -22,10 +22,19 @@ export type TestResult = {
   reportPath?: string;
   copiedReport?: string;
   copiedLogs: string[];
+  terminalLogPath?: string;
 };
 
 function ensureDir(dir: string) {
   fs.mkdirSync(dir, { recursive: true });
+}
+
+function openTerminalLog(runDir: string, terminalExec: string, args: string[]): { path: string; stream: fs.WriteStream } {
+  const logPath = path.join(runDir, "terminal-run.log");
+  const stream = fs.createWriteStream(logPath, { flags: "a" });
+  const started = new Date().toISOString();
+  stream.write(`[${started}] launch: ${terminalExec} ${args.join(" ")}` + "\n");
+  return { path: logPath, stream };
 }
 
 function readTextWithEncoding(filePath: string): { text: string; encoding: "utf16le" | "utf8"; bom: boolean } {
@@ -363,17 +372,37 @@ export async function runTester(
   const args = [configArg];
   if (runner.portable) args.unshift("/portable");
 
+  const terminalLog = openTerminalLog(runDirFinal, terminalExec, args);
+
   const startTime = Date.now();
   await new Promise<void>((resolve, reject) => {
-    const child = spawn(terminalExec, args, { stdio: "inherit" });
-    child.on("error", (err) => reject(err));
+    const child = spawn(terminalExec, args, { stdio: ["ignore", "pipe", "pipe"] });
+    if (child.stdout) {
+      child.stdout.on("data", (chunk) => {
+        process.stdout.write(chunk);
+        terminalLog.stream.write(chunk);
+      });
+    }
+    if (child.stderr) {
+      child.stderr.on("data", (chunk) => {
+        process.stderr.write(chunk);
+        terminalLog.stream.write(chunk);
+      });
+    }
+    child.on("error", (err) => {
+      terminalLog.stream.write(`[${new Date().toISOString()}] error: ${String(err)}\n`);
+      terminalLog.stream.end();
+      reject(err);
+    });
     child.on("exit", (code) => {
+      terminalLog.stream.write(`[${new Date().toISOString()}] exit: ${code ?? 0}\n`);
+      terminalLog.stream.end();
       if (code && code !== 0) {
         if (code === 189) {
           reject(new Error("terminal ja esta aberto com o mesmo data path; feche a instancia e tente novamente"));
           return;
         }
-        reject(new Error(`terminal retornou ${code}`));
+        reject(new Error(`terminal retornou ${code} (log: ${terminalLog.path})`));
         return;
       }
       resolve();
@@ -401,6 +430,7 @@ export async function runTester(
     setPath: setFilePath,
     reportPath: reportAbs,
     copiedReport: copiedReport ?? undefined,
-    copiedLogs
+    copiedLogs,
+    terminalLogPath: terminalLog.path
   };
 }

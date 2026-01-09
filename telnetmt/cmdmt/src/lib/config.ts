@@ -186,6 +186,28 @@ function parseHostsValue(value?: string | string[]): string[] {
     .filter(Boolean);
 }
 
+function detectWslNameserver(): string[] {
+  if (!isWsl()) return [];
+  try {
+    const text = fs.readFileSync("/etc/resolv.conf", "utf8");
+    const match = text.match(/^nameserver\s+([0-9.]+)/m);
+    if (match?.[1]) return [match[1]];
+  } catch {
+    // ignore
+  }
+  return [];
+}
+
+function defaultHosts(): string[] {
+  const out: string[] = [];
+  if (isWsl()) {
+    out.push(...detectWslNameserver());
+    out.push("192.168.64.1");
+  }
+  out.push(...DEFAULT_HOSTS);
+  return Array.from(new Set(out.filter(Boolean)));
+}
+
 function pickConfigLayer(file: ConfigFile): ConfigLayer {
   const { defaults, profiles, runners, profile, ...rest } = file;
   return rest;
@@ -220,7 +242,7 @@ function resolveHosts(layers: ConfigLayer[]): string[] {
     const host = transport.host?.trim();
     if (host) return [host];
   }
-  return DEFAULT_HOSTS;
+  return defaultHosts();
 }
 
 function normalizeTester(cfg?: TesterConfig): Required<Pick<TesterConfig, "artifactsDir" | "reportDir">> & TesterConfig {

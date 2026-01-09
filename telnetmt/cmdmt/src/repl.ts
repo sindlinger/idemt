@@ -55,6 +55,7 @@ async function handleCommand(tokens: string[], ctx: Ctx, opts: ReplOpts, resolve
     const runner = requireRunner(resolved);
     const result = await runTester(res.spec, runner, resolved.tester);
     process.stdout.write(`tester: ${result.runDir}\n`);
+    if (result.terminalLogPath) process.stdout.write(`terminal-log: ${result.terminalLogPath}\n`);
     if (result.copiedReport) process.stdout.write(`report: ${result.copiedReport}\n`);
     if (result.copiedLogs.length) process.stdout.write(`logs: ${result.copiedLogs.join(", ")}\n`);
     return;

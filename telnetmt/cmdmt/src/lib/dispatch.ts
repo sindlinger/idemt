@@ -429,6 +429,9 @@ export function dispatch(tokens: string[], ctx: Ctx): DispatchResult {
         baseTpl = rest2[tplIdx];
         rest2.splice(tplIdx, 1);
       }
+      if (!baseTpl && ctx.baseTpl) {
+        baseTpl = ctx.baseTpl;
+      }
       if (!params && hasImplicitParams(rest2)) {
         return err(PARAMS_HINT);
       }

@@ -29,6 +29,15 @@ Atualmente **não existe** `COMPILE` no `TelnetMT_ServiceHandlers.mqh`.
 O fluxo de compile no projeto está no **CLI `cmdmt`**, que usa `metaeditor64.exe`
 ou um `compilePath` configurado.
 
+## Tester (run/test) — logs de execução
+O `cmdmt expert run/test` gera artefatos em `cmdmt-artifacts/<runId>/` e agora
+também salva o log de execução do terminal em:
+
+- `terminal-run.log`
+
+Esse arquivo contém a linha de comando usada para abrir o MT5 e o **exit code**
+do processo. Use-o para diagnosticar erros como `terminal retornou 255`.
+
 Se você quer `compile` via TelnetMT, precisamos **adicionar um handler** novo
 no dispatcher (ex.: `COMPILE`) e decidir a estratégia (ex.: criar arquivo de
 request, chamar MetaEditor externamente, ou delegar ao `cmdmt`).
