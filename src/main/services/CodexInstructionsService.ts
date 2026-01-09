@@ -119,7 +119,18 @@ export const ensureInstructionsFile = async (
   const { base, index } = await ensureProfileFiles(workspaceRoot, logs);
   const active = index.profiles.find((profile) => profile.id === index.activeId);
   const fileName = active?.file ?? `${DEFAULT_PROFILES[0].id}.md`;
-  return path.join(base, fileName);
+  const filePath = path.join(base, fileName);
+  try {
+    const content = await fs.readFile(filePath, "utf-8");
+    if (!content.trim()) {
+      const fallback = DEFAULT_PROFILES.find((profile) => profile.id === index.activeId)
+        ?? DEFAULT_PROFILES[0];
+      await fs.writeFile(filePath, fallback.content, "utf-8");
+    }
+  } catch {
+    // ignore read errors; file will be created by ensureProfileFiles
+  }
+  return filePath;
 };
 
 export const getProfilesInfo = async (workspaceRoot: string, logs?: LogsService) => {
@@ -172,6 +183,6 @@ export const toWslPath = (value: string) => {
 };
 
 export const buildCodexAgentArgs = (instructionsPath: string) => {
-  const configArg = `experimental_instructions_file=${JSON.stringify(instructionsPath)}`;
+  const configArg = `experimental_instructions_file=${instructionsPath}`;
   return ["-a", "never", "-s", "workspace-write", "-c", configArg];
 };
