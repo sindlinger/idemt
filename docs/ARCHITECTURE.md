@@ -20,11 +20,13 @@ Only preload exposes the API to the renderer (ContextIsolation ON, NodeIntegrati
 - `localStorage` (renderer): per-workspace open tab list + active file
 
 ## Services (main)
-- `WorkspaceService`: filesystem traversal, file IO, watchers, file tree
-- `CodexService`: runs Codex CLI and emits file-change diffs
-- `BuildService`: MetaEditor CLI compile + diagnostics parsing
-- `TestService`: MT5 tester run + report handling
-- `LogsService`: shared log stream to UI
+Services live in `src/main/services/` and are grouped by domain:
+- `workspace/WorkspaceService`: filesystem traversal, file IO, watchers, file tree
+- `codex/CodexService`: runs Codex CLI and emits file-change diffs
+- `codex/CodexSessionService`: interactive Codex session lifecycle
+- `build/BuildService`: MetaEditor CLI compile + diagnostics parsing
+- `test/TestService`: MT5 tester run + report handling
+- `logging/LogsService`: shared log stream to UI
 
 ## UI layout
 - Top bar: title + workspace chips + toolbar
@@ -32,6 +34,16 @@ Only preload exposes the API to the renderer (ContextIsolation ON, NodeIntegrati
 - Center: Monaco + tabs
 - Right sidebar: Codex chat/timeline
 - Bottom panel: Terminal / Problems / Output / Report
+
+## Renderer structure
+Renderer UI is split by domain under `src/renderer/`:
+- `app/` (top bar + app shell)
+- `workspace/` (file tree, workspace header)
+- `editor/` (Monaco + tabs)
+- `codex/` (Codex sidebar + terminal view)
+- `panels/` (Bottom panel + sub-panels)
+- `settings/` (Settings modal)
+- `styles/` (`app.css`)
 
 ## Evidence-first
 Build, test, and Codex results are always based on real output/logs and displayed as-is.
