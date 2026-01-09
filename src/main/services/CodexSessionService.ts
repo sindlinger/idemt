@@ -295,8 +295,8 @@ export class CodexSessionService {
       session.queue.unshift({ prompt, settings });
       return;
     }
-    const bracketed = `\x1b[200~${prompt}\x1b[201~`;
-    session.pty.write(`${bracketed}\r\n`);
+    const safePrompt = prompt.replace(/\x1b/g, "");
+    session.pty.write(`${safePrompt}\r\n`);
   }
 
   private async emitFileChanges(
