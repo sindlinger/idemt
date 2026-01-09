@@ -194,9 +194,6 @@ export class CodexSessionService {
 
   private handleOutput(session: SessionState, data: string) {
     session.lastOutputAt = Date.now();
-    if (!session.ready) {
-      this.markReady(session);
-    }
     if (!session.acknowledged) {
       const normalized = data.toLowerCase();
       if (
@@ -214,8 +211,11 @@ export class CodexSessionService {
       timestamp: Date.now()
     } satisfies CodexEvent);
 
+    session.promptBuffer = this.updatePromptBuffer(session.promptBuffer ?? "", data);
+    if (this.isPromptReady(session.promptBuffer)) {
+      this.markReady(session);
+    }
     if (session.running) {
-      session.promptBuffer = this.updatePromptBuffer(session.promptBuffer ?? "", data);
       if (this.isPromptReady(session.promptBuffer)) {
         if (session.idleTimer) clearTimeout(session.idleTimer);
         void this.finishRun(session);
@@ -285,16 +285,16 @@ export class CodexSessionService {
   }
 
   private async startRun(session: SessionState, prompt: string, settings: Settings) {
+    if (!session.ready) {
+      session.queue.unshift({ prompt, settings });
+      return;
+    }
     session.snapshots = await snapshotWorkspace(this.workspace);
     session.runId = randomUUID();
     session.lastSettings = settings;
     session.running = true;
     session.status = { running: true, startedAt: Date.now() };
     this.window.webContents.send("codex:run:start", session.status);
-    if (!session.ready) {
-      session.queue.unshift({ prompt, settings });
-      return;
-    }
     const safePrompt = prompt.replace(/\x1b/g, "");
     session.pty.write(`${safePrompt}\r\n`);
   }
