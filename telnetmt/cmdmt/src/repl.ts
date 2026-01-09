@@ -171,7 +171,7 @@ export async function runRepl(opts: ReplOpts, ctx: Ctx, resolved: ResolvedConfig
     process.stdout.write(
       renderBanner({
         label,
-        owner: "Sebastian Henry",
+        owner: "Eduardo Candeiro Gonçalves",
         socket: `${hosts}:${opts.port}`
       })
     );
