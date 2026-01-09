@@ -14,6 +14,7 @@ if not defined MT5_DATA (
 )
 
 set SRC=C:\git\mt5ide\telnetmt
+set SRC_SERVICES=%SRC%\Services
 
 if not exist "%MT5_DATA%\MQL5" (
   echo MQL5 nao encontrado em %MT5_DATA%
@@ -43,9 +44,23 @@ mklink /J "%MT5_DATA%\MQL5\Services\TelnetMT" "%SRC%"
 mklink /J "%MT5_DATA%\MQL5\Experts\TelnetMT" "%SRC%\Experts"
 mklink /J "%MT5_DATA%\MQL5\Scripts\TelnetMT" "%SRC%\Scripts"
 
-REM Copia do servico na raiz (MT5 exige o .mq5/.ex5 na raiz de Services)
-copy /Y "%SRC%\TelnetMT_SocketTelnetService.mq5" "%MT5_DATA%\MQL5\Services\"
-copy /Y "%SRC%\TelnetMT_SocketTelnetService.ex5" "%MT5_DATA%\MQL5\Services\"
+REM Limpa services raiz antigos
+del /F /Q "%MT5_DATA%\MQL5\Services\TelnetMT_SocketTelnetService.mq5" >nul 2>&1
+del /F /Q "%MT5_DATA%\MQL5\Services\TelnetMT_SocketTelnetService.ex5" >nul 2>&1
+del /F /Q "%MT5_DATA%\MQL5\Services\TelnetMT_OficialTelnetServiceBootstrap.mq5" >nul 2>&1
+
+REM Hardlinks dos servicos na raiz (MT5 exige o .mq5/.ex5 na raiz de Services)
+mklink /H "%MT5_DATA%\MQL5\Services\TelnetMT_SocketTelnetService.mq5" "%SRC_SERVICES%\TelnetMT_SocketTelnetService.mq5"
+mklink /H "%MT5_DATA%\MQL5\Services\TelnetMT_SocketTelnetService.ex5" "%SRC_SERVICES%\TelnetMT_SocketTelnetService.ex5"
+if exist "%SRC_SERVICES%\TelnetMT_OficialTelnetServiceBootstrap.mq5" (
+  mklink /H "%MT5_DATA%\MQL5\Services\TelnetMT_OficialTelnetServiceBootstrap.mq5" "%SRC_SERVICES%\TelnetMT_OficialTelnetServiceBootstrap.mq5"
+)
+
+REM Hardlinks para .mqh (includes locais)
+for %%F in ("%SRC_SERVICES%\*.mqh") do (
+  del /F /Q "%MT5_DATA%\MQL5\Services\%%~nxF" >nul 2>&1
+  mklink /H "%MT5_DATA%\MQL5\Services\%%~nxF" "%%~fF"
+)
 
 echo OK
 endlocal
