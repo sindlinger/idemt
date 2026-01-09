@@ -30,6 +30,7 @@ export type AttachReport = {
   buffers?: Record<string, number[]>;
   logs?: { file: string; lines: string[]; mode?: "match" | "tail" } | null;
   screenshot?: string | null;
+  diagnostics?: string[];
 };
 
 export type LogStart = { file: string; offset: number };
@@ -126,6 +127,49 @@ function parseBuffers(map: Record<string, string>): Record<string, number[]> {
   return out;
 }
 
+function parseMtTime(value?: string): number | null {
+  if (!value) return null;
+  const m = value.match(/^(\d{4})\.(\d{2})\.(\d{2})\s+(\d{2}):(\d{2}):(\d{2})$/);
+  if (!m) return null;
+  const [_, yy, mo, dd, hh, mm, ss] = m;
+  return Date.UTC(Number(yy), Number(mo) - 1, Number(dd), Number(hh), Number(mm), Number(ss));
+}
+
+function detectDiagnostics(map: Record<string, string>, buffers: Record<string, number[]>, meta: AttachMeta): string[] {
+  const diags: string[] = [];
+  const count = map.count ? Number(map.count) : null;
+  const bars = map.bars ? Number(map.bars) : null;
+  const time0 = parseMtTime(map.time0);
+  const timeN = parseMtTime(map.timeN);
+
+  if (count !== null && count <= 0) {
+    diags.push("count=0 (sem dados retornados)");
+  }
+  if (count !== null && count < 2) {
+    diags.push("count baixo (poucos dados, possivel falha de copy)");
+  }
+  if (bars !== null && count !== null && bars > 0 && count > bars) {
+    diags.push("count maior que bars (inconsistente)");
+  }
+  if (time0 !== null && timeN !== null && time0 < timeN) {
+    diags.push("time0 < timeN (series possivelmente invertida / nao time-series)");
+  }
+  if (time0 !== null && timeN !== null && time0 === timeN && count !== null && count > 1) {
+    diags.push("time0 == timeN com count>1 (timestamps repetidos)");
+  }
+
+  const bufferKeys = Object.keys(buffers);
+  const empty = bufferKeys.filter((k) => buffers[k].length === 0);
+  if (empty.length) {
+    diags.push(`buffers vazios: ${empty.join(", ")}`);
+  }
+  if (meta.buffers && bufferKeys.length < meta.buffers) {
+    diags.push(`buffers retornados (${bufferKeys.length}) < solicitado (${meta.buffers})`);
+  }
+
+  return diags;
+}
+
 function normalizeIndicatorName(name: string): string {
   let n = name.trim();
   if (n.toLowerCase().startsWith("wpath ")) n = n.slice(6);
@@ -168,6 +212,7 @@ export async function buildAttachReport(opts: {
     if (map.timeN) report.timeN = map.timeN;
     if (map.bars) report.bars = Number(map.bars);
     report.buffers = parseBuffers(map);
+    report.diagnostics = detectDiagnostics(map, report.buffers, opts.meta);
   } else {
     const resp = await opts.send({
       type: "BAR_INFO",
@@ -231,6 +276,10 @@ export function formatAttachReport(report: AttachReport): string {
     } else {
       lines.push(`  (sem linhas relevantes)`);
     }
+  }
+  if (report.diagnostics && report.diagnostics.length) {
+    lines.push(`diagnostics:`);
+    for (const d of report.diagnostics) lines.push(`  ${d}`);
   }
   if (report.screenshot) {
     lines.push(`screenshot: ${report.screenshot}`);

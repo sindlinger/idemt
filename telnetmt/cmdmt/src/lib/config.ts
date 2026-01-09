@@ -98,6 +98,7 @@ export type ResolvedConfig = {
 
 const DEFAULT_PORT = 9090;
 const DEFAULT_TIMEOUT = 3000;
+const DEFAULT_HOSTS = ["host.docker.internal", "127.0.0.1"];
 const DEFAULT_CONFIG_PATH = path.join(os.homedir(), ".cmdmt", "config.json");
 const DEFAULT_TESTER: Required<Pick<TesterConfig, "artifactsDir" | "reportDir">> & TesterConfig = {
   artifactsDir: "cmdmt-artifacts",
@@ -219,7 +220,7 @@ function resolveHosts(layers: ConfigLayer[]): string[] {
     const host = transport.host?.trim();
     if (host) return [host];
   }
-  return [];
+  return DEFAULT_HOSTS;
 }
 
 function normalizeTester(cfg?: TesterConfig): Required<Pick<TesterConfig, "artifactsDir" | "reportDir">> & TesterConfig {
