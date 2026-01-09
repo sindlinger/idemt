@@ -7,15 +7,13 @@ import {
   RefreshCw,
   RotateCcw,
   Send,
-  Square,
-  Terminal
+  Square
 } from "lucide-react";
 import type { CodexEvent, CodexRunStatus } from "@shared/ipc";
 import type { CodexMessage, ReviewChange } from "@state/store";
 import AnsiToHtml from "ansi-to-html";
 import { Terminal as XTerm } from "xterm";
 import { SerializeAddon } from "xterm-addon-serialize";
-import CodexTerminalView from "./CodexTerminalView";
 
 const stripAnsi = (text: string) => {
   const withoutOsc = text.replace(/\x1b\][^\x07]*\x07/g, "");
@@ -126,7 +124,6 @@ const CodexSidebar = ({
   collapsed
 }: CodexSidebarProps) => {
   const [message, setMessage] = useState("");
-  const [showTerminal, setShowTerminal] = useState(false);
   const [model, setModel] = useState(defaultModel ?? "default");
   const [level, setLevel] = useState(defaultLevel ?? "default");
   const [expandedReview, setExpandedReview] = useState<Set<string>>(() => new Set());
@@ -241,10 +238,6 @@ const CodexSidebar = ({
     el.scrollTop = el.scrollHeight;
   }, [codexEvents.length, codexMessages.length]);
   useEffect(() => {
-    if (showTerminal) {
-      setCopyAnchor(null);
-      return;
-    }
     const container = chatRef.current;
     if (!container) return;
 
@@ -294,7 +287,7 @@ const CodexSidebar = ({
       container.removeEventListener("scroll", handleScroll);
       window.removeEventListener("blur", handleBlur);
     };
-  }, [showTerminal]);
+  }, []);
   useEffect(() => {
     if (parserRef.current) return;
     const term = new XTerm({
@@ -394,14 +387,6 @@ const CodexSidebar = ({
                 </button>
               </div>
             ) : null}
-            <button
-              className={`codex-view-toggle ${showTerminal ? "active" : ""}`}
-              onClick={() => setShowTerminal((value) => !value)}
-              title="Terminal"
-              aria-pressed={showTerminal}
-            >
-              <Terminal size={12} />
-            </button>
             <button className="codex-view-toggle" onClick={onNewSession} title="New">
               <RefreshCw size={12} />
             </button>
@@ -505,55 +490,47 @@ const CodexSidebar = ({
             )}
           </div>
         ) : null}
-        {showTerminal ? (
-          <CodexTerminalView
-            events={codexEvents}
-            running={codexStatus.running}
-            mode="raw"
-          />
-        ) : (
-          <div className="codex-chat" ref={chatRef}>
-            <div className="codex-output">
-              {graphicLines.map((line, idx) => (
-                <div
-                  key={`codex-line-${idx}`}
-                  className="codex-log-line codex"
-                  dangerouslySetInnerHTML={{ __html: line }}
-                />
+        <div className="codex-chat" ref={chatRef}>
+          <div className="codex-output">
+            {graphicLines.map((line, idx) => (
+              <div
+                key={`codex-line-${idx}`}
+                className="codex-log-line codex"
+                dangerouslySetInnerHTML={{ __html: line }}
+              />
+            ))}
+          </div>
+          {copyAnchor ? (
+            <button
+              className="codex-copy"
+              style={{
+                left: Math.max(8, Math.min(copyAnchor.x, (chatRef.current?.clientWidth ?? 0) - 60)),
+                top: Math.max(6, copyAnchor.y)
+              }}
+              onClick={() => {
+                const text = copyAnchor.text;
+                if (!text) return;
+                if (navigator.clipboard?.writeText) {
+                  navigator.clipboard.writeText(text).catch(() => undefined);
+                } else {
+                  document.execCommand("copy");
+                }
+                setCopyAnchor(null);
+              }}
+            >
+              Copiar
+            </button>
+          ) : null}
+          {userBubbles.length ? (
+            <div className="codex-bubbles">
+              {userBubbles.map((entry) => (
+                <div key={entry.id} className="codex-message user">
+                  <div className="codex-text">{entry.text}</div>
+                </div>
               ))}
             </div>
-            {copyAnchor ? (
-              <button
-                className="codex-copy"
-                style={{
-                  left: Math.max(8, Math.min(copyAnchor.x, (chatRef.current?.clientWidth ?? 0) - 60)),
-                  top: Math.max(6, copyAnchor.y)
-                }}
-                onClick={() => {
-                  const text = copyAnchor.text;
-                  if (!text) return;
-                  if (navigator.clipboard?.writeText) {
-                    navigator.clipboard.writeText(text).catch(() => undefined);
-                  } else {
-                    document.execCommand("copy");
-                  }
-                  setCopyAnchor(null);
-                }}
-              >
-                Copiar
-              </button>
-            ) : null}
-            {userBubbles.length ? (
-              <div className="codex-bubbles">
-                {userBubbles.map((entry) => (
-                  <div key={entry.id} className="codex-message user">
-                    <div className="codex-text">{entry.text}</div>
-                  </div>
-                ))}
-              </div>
-            ) : null}
-          </div>
-        )}
+          ) : null}
+        </div>
         {changes.length > 0 ? (
           <div className="codex-panels">
             <div className="codex-panel codex-review">
