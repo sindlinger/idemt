@@ -167,11 +167,11 @@ async function handleCommand(tokens: string[], ctx: Ctx, opts: ReplOpts, resolve
 export async function runRepl(opts: ReplOpts, ctx: Ctx, resolved: ResolvedConfig) {
   if (!opts.quiet) {
     const hosts = opts.hosts.join(",");
-    const label = (process.env.CMDMT_INVOKE_AS?.trim() || "cmdmt").toUpperCase();
+    const label = process.env.CMDMT_INVOKE_AS?.trim() || "cmdmt";
     process.stdout.write(
       renderBanner({
         label,
-        owner: "Eduardo Candeiro Goncalves",
+        owner: "Sebastian Henry",
         socket: `${hosts}:${opts.port}`
       })
     );
