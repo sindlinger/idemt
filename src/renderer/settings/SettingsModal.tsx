@@ -15,13 +15,15 @@ const SettingsModal = ({
 }) => {
   const [local, setLocal] = useState<Settings>(settings);
   const [validation, setValidation] = useState<Record<string, boolean>>({});
-  const [activeTab, setActiveTab] = useState<"ui" | "editor" | "paths" | "codex" | "workspaces">(
+  const [activeTab, setActiveTab] = useState<"ui" | "editor" | "paths" | "codex" | "workspaces" | "pyplot">(
     "ui"
   );
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [codexProfiles, setCodexProfiles] = useState<CodexProfilesInfo | null>(null);
   const [codexProfileContent, setCodexProfileContent] = useState("");
   const [codexProfileId, setCodexProfileId] = useState("");
+  const [pyplotChannels, setPyplotChannels] = useState<string[]>([]);
+  const [pyplotInstallLog, setPyplotInstallLog] = useState("");
   const isWindows = window.api?.platform === "win32";
   const dragRef = useRef<{ startX: number; startY: number; originX: number; originY: number } | null>(
     null
@@ -39,6 +41,14 @@ const SettingsModal = ({
       setCodexProfiles(info);
       setCodexProfileContent(info.content);
       setCodexProfileId(info.activeId);
+    });
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+    if (typeof window.api?.pyplotChannelsGet !== "function") return;
+    window.api.pyplotChannelsGet().then((info) => {
+      setPyplotChannels(info.channels ?? []);
     });
   }, [open]);
 
@@ -132,6 +142,36 @@ const SettingsModal = ({
     window.api.codexSessionStop?.();
   };
 
+  const handlePyplotInstall = async () => {
+    if (typeof window.api?.pyplotInstall !== "function") return;
+    const dataDir = (local.mtDataDir ?? "").trim();
+    if (!dataDir) {
+      setPyplotInstallLog("MT Data Dir vazio");
+      return;
+    }
+    const channel = (local.pyplotChannel ?? "").trim() || pyplotChannels[0] || "MAIN";
+    const indicatorFolder = (local.pyplotIndicatorFolder ?? "").trim() || "PyPlotMT";
+    const capacityMb = Number(local.pyplotCapacityMb ?? 8);
+    const result = await window.api.pyplotInstall({
+      dataDir,
+      channel,
+      indicatorFolder,
+      capacityMb
+    });
+    setPyplotInstallLog(result.log || "");
+  };
+
+  const handlePyplotMsiInstall = async () => {
+    if (typeof window.api?.pyplotMsiInstall !== "function") return;
+    const msiPath = (local.pyplotMsiPath ?? "").trim();
+    if (!msiPath) {
+      setPyplotInstallLog("MSI path vazio");
+      return;
+    }
+    const result = await window.api.pyplotMsiInstall({ msiPath });
+    setPyplotInstallLog(result.log || "");
+  };
+
   return (
     <div className="settings-modal" onClick={onClose}>
       <div
@@ -174,6 +214,12 @@ const SettingsModal = ({
             onClick={() => setActiveTab("workspaces")}
           >
             Workspaces
+          </button>
+          <button
+            className={`settings-tab ${activeTab === "pyplot" ? "active" : ""}`}
+            onClick={() => setActiveTab("pyplot")}
+          >
+            PyPlotMT
           </button>
         </div>
         <div className="settings-section">
@@ -471,6 +517,94 @@ const SettingsModal = ({
                   Clear List
                 </button>
               </div>
+            </>
+          ) : null}
+          {activeTab === "pyplot" ? (
+            <>
+              <div className="settings-field">
+                <label>MT Data Dir</label>
+                <div style={{ display: "flex", gap: 8 }}>
+                  <input
+                    value={local.mtDataDir ?? ""}
+                    onChange={(event) => updateField("mtDataDir", event.target.value)}
+                  />
+                  <button
+                    className="button"
+                    type="button"
+                    onClick={() => browse("mtDataDir", "directory")}
+                  >
+                    <FolderOpen size={12} />
+                    Browse
+                  </button>
+                </div>
+              </div>
+              <div className="settings-field">
+                <label>Channel</label>
+                <select
+                  value={local.pyplotChannel || pyplotChannels[0] || "MAIN"}
+                  onChange={(event) => updateField("pyplotChannel", event.target.value)}
+                >
+                  {(pyplotChannels.length ? pyplotChannels : ["MAIN"]).map((name) => (
+                    <option key={name} value={name}>
+                      {name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="settings-field">
+                <label>Indicator Folder</label>
+                <input
+                  value={local.pyplotIndicatorFolder ?? "PyPlotMT"}
+                  onChange={(event) => updateField("pyplotIndicatorFolder", event.target.value)}
+                />
+              </div>
+              <div className="settings-field">
+                <label>Capacity (MB)</label>
+                <input
+                  type="number"
+                  min={1}
+                  max={256}
+                  value={local.pyplotCapacityMb ?? 8}
+                  onChange={(event) => updateNumberField("pyplotCapacityMb", event.target.value)}
+                />
+              </div>
+              <div className="settings-field">
+                <label>MSI Path</label>
+                <div style={{ display: "flex", gap: 8 }}>
+                  <input
+                    value={local.pyplotMsiPath ?? ""}
+                    onChange={(event) => updateField("pyplotMsiPath", event.target.value)}
+                  />
+                  <button
+                    className="button"
+                    type="button"
+                    onClick={() => browse("pyplotMsiPath", "file")}
+                  >
+                    <FolderOpen size={12} />
+                    Browse
+                  </button>
+                </div>
+              </div>
+              <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                <button className="button" type="button" onClick={handlePyplotInstall}>
+                  Install Bridge
+                </button>
+                <button className="button" type="button" onClick={handlePyplotMsiInstall}>
+                  Run MSI
+                </button>
+              </div>
+              {pyplotInstallLog ? (
+                <pre
+                  style={{
+                    marginTop: 8,
+                    fontSize: 11,
+                    whiteSpace: "pre-wrap",
+                    color: "var(--muted)"
+                  }}
+                >
+                  {pyplotInstallLog}
+                </pre>
+              ) : null}
             </>
           ) : null}
         </div>

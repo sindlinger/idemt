@@ -29,6 +29,11 @@ const DEFAULTS: Settings = {
   codexReviewKeepDays: 14,
   codexReviewGoogleCredentials: "",
   codexReviewGoogleFolderId: "",
+  pyplotDataDir: "",
+  pyplotChannel: "",
+  pyplotIndicatorFolder: "",
+  pyplotCapacityMb: 8,
+  pyplotMsiPath: "",
   windowBounds: undefined
 };
 

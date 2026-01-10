@@ -145,7 +145,29 @@ export type Settings = {
   codexReviewKeepDays?: number;
   codexReviewGoogleCredentials?: string;
   codexReviewGoogleFolderId?: string;
+  pyplotDataDir?: string;
+  pyplotChannel?: string;
+  pyplotIndicatorFolder?: string;
+  pyplotCapacityMb?: number;
+  pyplotMsiPath?: string;
   windowBounds?: WindowBounds;
+};
+
+export type PyPlotInstallRequest = {
+  dataDir: string;
+  channel: string;
+  indicatorFolder?: string;
+  capacityMb?: number;
+};
+
+export type PyPlotInstallResult = {
+  ok: boolean;
+  log: string;
+};
+
+export type PyPlotChannelsInfo = {
+  channels: string[];
+  source: string;
 };
 
 export type WindowBounds = {
@@ -180,7 +202,10 @@ export const IPC_CHANNELS = {
   testDone: "test:done",
   logsAppend: "logs:append",
   settingsGet: "settings:get",
-  settingsSet: "settings:set"
+  settingsSet: "settings:set",
+  pyplotChannelsGet: "pyplot:channels:get",
+  pyplotInstall: "pyplot:install",
+  pyplotMsiInstall: "pyplot:msi:install"
 } as const;
 
 export type FileChangePayload = {

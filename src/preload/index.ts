@@ -16,7 +16,10 @@ import type {
   TestStatus,
   WorkspaceNode,
   FileFilters,
-  WorkspaceDirUpdate
+  WorkspaceDirUpdate,
+  PyPlotChannelsInfo,
+  PyPlotInstallRequest,
+  PyPlotInstallResult
 } from "../shared/ipc";
 
 const on = <T>(channel: string, handler: (payload: T) => void) => {
@@ -32,6 +35,11 @@ contextBridge.exposeInMainWorld("api", {
   settingsSet: (settings: Settings): Promise<Settings> => ipcRenderer.invoke("settings:set", settings),
   settingsValidate: (settings: Settings): Promise<Record<string, boolean>> =>
     ipcRenderer.invoke("settings:validate", settings),
+  pyplotChannelsGet: (): Promise<PyPlotChannelsInfo> => ipcRenderer.invoke("pyplot:channels:get"),
+  pyplotInstall: (payload: PyPlotInstallRequest): Promise<PyPlotInstallResult> =>
+    ipcRenderer.invoke("pyplot:install", payload),
+  pyplotMsiInstall: (payload: { msiPath: string }): Promise<PyPlotInstallResult> =>
+    ipcRenderer.invoke("pyplot:msi:install", payload),
   selectWorkspace: (): Promise<string | null> => ipcRenderer.invoke("workspace:select"),
   activateWorkspace: (root: string): Promise<WorkspaceNode | null> =>
     ipcRenderer.invoke("workspace:activate", root),

@@ -16,7 +16,10 @@ import type {
   TestStatus,
   WorkspaceNode,
   FileFilters,
-  WorkspaceDirUpdate
+  WorkspaceDirUpdate,
+  PyPlotChannelsInfo,
+  PyPlotInstallRequest,
+  PyPlotInstallResult
 } from "@shared/ipc";
 
 declare global {
@@ -27,6 +30,9 @@ declare global {
       settingsGet: () => Promise<Settings>;
       settingsSet: (settings: Settings) => Promise<Settings>;
       settingsValidate: (settings: Settings) => Promise<Record<string, boolean>>;
+      pyplotChannelsGet: () => Promise<PyPlotChannelsInfo>;
+      pyplotInstall: (payload: PyPlotInstallRequest) => Promise<PyPlotInstallResult>;
+      pyplotMsiInstall: (payload: { msiPath: string }) => Promise<PyPlotInstallResult>;
       selectWorkspace: () => Promise<string | null>;
       activateWorkspace: (root: string) => Promise<WorkspaceNode | null>;
       closeWorkspace: (

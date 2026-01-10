@@ -23,6 +23,7 @@ import { ReviewStoreService } from "./services/review/ReviewStoreService";
 import { logLine } from "./logger";
 import fs from "node:fs/promises";
 import path from "node:path";
+import { installPyPlot } from "./services/pyplot/PyPlotInstallService";
 
 export const registerIpc = async (window: BrowserWindow, settingsService: SettingsService) => {
   logLine("ipc", "registerIpc start");
@@ -76,6 +77,56 @@ export const registerIpc = async (window: BrowserWindow, settingsService: Settin
     const updated = await settingsService.set(partial);
     return updated;
   });
+
+  ipcMain.handle("pyplot:channels:get", async () => {
+    const hubCfg = path.join(
+      process.cwd(),
+      "pyplotmt",
+      "app",
+      "src",
+      "pyshared_hub",
+      "hub_config.py"
+    );
+    try {
+      const text = await fs.readFile(hubCfg, "utf8");
+      const names = Array.from(text.matchAll(/"name"\s*:\s*"([^"]+)"/g)).map((m) => m[1]);
+      if (names.length) return { channels: names, source: "hub_config.py" };
+      return { channels: ["MAIN"], source: "fallback" };
+    } catch {
+      return { channels: ["MAIN"], source: "fallback" };
+    }
+  });
+
+  ipcMain.handle(
+    "pyplot:install",
+    async (_event, payload: { dataDir: string; channel: string; indicatorFolder?: string; capacityMb?: number }) => {
+      logLine("ipc", "pyplot:install");
+      return installPyPlot(payload);
+    }
+  );
+
+  ipcMain.handle(
+    "pyplot:msi:install",
+    async (_event, payload: { msiPath: string }) => {
+      logLine("ipc", "pyplot:msi:install");
+      const msiPath = payload.msiPath;
+      if (!msiPath) return { ok: false, log: "msiPath vazio" };
+      const exists = await fs
+        .access(msiPath)
+        .then(() => true)
+        .catch(() => false);
+      if (!exists) return { ok: false, log: `MSI nao encontrado: ${msiPath}` };
+      // Use explorer/msiexec via shell open (async)
+      try {
+        await import("node:child_process").then(({ spawn }) => {
+          spawn("msiexec", ["/i", msiPath], { detached: true, stdio: "ignore" }).unref();
+        });
+        return { ok: true, log: `msiexec /i ${msiPath}` };
+      } catch (err) {
+        return { ok: false, log: `falha ao iniciar MSI: ${String(err)}` };
+      }
+    }
+  );
   ipcMain.handle("settings:validate", async (_event, settings: Settings) => {
     logLine("ipc", "settings:validate");
     return settingsService.validate(settings);
