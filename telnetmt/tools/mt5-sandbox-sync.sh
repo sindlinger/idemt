@@ -43,9 +43,19 @@ LOG_PATH="$SANDBOX_WSL/Logs/$LOG_FILE"
 if [[ "$REFRESH_CRED" == "1" ]]; then
   echo "[sandbox] Atualizando credenciais via cli-duka-account..."
   OUT="$(cli-duka-account 2>/dev/null || true)"
-  LOGIN="$(echo "$OUT" | grep -m1 -E '^[[:space:]]*login[[:space:]]*:' | sed -E 's/^[^:]*:[[:space:]]*//')"
-  PASS="$(echo "$OUT" | grep -m1 -E '^[[:space:]]*senha[[:space:]]*:' | sed -E 's/^[^:]*:[[:space:]]*//')"
-  SERVER="$(echo "$OUT" | grep -m1 -E '^[[:space:]]*servidor[[:space:]]*:' | sed -E 's/^[^:]*:[[:space:]]*//')"
+  # pega apenas o bloco de "CREDENCIAIS MT5"
+  LOGIN="$(echo "$OUT" | awk '
+    /CREDENCIAIS MT5/ {in=1; next}
+    in && /^[[:space:]]*login[[:space:]]*:/ {sub(/^[^:]*:[[:space:]]*/, "", $0); print $0; exit}
+  ')"
+  PASS="$(echo "$OUT" | awk '
+    /CREDENCIAIS MT5/ {in=1; next}
+    in && /^[[:space:]]*senha[[:space:]]*:/ {sub(/^[^:]*:[[:space:]]*/, "", $0); print $0; exit}
+  ')"
+  SERVER="$(echo "$OUT" | awk '
+    /CREDENCIAIS MT5/ {in=1; next}
+    in && /^[[:space:]]*servidor[[:space:]]*:/ {sub(/^[^:]*:[[:space:]]*/, "", $0); print $0; exit}
+  ')"
   if [[ -n "$LOGIN" && -n "$PASS" && -n "$SERVER" ]]; then
     echo "[sandbox] credenciais: $LOGIN / $SERVER"
     python3 - <<PY
