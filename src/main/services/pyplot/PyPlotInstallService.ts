@@ -9,7 +9,8 @@ type InstallRequest = {
 };
 
 const ROOT = path.resolve(__dirname, "..", "..", "..", "..", "..");
-const DLL_SRC = path.join(ROOT, "dll", "PyShared_v2.dll");
+const DLL_SRC_DEFAULT = path.join(ROOT, "dll", "PyShared_v2.dll");
+const DLL_MANIFEST = path.join(ROOT, "dll", "PyShared_v2.manifest.json");
 const IND_TEMPLATE = path.join(
   ROOT,
   "pyplotmt",
@@ -63,15 +64,25 @@ export async function installPyPlot(request: InstallRequest): Promise<{ ok: bool
   await ensureDir(libsDir);
   await ensureDir(indDir);
 
+  const envDll = (process.env.PYPLOT_DLL_SRC || "").trim();
+  const dllSrc = envDll || DLL_SRC_DEFAULT;
   try {
-    await fs.access(DLL_SRC);
+    await fs.access(dllSrc);
   } catch {
-    return { ok: false, log: `DLL source missing: ${DLL_SRC}` };
+    return { ok: false, log: `DLL source missing: ${dllSrc}` };
   }
 
   const dllDest = path.join(libsDir, "PyShared_v2.dll");
-  await fs.copyFile(DLL_SRC, dllDest);
+  await fs.copyFile(dllSrc, dllDest);
   log.push(`dll: ${dllDest}`);
+  if (envDll) log.push(`dll_source: ${dllSrc}`);
+  try {
+    const manifest = JSON.parse(await fs.readFile(DLL_MANIFEST, "utf8"));
+    if (manifest?.version) log.push(`dll_version: ${manifest.version}`);
+    if (manifest?.sha256) log.push(`dll_sha256: ${manifest.sha256}`);
+  } catch {
+    // ignore
+  }
 
   const capacity = request.capacityMb && request.capacityMb > 0 ? request.capacityMb : DEFAULT_CAPACITY_MB;
   let channel = request.channel?.trim();

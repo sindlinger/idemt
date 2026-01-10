@@ -54,6 +54,20 @@ Opcional:
 ```
 Se `--channel` não for passado, o script tenta usar o **primeiro canal** de `hub_config.py` (ex.: `FISHER`).
 
+### DLL versionada
+A DLL usada no install vem de:
+```
+<repo>\dll\PyShared_v2.dll
+```
+Manifesto:
+```
+<repo>\dll\PyShared_v2.manifest.json
+```
+Para usar uma DLL alternativa na instalacao (sem alterar o repo), defina:
+```
+PYPLOT_DLL_SRC=C:\caminho\PyShared_v2.dll
+```
+
 ## Build do instalador (dev)
 Execute:
 ```

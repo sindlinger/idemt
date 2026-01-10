@@ -569,7 +569,7 @@ const SettingsModal = ({
                 />
               </div>
               <div className="settings-field">
-                <label>MSI Path</label>
+                <label>MSI Path (PyPlot-MT.msi)</label>
                 <div style={{ display: "flex", gap: 8 }}>
                   <input
                     value={local.pyplotMsiPath ?? ""}
@@ -584,6 +584,9 @@ const SettingsModal = ({
                     Browse
                   </button>
                 </div>
+              </div>
+              <div style={{ color: "var(--muted)", fontSize: 11 }}>
+                Opcional: defina PYPLOT_DLL_SRC para usar outra DLL na instalacao.
               </div>
               <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
                 <button className="button" type="button" onClick={handlePyplotInstall}>
