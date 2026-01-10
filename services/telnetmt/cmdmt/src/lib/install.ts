@@ -143,13 +143,27 @@ function psEscape(value: string): string {
 }
 
 function runPowerShell(script: string): { ok: boolean; out: string } {
-  const res = spawnSync(
-    "powershell.exe",
-    ["-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-Command", script],
-    { encoding: "utf8", timeout: 30000 }
-  );
-  const out = `${res.stdout || ""}${res.stderr || ""}`.trim();
-  return { ok: res.status === 0, out };
+  const direct = () => {
+    const res = spawnSync(
+      "powershell.exe",
+      ["-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-Command", script],
+      { encoding: "utf8", timeout: 30000 }
+    );
+    const out = `${res.stdout || ""}${res.stderr || ""}`.trim();
+    return { ok: res.status === 0, out };
+  };
+
+  if (isWsl() && process.env.CMDMT_INSTALL_TTY !== "0") {
+    const safe = script.replace(/"/g, "\\\"");
+    const cmd = `powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command \"${safe}\"`;
+    const res = spawnSync("script", ["-q", "-c", cmd, "/dev/null"], { encoding: "utf8", timeout: 30000 });
+    const out = `${res.stdout || ""}${res.stderr || ""}`.trim();
+    if (res.status === 0 || out) {
+      return { ok: res.status === 0, out };
+    }
+  }
+
+  return direct();
 }
 
 function ensureJunctions(

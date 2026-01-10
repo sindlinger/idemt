@@ -69,6 +69,8 @@ cmdmt examples expert run
    - `MQL5\Scripts\TelnetMT`  -> `services/telnetmt/Scripts`
 2) `common.ini`: `AllowDllImport=1`, `AllowLiveTrading=1` (padrão; pode desativar com `--no-allow-dll/--no-allow-live`)
 3) `terminal.ini`: adiciona URLs em `[WebRequest]` quando `--web` é usado
+4) No WSL, o install tenta rodar o PowerShell via pseudo‑TTY (`script`) para evitar travas.  
+   Para desligar isso: `CMDMT_INSTALL_TTY=0 cmdmt install ...`
 
 ## Fluxo do tester (run)
 1) resolve EA (nome/path)
