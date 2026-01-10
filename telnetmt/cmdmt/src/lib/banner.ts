@@ -39,13 +39,14 @@ export function renderBanner(opts: {
   socket: string;
 }): string {
   const version = resolveVersion();
+  const title = "CommandMetaTrader";
   const lines: string[] = [
-    `${opts.label} (socket)`,
-    `Autor: ${opts.owner}`,
-    `Versao: v${version}`,
+    `${title} • ${opts.label} v${version}`,
     `Socket: ${opts.socket}`
   ];
-  const width = Math.max(...lines.map((l) => l.length)) + 2;
+  const maxLine = Math.max(...lines.map((l) => l.length)) + 2;
+  const termWidth = Number.isFinite(process.stdout.columns) ? process.stdout.columns : 0;
+  const width = Math.max(maxLine, termWidth);
   const out: string[] = [];
   for (const line of lines) {
     out.push(`${BLUE_BG}${WHITE}${pad(" " + line + " ", width)}${RESET}`);
