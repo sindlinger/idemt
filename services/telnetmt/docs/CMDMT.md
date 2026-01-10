@@ -4,6 +4,7 @@ Este documento descreve **apenas** o que foi implementado/alterado no CLI `cmdmt
 
 ## Escopo entregue
 - **Defaults inteligentes**: comandos tentam usar `defaults.context.symbol/tf/sub` sempre que possivel.
+- **`install`**: injeta junctions do TelnetMT e sincroniza `common.ini` (DLL/Live) + `terminal.ini` (WebRequest) no MT5 Data Folder informado.
 - **`expert run` => fluxo tester completo**: resolve EA, compila `.mq5` se preciso, cria `tester.tpl`,
   gera `.set` + `.ini`, sincroniza `common.ini` (login/servidor/barras) e executa `/config`.
 - **`expert test`**: roda tester sem gerar template (para cenarios avancados).
@@ -25,6 +26,7 @@ cmdmt/index.ts
   - runners, baseTpl, tester params, paths WSL/Windows
 - `dispatch.ts`:
   - defaults por contexto
+  - `install` injeta junctions + ini allowlist
   - `expert run` = tester end-to-end
   - `examples` aceita `<comando> <subcomando>`
 - `tester.ts`:
@@ -50,11 +52,21 @@ Para permitir comandos com **1 parametro** (ex.: `cmdmt indicador ZigZag`, `cmdm
 
 ## Exemplos principais
 ```
+cmdmt install C:\Users\...\MetaQuotes\Terminal\<HASH>
+cmdmt install C:\...\Terminal\<HASH> --web https://example.com --web http://localhost:9090
 cmdmt indicador ZigZag
 cmdmt expert run MyEA
 cmdmt expert test MyEA
 cmdmt examples expert run
 ```
+
+## Fluxo do install
+1) cria junctions:
+   - `MQL5\Services\TelnetMT` -> `services/telnetmt/Services`
+   - `MQL5\Experts\TelnetMT`  -> `services/telnetmt/Experts`
+   - `MQL5\Scripts\TelnetMT`  -> `services/telnetmt/Scripts`
+2) `common.ini`: `AllowDllImport=1`, `AllowLiveTrading=1` (padrão; pode desativar com `--no-allow-dll/--no-allow-live`)
+3) `terminal.ini`: adiciona URLs em `[WebRequest]` quando `--web` é usado
 
 ## Fluxo do tester (run)
 1) resolve EA (nome/path)
@@ -67,4 +79,3 @@ cmdmt examples expert run
 ## Testes executados nesta rodada
 - `npm run typecheck` (cmdmt)
 - `npm run build` (cmdmt)
-

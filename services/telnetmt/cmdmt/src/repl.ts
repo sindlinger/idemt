@@ -10,6 +10,7 @@ import { runTester } from "./lib/tester.js";
 import { createExpertTemplate } from "./lib/template.js";
 import { buildAttachReport, formatAttachReport, DEFAULT_ATTACH_META, findLatestLogFile } from "./lib/attach_report.js";
 import { renderBanner } from "./lib/banner.js";
+import { runInstall } from "./lib/install.js";
 
 export type ReplOpts = TransportOpts & { json?: boolean; quiet?: boolean };
 
@@ -50,6 +51,21 @@ async function handleCommand(tokens: string[], ctx: Ctx, opts: ReplOpts, resolve
   }
   if (res.kind === "exit") {
     throw new Error("__EXIT__");
+  }
+  if (res.kind === "install") {
+    const output = runInstall(
+      {
+        dataPath: res.dataPath,
+        allowDll: res.allowDll ?? true,
+        allowLive: res.allowLive ?? true,
+        web: res.web ?? [],
+        dryRun: res.dryRun ?? false,
+        repoPath: res.repoPath
+      },
+      process.cwd()
+    );
+    process.stdout.write(output + "\n");
+    return;
   }
   if (res.kind === "test") {
     const runner = requireRunner(resolved);

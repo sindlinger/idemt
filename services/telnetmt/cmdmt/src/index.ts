@@ -21,6 +21,7 @@ import {
 import { runTester } from "./lib/tester.js";
 import { createExpertTemplate } from "./lib/template.js";
 import { buildAttachReport, formatAttachReport, DEFAULT_ATTACH_META, findLatestLogFile } from "./lib/attach_report.js";
+import { runInstall } from "./lib/install.js";
 
 type AttachReport = Awaited<ReturnType<typeof buildAttachReport>>;
 
@@ -316,6 +317,14 @@ async function main() {
     .option("--json", "saida em JSON", false)
     .option("--quiet", "nao imprime banner no modo interativo", false)
     .argument("[cmd...]", "comando e parametros")
+    .option("--repo <path>", "override do caminho do repo TelnetMT")
+    .option("--no-allow-dll", "desabilitar AllowDllImport (padrao: habilitado)")
+    .option("--no-allow-live", "desabilitar AllowLiveTrading (padrao: habilitado)")
+    .option("--web <url>", "adicionar url em WebRequest (repeatable)", (val, acc: string[]) => {
+      acc.push(val);
+      return acc;
+    }, [] as string[])
+    .option("--dry-run", "nao altera arquivos (apenas mostra plano)", false)
     .allowUnknownOption(true)
     .configureOutput({
       writeErr: (str) => process.stderr.write(str),
@@ -428,6 +437,24 @@ async function main() {
     return;
   }
   if (res.kind === "exit") {
+    return;
+  }
+  if (res.kind === "install") {
+    const dataPath = res.dataPath;
+    const allowDll = res.allowDll ?? opts.allowDll;
+    const allowLive = res.allowLive ?? opts.allowLive;
+    const web = res.web ?? (Array.isArray(opts.web) ? opts.web : []);
+    const dryRun = res.dryRun ?? Boolean(opts.dryRun);
+    const repoPath = res.repoPath ?? opts.repo;
+    const output = runInstall(
+      { dataPath, allowDll, allowLive, web, dryRun, repoPath },
+      process.cwd()
+    );
+    if (opts.json) {
+      process.stdout.write(JSON.stringify({ kind: "install", output }) + "\n");
+    } else {
+      process.stdout.write(output + "\n");
+    }
     return;
   }
   if (res.kind === "test") {

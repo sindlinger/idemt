@@ -82,7 +82,7 @@ const VERSION = resolveVersion();
 export type HelpSection = { title: string; items: string[] };
 
 const SECTIONS: HelpSection[] = [
-  { title: "basic", items: ["ping", "debug", "compile", "use", "ctx", "help", "indicador"] },
+  { title: "basic", items: ["ping", "debug", "compile", "use", "ctx", "help", "indicador", "install"] },
   { title: "chart", items: ["open", "close", "list", "closeall", "redraw", "detachall", "find"] },
   { title: "template", items: ["apply", "save", "saveea", "savechart"] },
   { title: "indicator", items: ["attach", "detach", "total", "name", "handle", "get", "release"] },
@@ -199,6 +199,16 @@ const EXAMPLES: Record<string, ExampleGroup[]> = {
   use: [{ title: "use", lines: ["use EURUSD M5", "use GBPUSD H1"] }],
   ctx: [{ title: "ctx", lines: ["ctx"] }],
   help: [{ title: "help", lines: ["help", "examples", "examples chart"] }],
+  install: [
+    {
+      title: "install",
+      lines: [
+        "install C:\\\\Users\\\\...\\\\MetaQuotes\\\\Terminal\\\\<HASH>",
+        "install C:\\\\...\\\\Terminal\\\\<HASH> --web https://example.com --web http://localhost:9090",
+        "install C:\\\\...\\\\Terminal\\\\<HASH> --no-allow-dll --no-allow-live --dry-run"
+      ]
+    }
+  ],
   indicador: [
     {
       title: "indicador",
