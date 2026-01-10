@@ -380,13 +380,13 @@ export async function runTester(
     if (child.stdout) {
       child.stdout.on("data", (chunk) => {
         process.stdout.write(chunk);
-        terminalLog.stream.write(chunk);
+        if (!terminalLog.stream.writableEnded) terminalLog.stream.write(chunk);
       });
     }
     if (child.stderr) {
       child.stderr.on("data", (chunk) => {
         process.stderr.write(chunk);
-        terminalLog.stream.write(chunk);
+        if (!terminalLog.stream.writableEnded) terminalLog.stream.write(chunk);
       });
     }
     child.on("error", (err) => {
