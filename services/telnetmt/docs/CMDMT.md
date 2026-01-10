@@ -62,6 +62,13 @@ cmdmt expert test MyEA
 cmdmt examples expert run
 ```
 
+## Shim do cmdmt (Windows)
+Se o `cmdmt` abrir VSCode/Electron ou mostrar warning de opções desconhecidas, o `.cmd` do npm
+pode estar chamando o `.js` direto (associação errada). Corrija com:
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File C:\git\mt5ide\services\telnetmt\cmdmt\tools\fix-cmdmt-shim.ps1
+```
+
 ## Fluxo do install
 1) cria junctions:
    - `MQL5\Services\TelnetMT` -> `services/telnetmt/Services`
