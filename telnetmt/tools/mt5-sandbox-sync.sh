@@ -45,16 +45,16 @@ if [[ "$REFRESH_CRED" == "1" ]]; then
   OUT="$(cli-duka-account 2>/dev/null || true)"
   # pega apenas o bloco de "CREDENCIAIS MT5"
   LOGIN="$(echo "$OUT" | awk '
-    /CREDENCIAIS MT5/ {in=1; next}
-    in && /^[[:space:]]*login[[:space:]]*:/ {sub(/^[^:]*:[[:space:]]*/, "", $0); print $0; exit}
+    /CREDENCIAIS MT5/ {in_block=1; next}
+    in_block && /^[[:space:]]*login[[:space:]]*:/ {sub(/^[^:]*:[[:space:]]*/, "", $0); print $0; exit}
   ')"
   PASS="$(echo "$OUT" | awk '
-    /CREDENCIAIS MT5/ {in=1; next}
-    in && /^[[:space:]]*senha[[:space:]]*:/ {sub(/^[^:]*:[[:space:]]*/, "", $0); print $0; exit}
+    /CREDENCIAIS MT5/ {in_block=1; next}
+    in_block && /^[[:space:]]*senha[[:space:]]*:/ {sub(/^[^:]*:[[:space:]]*/, "", $0); print $0; exit}
   ')"
   SERVER="$(echo "$OUT" | awk '
-    /CREDENCIAIS MT5/ {in=1; next}
-    in && /^[[:space:]]*servidor[[:space:]]*:/ {sub(/^[^:]*:[[:space:]]*/, "", $0); print $0; exit}
+    /CREDENCIAIS MT5/ {in_block=1; next}
+    in_block && /^[[:space:]]*servidor[[:space:]]*:/ {sub(/^[^:]*:[[:space:]]*/, "", $0); print $0; exit}
   ')"
   if [[ -n "$LOGIN" && -n "$PASS" && -n "$SERVER" ]]; then
     echo "[sandbox] credenciais: $LOGIN / $SERVER"
