@@ -6,10 +6,12 @@ type InstallRequest = {
   channel: string;
   indicatorFolder?: string;
   capacityMb?: number;
+  linkDll?: boolean;
 };
 
 const ROOT = path.resolve(__dirname, "..", "..", "..", "..", "..");
 const DLL_SRC_DEFAULT = path.join(ROOT, "dll", "PyShared_v2.dll");
+const DLL_SRC_RELEASE = path.join(ROOT, "releases", "dist", "pyshared", "PyShared_v2.dll");
 const DLL_MANIFEST = path.join(ROOT, "dll", "PyShared_v2.manifest.json");
 const IND_TEMPLATE = path.join(
   ROOT,
@@ -46,6 +48,38 @@ async function ensureDir(dirPath: string) {
   await fs.mkdir(dirPath, { recursive: true });
 }
 
+async function resolveDllSource(envOverride: string): Promise<string> {
+  if (envOverride) return envOverride;
+  try {
+    await fs.access(DLL_SRC_RELEASE);
+    return DLL_SRC_RELEASE;
+  } catch {
+    return DLL_SRC_DEFAULT;
+  }
+}
+
+async function readManifest(dllSource: string, log: string[]) {
+  const manifestFromSource = path.join(path.dirname(dllSource), "PyShared_v2.manifest.json");
+  const manifestPath = await fs
+    .access(manifestFromSource)
+    .then(() => manifestFromSource)
+    .catch(async () =>
+      fs
+        .access(DLL_MANIFEST)
+        .then(() => DLL_MANIFEST)
+        .catch(() => "")
+    );
+  if (!manifestPath) return;
+  try {
+    const manifest = JSON.parse(await fs.readFile(manifestPath, "utf8"));
+    if (manifest?.version) log.push(`dll_version: ${manifest.version}`);
+    if (manifest?.sha256) log.push(`dll_sha256: ${manifest.sha256}`);
+    log.push(`dll_manifest: ${manifestPath}`);
+  } catch {
+    // ignore
+  }
+}
+
 export async function installPyPlot(request: InstallRequest): Promise<{ ok: boolean; log: string }> {
   const log: string[] = [];
   const dataDir = request.dataDir?.trim();
@@ -65,7 +99,7 @@ export async function installPyPlot(request: InstallRequest): Promise<{ ok: bool
   await ensureDir(indDir);
 
   const envDll = (process.env.PYPLOT_DLL_SRC || "").trim();
-  const dllSrc = envDll || DLL_SRC_DEFAULT;
+  const dllSrc = await resolveDllSource(envDll);
   try {
     await fs.access(dllSrc);
   } catch {
@@ -73,16 +107,28 @@ export async function installPyPlot(request: InstallRequest): Promise<{ ok: bool
   }
 
   const dllDest = path.join(libsDir, "PyShared_v2.dll");
-  await fs.copyFile(dllSrc, dllDest);
-  log.push(`dll: ${dllDest}`);
-  if (envDll) log.push(`dll_source: ${dllSrc}`);
-  try {
-    const manifest = JSON.parse(await fs.readFile(DLL_MANIFEST, "utf8"));
-    if (manifest?.version) log.push(`dll_version: ${manifest.version}`);
-    if (manifest?.sha256) log.push(`dll_sha256: ${manifest.sha256}`);
-  } catch {
-    // ignore
+  const linkDll = request.linkDll === true;
+  let linkMode: "hardlink" | "copy" = "copy";
+  if (linkDll) {
+    try {
+      await fs.rm(dllDest, { force: true });
+    } catch {
+      // ignore
+    }
+    try {
+      await fs.link(dllSrc, dllDest);
+      linkMode = "hardlink";
+    } catch (err) {
+      log.push(`dll_link_failed: ${String(err)}`);
+    }
   }
+  if (linkMode === "copy") {
+    await fs.copyFile(dllSrc, dllDest);
+  }
+  log.push(`dll: ${dllDest}`);
+  log.push(`dll_mode: ${linkMode}`);
+  log.push(`dll_source: ${dllSrc}`);
+  await readManifest(dllSrc, log);
 
   const capacity = request.capacityMb && request.capacityMb > 0 ? request.capacityMb : DEFAULT_CAPACITY_MB;
   let channel = request.channel?.trim();

@@ -152,11 +152,13 @@ const SettingsModal = ({
     const channel = (local.pyplotChannel ?? "").trim() || pyplotChannels[0] || "MAIN";
     const indicatorFolder = (local.pyplotIndicatorFolder ?? "").trim() || "PyPlotMT";
     const capacityMb = Number(local.pyplotCapacityMb ?? 8);
+    const linkDll = local.pyplotLinkDll ?? true;
     const result = await window.api.pyplotInstall({
       dataDir,
       channel,
       indicatorFolder,
-      capacityMb
+      capacityMb,
+      linkDll
     });
     setPyplotInstallLog(result.log || "");
   };
@@ -566,6 +568,14 @@ const SettingsModal = ({
                   max={256}
                   value={local.pyplotCapacityMb ?? 8}
                   onChange={(event) => updateNumberField("pyplotCapacityMb", event.target.value)}
+                />
+              </div>
+              <div className="settings-field">
+                <label>Link DLL (hardlink)</label>
+                <input
+                  type="checkbox"
+                  checked={local.pyplotLinkDll ?? true}
+                  onChange={(event) => updateBooleanField("pyplotLinkDll", event.target.checked)}
                 />
               </div>
               <div className="settings-field">

@@ -34,6 +34,7 @@ const DEFAULTS: Settings = {
   pyplotIndicatorFolder: "",
   pyplotCapacityMb: 8,
   pyplotMsiPath: "",
+  pyplotLinkDll: true,
   windowBounds: undefined
 };
 

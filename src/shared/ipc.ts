@@ -150,6 +150,7 @@ export type Settings = {
   pyplotIndicatorFolder?: string;
   pyplotCapacityMb?: number;
   pyplotMsiPath?: string;
+  pyplotLinkDll?: boolean;
   windowBounds?: WindowBounds;
 };
 
@@ -158,6 +159,7 @@ export type PyPlotInstallRequest = {
   channel: string;
   indicatorFolder?: string;
   capacityMb?: number;
+  linkDll?: boolean;
 };
 
 export type PyPlotInstallResult = {

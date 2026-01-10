@@ -99,7 +99,16 @@ export const registerIpc = async (window: BrowserWindow, settingsService: Settin
 
   ipcMain.handle(
     "pyplot:install",
-    async (_event, payload: { dataDir: string; channel: string; indicatorFolder?: string; capacityMb?: number }) => {
+    async (
+      _event,
+      payload: {
+        dataDir: string;
+        channel: string;
+        indicatorFolder?: string;
+        capacityMb?: number;
+        linkDll?: boolean;
+      }
+    ) => {
       logLine("ipc", "pyplot:install");
       return installPyPlot(payload);
     }

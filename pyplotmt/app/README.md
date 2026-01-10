@@ -55,17 +55,31 @@ Opcional:
 Se `--channel` não for passado, o script tenta usar o **primeiro canal** de `hub_config.py` (ex.: `FISHER`).
 
 ### DLL versionada
-A DLL usada no install vem de:
-```
-<repo>\dll\PyShared_v2.dll
-```
-Manifesto:
+Preferência de fonte da DLL (por ordem):
+1) `<repo>\releases\dist\pyshared\PyShared_v2.dll`
+2) `<repo>\dll\PyShared_v2.dll`
+
+Manifesto (hash/versão):
 ```
 <repo>\dll\PyShared_v2.manifest.json
 ```
-Para usar uma DLL alternativa na instalacao (sem alterar o repo), defina:
+
+Override manual (sem alterar o repo):
 ```
 PYPLOT_DLL_SRC=C:\caminho\PyShared_v2.dll
+```
+
+Se a opção **Link DLL** estiver ativa no Settings, o installer tenta criar **hardlink**
+em `MQL5\Libraries` (fallback automático para copy se falhar).
+
+### Build da DLL (dev)
+Script no repo:
+```
+<repo>\scripts\build-pyshared.ps1
+```
+Ele compila a DLL (CMake) e copia o output para:
+```
+<repo>\releases\dist\pyshared\PyShared_v2.dll
 ```
 
 ## Build do instalador (dev)
