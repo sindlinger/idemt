@@ -32,6 +32,23 @@ function err(msg: string): DispatchResult {
 }
 
 const PARAMS_HINT = "params devem ser passados com --params k=v ... (ex: --params depth=12 deviation=5)";
+const DEFAULT_SYMBOL = "EURUSD";
+const DEFAULT_TF = "M5";
+
+function parseSymTfDefault(args: string[], ctx: Ctx): { sym: string; tf: string; rest: string[] } {
+  const a = [...args];
+  let sym = ctx.symbol?.trim() || DEFAULT_SYMBOL;
+  let tf = ctx.tf?.trim() || DEFAULT_TF;
+  if (a.length >= 2 && isTf(a[1])) {
+    sym = a[0];
+    tf = a[1];
+    a.splice(0, 2);
+  } else if (a.length >= 1 && isTf(a[0])) {
+    tf = a[0];
+    a.splice(0, 1);
+  }
+  return { sym, tf, rest: a };
+}
 
 function requireSymTf(args: string[], ctx: Ctx): { sym: string; tf: string; rest: string[] } | null {
   return resolveSymTf(args, ctx, true);
@@ -132,10 +149,6 @@ function maybeResolveLocalPath(name: string): string {
   const abs = path.isAbsolute(trimmed) ? trimmed : path.resolve(process.cwd(), trimmed);
   if (fs.existsSync(abs)) return abs;
   return name;
-}
-
-function requireDefaultSymbol(ctx: Ctx): string | null {
-  return ctx.symbol?.trim() || null;
 }
 
 function requireBaseTpl(ctx: Ctx): string | null {
@@ -264,17 +277,13 @@ export function dispatch(tokens: string[], ctx: Ctx): DispatchResult {
     if (!rest.length) return err("uso: debug MSG");
     return { kind: "send", type: "DEBUG_MSG", params: [rest.join(" ")] };
   }
+  if (cmd === "open") {
+    const r = parseSymTfDefault(rest, ctx);
+    return { kind: "send", type: "OPEN_CHART", params: [r.sym, r.tf] };
+  }
 
   if (cmd === "indicador") {
-    const symbol = requireDefaultSymbol(ctx);
-    if (!symbol) return err("symbol default ausente. Use --symbol/CMDMT_SYMBOL ou defaults.context.symbol.");
-    let tf = ctx.tf;
-    let remaining = [...rest];
-    if (remaining.length >= 1 && isTf(remaining[0])) {
-      tf = remaining[0];
-      remaining = remaining.slice(1);
-    }
-    if (!tf) return err("tf default ausente. Use --tf/CMDMT_TF ou defaults.context.tf.");
+    const { sym, tf, rest: remaining } = parseSymTfDefault(rest, ctx);
     const { params, rest: rest2, meta } = parseParamsAndMeta(remaining);
     const { sub: subw, rest: rest3 } = parseSub(rest2, ctx);
     if (!params && hasImplicitParams(rest3)) {
@@ -283,13 +292,13 @@ export function dispatch(tokens: string[], ctx: Ctx): DispatchResult {
     let name = rest3.join(" ");
     if (!name) return err("uso: indicador [TF] NOME [sub=N] [--params k=v ...]");
     name = maybeResolveLocalPath(name);
-    const payload = [symbol, tf, name, subw];
+    const payload = [sym, tf, name, subw];
     if (params) payload.push(params);
     return {
       kind: "send",
       type: "ATTACH_IND_FULL",
       params: payload,
-      attach: { kind: "indicator", name, symbol, tf, sub: Number(subw) },
+      attach: { kind: "indicator", name, symbol: sym, tf, sub: Number(subw) },
       meta
     };
   }
@@ -301,28 +310,24 @@ export function dispatch(tokens: string[], ctx: Ctx): DispatchResult {
     if (sub === "list") return { kind: "send", type: "LIST_CHARTS", params: [] };
     if (sub === "closeall") return { kind: "send", type: "CLOSE_ALL", params: [] };
     if (sub === "open") {
-      const r = resolveSymTf(args, ctx, false);
-      if (!r || !r.sym || !r.tf) return err("uso: chart open [SYMBOL TF]");
+      const r = parseSymTfDefault(args, ctx);
       return { kind: "send", type: "OPEN_CHART", params: [r.sym, r.tf] };
     }
     if (sub === "close") {
-      const r = resolveSymTf(args, ctx, false);
-      if (!r || !r.sym || !r.tf) return err("uso: chart close [SYMBOL TF]");
+      const r = parseSymTfDefault(args, ctx);
       return { kind: "send", type: "CLOSE_CHART", params: [r.sym, r.tf] };
     }
     if (sub === "redraw") {
-      const r = resolveSymTf(args, ctx, false);
-      if (!r || !r.sym || !r.tf) return err("uso: chart redraw [SYMBOL TF]");
+      const r = parseSymTfDefault(args, ctx);
       return { kind: "send", type: "REDRAW_CHART", params: [r.sym, r.tf] };
     }
     if (sub === "detachall") {
-      const r = resolveSymTf(args, ctx, false);
-      if (!r || !r.sym || !r.tf) return err("uso: chart detachall [SYMBOL TF]");
+      const r = parseSymTfDefault(args, ctx);
       return { kind: "send", type: "DETACH_ALL", params: [r.sym, r.tf] };
     }
     if (sub === "find") {
-      const r = resolveSymTf(args, ctx, false);
-      if (!r || !r.sym || !r.tf || r.rest.length < 1) return err("uso: chart find [SYMBOL TF] NAME");
+      const r = parseSymTfDefault(args, ctx);
+      if (r.rest.length < 1) return err("uso: chart find [SYMBOL TF] NAME");
       return { kind: "send", type: "WINDOW_FIND", params: [r.sym, r.tf, r.rest.join(" ")] };
     }
   }
@@ -332,13 +337,13 @@ export function dispatch(tokens: string[], ctx: Ctx): DispatchResult {
     const sub = rest[0].toLowerCase();
     const args = rest.slice(1);
     if (sub === "apply") {
-      const r = resolveSymTf(args, ctx, false);
-      if (!r || !r.sym || !r.tf || r.rest.length < 1) return err("uso: template apply [SYMBOL TF] TEMPLATE");
+      const r = parseSymTfDefault(args, ctx);
+      if (r.rest.length < 1) return err("uso: template apply [SYMBOL TF] TEMPLATE");
       return { kind: "send", type: "APPLY_TPL", params: [r.sym, r.tf, r.rest.join(" ")] };
     }
     if (sub === "save") {
-      const r = resolveSymTf(args, ctx, false);
-      if (!r || !r.sym || !r.tf || r.rest.length < 1) return err("uso: template save [SYMBOL TF] TEMPLATE");
+      const r = parseSymTfDefault(args, ctx);
+      if (r.rest.length < 1) return err("uso: template save [SYMBOL TF] TEMPLATE");
       return { kind: "send", type: "SAVE_TPL", params: [r.sym, r.tf, r.rest.join(" ")] };
     }
     if (sub === "savechart") {
@@ -364,8 +369,8 @@ export function dispatch(tokens: string[], ctx: Ctx): DispatchResult {
     const args = rest.slice(1);
 
     if (sub === "attach") {
-      const r = resolveSymTf(args, ctx, false);
-      if (!r || !r.sym || !r.tf || r.rest.length < 1)
+      const r = parseSymTfDefault(args, ctx);
+      if (r.rest.length < 1)
         return err("uso: indicator attach [SYMBOL TF] NAME [SUB|sub=N] [--params k=v ...]");
       const { params, rest: rest2, meta } = parseParamsAndMeta(r.rest);
       const { sub: subw, rest: rest3 } = parseSub(rest2, ctx);
@@ -385,16 +390,14 @@ export function dispatch(tokens: string[], ctx: Ctx): DispatchResult {
       };
     }
     if (sub === "detach") {
-      const r = resolveSymTf(args, ctx, false);
-      if (!r || !r.sym || !r.tf || r.rest.length < 1)
-        return err("uso: indicator detach [SYMBOL TF] NAME [SUB|sub=N]");
+      const r = parseSymTfDefault(args, ctx);
+      if (r.rest.length < 1) return err("uso: indicator detach [SYMBOL TF] NAME [SUB|sub=N]");
       const { sub: subw, rest: rest2 } = parseSub(r.rest, ctx);
       const name = rest2.join(" ");
       return { kind: "send", type: "DETACH_IND_FULL", params: [r.sym, r.tf, name, subw] };
     }
     if (sub === "total") {
-      const r = resolveSymTf(args, ctx, false);
-      if (!r || !r.sym || !r.tf) return err("uso: indicator total [SYMBOL TF] [SUB]");
+      const r = parseSymTfDefault(args, ctx);
       const { sub: subw, rest: rest2 } = parseSub(r.rest, ctx);
       if (rest2.length) {
         // allow explicit sub as arg
@@ -403,9 +406,8 @@ export function dispatch(tokens: string[], ctx: Ctx): DispatchResult {
       return { kind: "send", type: "IND_TOTAL", params: [r.sym, r.tf, subw] };
     }
     if (sub === "name" || sub === "handle" || sub === "get") {
-      const r = resolveSymTf(args, ctx, false);
-      if (!r || !r.sym || !r.tf || r.rest.length < 1)
-        return err(`uso: indicator ${sub} [SYMBOL TF] NAME|INDEX [SUB]`);
+      const r = parseSymTfDefault(args, ctx);
+      if (r.rest.length < 1) return err(`uso: indicator ${sub} [SYMBOL TF] NAME|INDEX [SUB]`);
       const { sub: subw, rest: rest2 } = parseSub(r.rest, ctx);
       const type = sub === "name" ? "IND_NAME" : sub === "handle" ? "IND_HANDLE" : "IND_GET";
       const params = [r.sym, r.tf, subw];
@@ -427,8 +429,8 @@ export function dispatch(tokens: string[], ctx: Ctx): DispatchResult {
       return { kind: "send", type: "FIND_EA", params: [args.join(" ")] };
     }
     if (sub === "run") {
-      let symbol = ctx.symbol?.trim();
-      let tf = ctx.tf?.trim();
+      let symbol = ctx.symbol?.trim() || DEFAULT_SYMBOL;
+      let tf = ctx.tf?.trim() || DEFAULT_TF;
       let restArgs = [...args];
       if (restArgs.length >= 2 && isTf(restArgs[1])) {
         symbol = restArgs[0];
@@ -438,8 +440,6 @@ export function dispatch(tokens: string[], ctx: Ctx): DispatchResult {
         tf = restArgs[0];
         restArgs = restArgs.slice(1);
       }
-      if (!symbol) return err("symbol default ausente. Use --symbol/CMDMT_SYMBOL ou defaults.context.symbol.");
-      if (!tf) return err("tf default ausente. Use --tf/CMDMT_TF ou defaults.context.tf.");
       let baseTpl = requireBaseTpl(ctx) ?? "";
       const tplIdx = restArgs.findIndex((t) => t.toLowerCase().endsWith(".tpl"));
       if (tplIdx >= 0) {
@@ -456,8 +456,8 @@ export function dispatch(tokens: string[], ctx: Ctx): DispatchResult {
       return { kind: "test", spec };
     }
     if (sub === "test") {
-      let symbol = ctx.symbol?.trim();
-      let tf = ctx.tf?.trim();
+      let symbol = ctx.symbol?.trim() || DEFAULT_SYMBOL;
+      let tf = ctx.tf?.trim() || DEFAULT_TF;
       let restArgs = [...args];
       if (restArgs.length >= 2 && isTf(restArgs[1])) {
         symbol = restArgs[0];
@@ -467,8 +467,6 @@ export function dispatch(tokens: string[], ctx: Ctx): DispatchResult {
         tf = restArgs[0];
         restArgs = restArgs.slice(1);
       }
-      if (!symbol) return err("symbol default ausente. Use --symbol/CMDMT_SYMBOL ou defaults.context.symbol.");
-      if (!tf) return err("tf default ausente. Use --tf/CMDMT_TF ou defaults.context.tf.");
       const { params, rest: rest2 } = parseParamsAndMeta(restArgs);
       if (!params && hasImplicitParams(rest2)) {
         return err(PARAMS_HINT);
@@ -479,8 +477,7 @@ export function dispatch(tokens: string[], ctx: Ctx): DispatchResult {
       return { kind: "test", spec };
     }
     if (sub === "oneshot") {
-      const symbol = requireDefaultSymbol(ctx);
-      if (!symbol) return err("symbol default ausente. Use --symbol/CMDMT_SYMBOL ou defaults.context.symbol.");
+      const symbol = ctx.symbol?.trim() || DEFAULT_SYMBOL;
       if (args.length < 2 || !isTf(args[0])) return err("uso: expert oneshot TF NOME [BASE_TPL] [--params k=v ...]");
       const tf = args[0];
       const restArgs = args.slice(1);
@@ -501,9 +498,8 @@ export function dispatch(tokens: string[], ctx: Ctx): DispatchResult {
       return { kind: "test", spec };
     }
     if (sub === "attach") {
-      const r = resolveSymTf(args, ctx, false);
-      if (!r || !r.sym || !r.tf || r.rest.length < 1)
-        return err("uso: expert attach [SYMBOL TF] NAME [BASE_TPL] [--params k=v ...]");
+      const r = parseSymTfDefault(args, ctx);
+      if (r.rest.length < 1) return err("uso: expert attach [SYMBOL TF] NAME [BASE_TPL] [--params k=v ...]");
       const { params, rest: rest2, meta } = parseParamsAndMeta(r.rest);
       if (rest2.length === 1 && rest2[0].toLowerCase().endsWith(".tpl") && !params) {
         return { kind: "send", type: "APPLY_TPL", params: [r.sym, r.tf, rest2[0]] };

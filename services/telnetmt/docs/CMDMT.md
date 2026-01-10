@@ -61,6 +61,7 @@ cmdmt expert run MyEA
 cmdmt expert test MyEA
 cmdmt examples expert run
 ```
+**Defaults:** quando SYMBOL/TF não são informados, o cmdmt usa `defaults.context` do config; se não houver, cai em `EURUSD/M5`.
 
 ## Shim do cmdmt (Windows)
 Se o `cmdmt` abrir VSCode/Electron ou mostrar warning de opções desconhecidas, o `.cmd` do npm
