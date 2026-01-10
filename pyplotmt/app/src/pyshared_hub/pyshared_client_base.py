@@ -37,6 +37,9 @@ class BridgeConfig:
 
 class PySharedBridge:
     def __init__(self, dll_path: str):
+        if os.name != "nt":
+            log_event("PySharedBridge requires Windows (ct.WinDLL)", "error")
+            raise RuntimeError("PySharedBridge requires Windows (ct.WinDLL)")
         self.dll_path = dll_path
         self.dll = ct.WinDLL(dll_path)
 
@@ -211,13 +214,19 @@ def _resolve_dll_path(cfg: Optional[dict], log: logging.Logger, cfg_path: Option
     if not mql5_root and cfg_path is not None:
         mql5_root = _find_mql5_root(cfg_path.resolve())
     if mql5_root:
-        dll_name = "PyShared.dll"
+        dll_name = "PyShared_v2.dll"
         if cfg and isinstance(cfg.get("dll_name"), str) and cfg["dll_name"]:
             dll_name = cfg["dll_name"]
         candidate = mql5_root / "Libraries" / dll_name
         if candidate.exists():
             log_event(f"dll_path resolved: {str(candidate)}")
             return str(candidate)
+        # fallback to legacy name if v2 not found
+        if dll_name != "PyShared.dll":
+            legacy = mql5_root / "Libraries" / "PyShared.dll"
+            if legacy.exists():
+                log_event(f"dll_path resolved (legacy): {str(legacy)}")
+                return str(legacy)
 
     log.error("DLL path not provided and default not found.")
     log_event("dll_path resolve failed", "error")

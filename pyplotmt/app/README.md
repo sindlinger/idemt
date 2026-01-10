@@ -42,6 +42,18 @@ Use o instalador diretamente:
 C:\mql\pyshared-hub\installer\wix\PyPlot-MT.msi
 ```
 
+## Setup rápido (dev)
+Gera `pyshared_config.json`, copia a DLL e cria um indicador bridge no MT5:
+```
+node C:\git\mt5ide\pyplotmt\tools\pypmt-install.mjs --data "C:\Users\<user>\AppData\Roaming\MetaQuotes\Terminal\<HASH>"
+```
+Opcional:
+```
+--name MinhaInterface   (pasta em MQL5\Indicators)
+--channel FISHER        (canal padrão do indicador gerado)
+```
+Se `--channel` não for passado, o script tenta usar o **primeiro canal** de `hub_config.py` (ex.: `FISHER`).
+
 ## Build do instalador (dev)
 Execute:
 ```
