@@ -43,9 +43,9 @@ LOG_PATH="$SANDBOX_WSL/Logs/$LOG_FILE"
 if [[ "$REFRESH_CRED" == "1" ]]; then
   echo "[sandbox] Atualizando credenciais via cli-duka-account..."
   OUT="$(cli-duka-account 2>/dev/null || true)"
-  LOGIN="$(echo "$OUT" | awk -F':' '/login/ {gsub(/ /,"",$2); print $2; exit}')"
-  PASS="$(echo "$OUT" | awk -F':' '/senha/ {sub(/^ /,"",$2); print $2; exit}')"
-  SERVER="$(echo "$OUT" | awk -F':' '/servidor/ {sub(/^ /,"",$2); print $2; exit}')"
+  LOGIN="$(echo "$OUT" | grep -m1 -E '^[[:space:]]*login[[:space:]]*:' | sed -E 's/^[^:]*:[[:space:]]*//')"
+  PASS="$(echo "$OUT" | grep -m1 -E '^[[:space:]]*senha[[:space:]]*:' | sed -E 's/^[^:]*:[[:space:]]*//')"
+  SERVER="$(echo "$OUT" | grep -m1 -E '^[[:space:]]*servidor[[:space:]]*:' | sed -E 's/^[^:]*:[[:space:]]*//')"
   if [[ -n "$LOGIN" && -n "$PASS" && -n "$SERVER" ]]; then
     echo "[sandbox] credenciais: $LOGIN / $SERVER"
     python3 - <<PY
@@ -83,7 +83,10 @@ cfg = Path.home()/".cmdmt"/"config.json"
 if cfg.exists():
     obj = json.loads(cfg.read_text())
     tester = obj.setdefault("defaults", {}).setdefault("tester", {})
-    tester["login"] = int(login)
+    if login.isdigit():
+        tester["login"] = int(login)
+    else:
+        tester["login"] = login
     tester["password"] = pwd
     tester["server"] = server
     cfg.write_text(json.dumps(obj, indent=2, ensure_ascii=False))
