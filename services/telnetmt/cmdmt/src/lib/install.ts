@@ -141,7 +141,11 @@ function psEscape(value: string): string {
 }
 
 function runPowerShell(script: string): { ok: boolean; out: string } {
-  const res = spawnSync("powershell.exe", ["-NoProfile", "-Command", script], { encoding: "utf8" });
+  const res = spawnSync(
+    "powershell.exe",
+    ["-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-Command", script],
+    { encoding: "utf8", timeout: 30000 }
+  );
   const out = `${res.stdout || ""}${res.stderr || ""}`.trim();
   return { ok: res.status === 0, out };
 }
