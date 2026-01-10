@@ -229,11 +229,13 @@ export function runInstall(spec: InstallSpec, cwd = process.cwd()): string {
     throw new Error("nao encontrei services/telnetmt. Use --repo <path>.");
   }
   const telnetRootWin = toWinPath(repoRoot);
-  const name = (spec.name || "TelnetMT").trim() || "TelnetMT";
-  const prefix = spec.namePrefix?.trim() || "";
-  const names = prefix
-    ? { services: `${prefix}Services`, experts: `${prefix}Experts`, scripts: `${prefix}Scripts` }
-    : { services: name, experts: name, scripts: name };
+  const name = (spec.name || "").trim();
+  const prefixRaw = (spec.namePrefix ?? "").trim();
+  const defaultPrefix = "TelnetMT_";
+  const prefix = prefixRaw || defaultPrefix;
+  const names = name
+    ? { services: name, experts: name, scripts: name }
+    : { services: `${prefix}Services`, experts: `${prefix}Experts`, scripts: `${prefix}Scripts` };
 
   log.push(`mt5 data: ${dataPathWin}`);
   log.push(`telnetmt: ${telnetRootWin}`);

@@ -52,8 +52,8 @@ Para permitir comandos com **1 parametro** (ex.: `cmdmt indicador ZigZag`, `cmdm
 
 ## Exemplos principais
 ```
-cmdmt install C:\Users\...\MetaQuotes\Terminal\<HASH>
-cmdmt install C:\...\Terminal\<HASH> --name TelnetMT
+cmdmt install C:\Users\...\MetaQuotes\Terminal\<HASH>          (prefixo padrão TelnetMT_)
+cmdmt install C:\...\Terminal\<HASH> --name MinhaInterface
 cmdmt install C:\...\Terminal\<HASH> --name-prefix TelnetMT_
 cmdmt install C:\...\Terminal\<HASH> --web https://example.com --web http://localhost:9090
 cmdmt indicador ZigZag
@@ -71,9 +71,12 @@ powershell -NoProfile -ExecutionPolicy Bypass -File C:\git\mt5ide\services\telne
 
 ## Fluxo do install
 1) cria junctions:
-   - `MQL5\Services\TelnetMT` -> `services/telnetmt/Services`
-   - `MQL5\Experts\TelnetMT`  -> `services/telnetmt/Experts`
-   - `MQL5\Scripts\TelnetMT`  -> `services/telnetmt/Scripts`
+   - **default** (sem `--name`):  
+     `MQL5\Services\TelnetMT_Services` -> `services/telnetmt/Services`  
+     `MQL5\Experts\TelnetMT_Experts`  -> `services/telnetmt/Experts`  
+     `MQL5\Scripts\TelnetMT_Scripts`  -> `services/telnetmt/Scripts`
+   - com `--name MinhaInterface`:  
+     `MQL5\Services\MinhaInterface` / `Experts` / `Scripts`
 2) `common.ini`: `AllowDllImport=1`, `AllowLiveTrading=1` (padrão; pode desativar com `--no-allow-dll/--no-allow-live`)
 3) `terminal.ini`: adiciona URLs em `[WebRequest]` quando `--web` é usado
 4) No WSL, o install tenta rodar o PowerShell via pseudo‑TTY (`script`) para evitar travas.  
