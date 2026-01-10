@@ -1,5 +1,9 @@
 node_modules
 dist
+!releases/
+!releases/dist/
+!releases/dist/pyshared/
+!releases/dist/pyshared/*
 logs
 runs
 reports
