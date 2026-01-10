@@ -39,6 +39,7 @@ Se algum valor obrigatorio estiver ausente (ex: host, symbol, runner), o CLI ret
     "tester": {
       "artifactsDir": "cmdmt-artifacts",
       "reportDir": "reports",
+      "allowOpen": false,
       "login": 1234567890,
       "password": "SENHA",
       "server": "MetaQuotes-Demo",
@@ -72,6 +73,9 @@ Se algum valor obrigatorio estiver ausente (ex: host, symbol, runner), o CLI ret
 - `CMDMT_PORT` / `CMDMT_TIMEOUT`
 - `CMDMT_MT5_PATH` / `CMDMT_MT5_DATA`
 - `CMDMT_COMPILE`: caminho do script/exe de compile
+
+### Tester
+- `tester.allowOpen`: permite rodar mesmo com MT5 aberto no mesmo data path (usa logs do terminal aberto)
 
 ### Flags principais
 - `--config <path>`

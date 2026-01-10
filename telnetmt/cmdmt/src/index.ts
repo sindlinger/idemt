@@ -8,6 +8,7 @@ import { dispatch } from "./lib/dispatch.js";
 import type { SendAction } from "./lib/dispatch.js";
 import { sendLine, sendJson } from "./lib/transport.js";
 import { runRepl } from "./repl.js";
+import { renderBanner } from "./lib/banner.js";
 import {
   requireRunner,
   requireTransport,
@@ -369,6 +370,17 @@ async function main() {
 
   const tokensRaw = args.length === 1 ? splitArgs(args[0]) : args;
   const tokens = invokeAs ? [invokeAs, ...tokensRaw] : tokensRaw;
+
+  if (!opts.quiet) {
+    const socketLabel = resolveConfig({ configPath: opts.config }).transport.hosts.join(",");
+    process.stdout.write(
+      renderBanner({
+        label: invokeAs || "cmdmt",
+        owner: "Eduardo Candeiro Gonçalves",
+        socket: `${socketLabel}:${resolved.transport.port}`
+      })
+    );
+  }
 
   if (tokens[0]?.toLowerCase() === "compile") {
     const compileArgs = tokens.slice(1);

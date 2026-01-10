@@ -399,7 +399,17 @@ export async function runTester(
       terminalLog.stream.end();
       if (code && code !== 0) {
         if (code === 189) {
-          reject(new Error("terminal ja esta aberto com o mesmo data path; feche a instancia e tente novamente"));
+          if (tester.allowOpen) {
+            const msg =
+              "terminal ja esta aberto com o mesmo data path; continuando (allowOpen=true)";
+            process.stdout.write(`${msg}\n`);
+            terminalLog.stream.write(`[warn] ${msg}\n`);
+            resolve();
+            return;
+          }
+          reject(
+            new Error("terminal ja esta aberto com o mesmo data path; feche a instancia e tente novamente")
+          );
           return;
         }
         reject(new Error(`terminal retornou ${code} (log: ${terminalLog.path})`));

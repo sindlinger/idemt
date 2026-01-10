@@ -19,6 +19,7 @@ export type ContextConfig = {
 export type TesterConfig = {
   artifactsDir?: string;
   reportDir?: string;
+  allowOpen?: boolean;
   login?: string | number;
   password?: string;
   server?: string;
@@ -103,6 +104,7 @@ const DEFAULT_CONFIG_PATH = path.join(os.homedir(), ".cmdmt", "config.json");
 const DEFAULT_TESTER: Required<Pick<TesterConfig, "artifactsDir" | "reportDir">> & TesterConfig = {
   artifactsDir: "cmdmt-artifacts",
   reportDir: "reports",
+  allowOpen: false,
   model: 0,
   executionMode: 0,
   optimization: 0,
