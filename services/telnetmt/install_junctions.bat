@@ -13,7 +13,7 @@ if not defined MT5_DATA (
   )
 )
 
-set SRC=C:\git\mt5ide\telnetmt
+set SRC=C:\git\mt5ide\services\telnetmt
 if not exist "%MT5_DATA%\MQL5" (
   echo MQL5 nao encontrado em %MT5_DATA%
   exit /b 1

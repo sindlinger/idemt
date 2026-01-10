@@ -2,7 +2,7 @@ param(
   [string]$RepoRoot = "C:\git\mt5ide"
 )
 
-$bin = Join-Path $RepoRoot "telnetmt\tools"
+$bin = Join-Path $RepoRoot "services\telnetmt\tools"
 if (!(Test-Path $bin)) {
   Write-Error "Path not found: $bin"
   exit 1

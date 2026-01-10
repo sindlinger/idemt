@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-BIN="/mnt/c/git/mt5ide/telnetmt/tools"
+BIN="/mnt/c/git/mt5ide/services/telnetmt/tools"
 PROFILE="${HOME}/.bashrc"
 
 if [ ! -d "$BIN" ]; then

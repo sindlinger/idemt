@@ -3,13 +3,13 @@
 Esta pasta contém os serviços MQL5 usados para orquestrar o MetaTrader via TCP.
 
 ## Estrutura
-- `telnetmt/Services/TelnetMT_SocketTelnetService.mq5`  
+- `services/telnetmt/Services/TelnetMT_SocketTelnetService.mq5`  
   Serviço TCP principal (entrada). Usa handlers em `TelnetMT_ServiceHandlers.mqh`.
-- `telnetmt/Services/TelnetMT_ServiceHandlers.mqh`  
+- `services/telnetmt/Services/TelnetMT_ServiceHandlers.mqh`  
   Dispatcher de comandos (PING, OPEN_CHART, ATTACH_IND_FULL, etc).
-- `telnetmt/Services/TelnetMT_SocketBridge.mqh`  
+- `services/telnetmt/Services/TelnetMT_SocketBridge.mqh`  
   Utilidades de socket/bridge.
-- `telnetmt/Services/TelnetMT_OficialTelnetServiceBootstrap.mq5`  
+- `services/telnetmt/Services/TelnetMT_OficialTelnetServiceBootstrap.mq5`  
   Bootstrap via arquivo `MQL5/Files/bootstrap_request.txt`.
 
 ## Observações importantes

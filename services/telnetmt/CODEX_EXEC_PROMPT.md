@@ -1,4 +1,4 @@
-Voce esta no repo /mnt/c/git/mt5ide/telnetmt. Siga AGENTS.md e implemente o desenho de config/perfis/runner para o CLI (cmdmt), alem dos novos comandos. Objetivo: tornar o CLI flexivel e robusto para multiplas instancias MT5 e testes.
+Voce esta no repo /mnt/c/git/mt5ide/services/telnetmt. Siga AGENTS.md e implemente o desenho de config/perfis/runner para o CLI (cmdmt), alem dos novos comandos. Objetivo: tornar o CLI flexivel e robusto para multiplas instancias MT5 e testes.
 
 Requisitos principais:
 - TypeScript em tudo.

@@ -1,0 +1,1 @@
+C:\mql\Python3.12\venv\Scripts\python.exe

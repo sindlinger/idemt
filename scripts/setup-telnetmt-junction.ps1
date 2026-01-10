@@ -4,7 +4,7 @@ param(
 )
 
 $svc = Join-Path $env:APPDATA "MetaQuotes\Terminal\$TerminalHash\MQL5\Services"
-$repoServices = Join-Path $RepoRoot "telnetmt\Services"
+$repoServices = Join-Path $RepoRoot "services\telnetmt\Services"
 
 if (!(Test-Path $svc)) {
   Write-Error "Services path not found: $svc"
@@ -27,6 +27,6 @@ Remove-IfExists (Join-Path $svc "TelnetMT")
 Remove-IfExists (Join-Path $svc "OficialTelnetServiceBootstrap.mq5")
 
 # Junction for TelnetMT folder
-New-Item -ItemType Junction -Path (Join-Path $svc "TelnetMT") -Target (Join-Path $RepoRoot "telnetmt") | Out-Null
+New-Item -ItemType Junction -Path (Join-Path $svc "TelnetMT") -Target (Join-Path $RepoRoot "services\telnetmt") | Out-Null
 
 Write-Host "Done. TelnetMT junction installed for $TerminalHash."

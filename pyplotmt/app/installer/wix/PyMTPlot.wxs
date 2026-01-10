@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+  <Product
+    Id="*"
+    Name="PyPlot-MT"
+    Manufacturer="pichau"
+    Version="1.0.5"
+    UpgradeCode="1e9f6239-8e10-4f9a-8bc0-960c2a37e568"
+    Language="1033">
+
+    <Package InstallerVersion="500" Compressed="yes" InstallScope="perMachine" />
+    <MajorUpgrade AllowSameVersionUpgrades="no" DowngradeErrorMessage="Uma versao mais recente do PyPlot-MT ja esta instalada." />
+    <MediaTemplate />
+
+    <Icon Id="AppIcon" SourceFile="..\..\assets\pyplot-mt.ico" />
+    <Property Id="ARPPRODUCTICON" Value="AppIcon" />
+
+    <Property Id="WIXUI_INSTALLDIR" Value="INSTALLFOLDER" />
+    <Property Id="STARTMENU_SHORTCUT" Value="1" />
+    <Property Id="STARTUP_SHORTCUT" Value="1" />
+    <Property Id="DESKTOP_SHORTCUT" Value="0" />
+    <Property Id="WIXUI_EXITDIALOGOPTIONALCHECKBOX" Value="1" />
+    <Property Id="WIXUI_EXITDIALOGOPTIONALCHECKBOXTEXT" Value="Iniciar PyPlot-MT agora" />
+    <!-- Disable Restart Manager prompts and suppress reboot requests -->
+    <Property Id="MSIRESTARTMANAGERCONTROL" Value="Disable" />
+    <Property Id="REBOOT" Value="ReallySuppress" />
+    <!-- Close only PyPlot-MT instance (pythonw/python) by command line -->
+    <CustomAction
+      Id="KillPyPlotMT"
+      Execute="immediate"
+      Impersonate="yes"
+      Return="ignore"
+      Directory="INSTALLFOLDER"
+      ExeCommand="&quot;[SystemFolder]WindowsPowerShell\\v1.0\\powershell.exe&quot; -NoProfile -NonInteractive -Command &quot;Get-CimInstance Win32_Process | Where-Object { $_.CommandLine -like '*PyPlot-MT.pyz*' } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force }&quot;" />
+
+    <Directory Id="TARGETDIR" Name="SourceDir">
+      <Directory Id="ProgramFilesFolder">
+        <Directory Id="INSTALLFOLDER" Name="PyPlot-MT">
+          <Component Id="AppFiles" Guid="226ddc1f-f4c6-43cb-be9e-693a338fee71">
+            <File Id="PyMTPlotExe" Source="..\..\dist\PyPlot-MT.exe" KeyPath="yes" />
+            <File Id="PyMTPlotPyz" Source="..\..\dist\PyPlot-MT.pyz" />
+            <File Id="PyMTPlotIco" Source="..\..\assets\pyplot-mt.ico" />
+            <File Id="PyMTPlotPyPath" Source="..\..\src\pyshared_hub\pymtplot_python_path.txt" />
+            <File Id="PyMTPlotHubConfig" Source="..\..\src\pyshared_hub\hub_config.py" />
+          </Component>
+        </Directory>
+      </Directory>
+
+      <Directory Id="ProgramMenuFolder">
+        <Directory Id="ProgramMenuDir" Name="PyPlot-MT">
+          <Component Id="StartMenuShortcut" Guid="6387d7c3-ed5f-4ce5-b848-20e5a2555928">
+            <Shortcut
+              Id="PyMTPlotHubShortcut"
+              Name="PyPlot-MT"
+              Target="[INSTALLFOLDER]PyPlot-MT.exe"
+              WorkingDirectory="INSTALLFOLDER"
+              Icon="AppIcon" />
+            <RemoveFolder Id="RemoveProgramMenuDir" On="uninstall" />
+            <RegistryValue Root="HKCU" Key="Software\PyPlot-MT" Name="Installed" Type="integer" Value="1" KeyPath="yes" />
+            <Condition>STARTMENU_SHORTCUT</Condition>
+          </Component>
+        </Directory>
+      </Directory>
+
+      <Directory Id="StartupFolder">
+        <Component Id="AutoStartShortcut" Guid="09e68d8a-ab9a-47d5-a21b-e3478571b386">
+          <Shortcut
+            Id="PyMTPlotHubAutoStart"
+            Name="PyPlot-MT"
+            Target="[INSTALLFOLDER]PyPlot-MT.exe"
+            WorkingDirectory="INSTALLFOLDER"
+            Icon="AppIcon" />
+          <RegistryValue Root="HKCU" Key="Software\PyPlot-MT" Name="AutoStart" Type="integer" Value="1" KeyPath="yes" />
+          <Condition>STARTUP_SHORTCUT</Condition>
+        </Component>
+      </Directory>
+
+      <Directory Id="DesktopFolder">
+        <Component Id="DesktopShortcut" Guid="3ff0e637-bd80-4621-9dad-3f4bb20e5e72">
+          <Shortcut
+            Id="PyMTPlotDesktopShortcut"
+            Name="PyPlot-MT"
+            Target="[INSTALLFOLDER]PyPlot-MT.exe"
+            WorkingDirectory="INSTALLFOLDER"
+            Icon="AppIcon" />
+          <RegistryValue Root="HKCU" Key="Software\PyPlot-MT" Name="DesktopShortcut" Type="integer" Value="1" KeyPath="yes" />
+          <Condition>DESKTOP_SHORTCUT</Condition>
+        </Component>
+      </Directory>
+    </Directory>
+
+    <CustomAction Id="LaunchPyMTPlot" FileKey="PyMTPlotExe" ExeCommand="" Execute="immediate" Impersonate="yes" Return="asyncNoWait" />
+
+    <UIRef Id="WixUI_InstallDir" />
+    <UIRef Id="WixUI_ErrorProgressText" />
+
+    <UI>
+      <Publish Dialog="ExitDialog" Control="Finish" Event="DoAction" Value="LaunchPyMTPlot">
+        WIXUI_EXITDIALOGOPTIONALCHECKBOX = 1 AND NOT Installed
+      </Publish>
+    </UI>
+
+    <Feature Id="MainFeature" Title="PyPlot-MT" Level="1">
+      <ComponentRef Id="AppFiles" />
+      <ComponentRef Id="StartMenuShortcut" />
+      <ComponentRef Id="AutoStartShortcut" />
+      <ComponentRef Id="DesktopShortcut" />
+    </Feature>
+
+    <InstallExecuteSequence>
+      <Custom Action="KillPyPlotMT" Before="InstallInitialize">NOT Installed OR REINSTALL</Custom>
+    </InstallExecuteSequence>
+  </Product>
+</Wix>
