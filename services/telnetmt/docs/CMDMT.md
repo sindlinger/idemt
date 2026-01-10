@@ -53,6 +53,7 @@ Para permitir comandos com **1 parametro** (ex.: `cmdmt indicador ZigZag`, `cmdm
 ## Exemplos principais
 ```
 cmdmt install C:\Users\...\MetaQuotes\Terminal\<HASH>
+cmdmt install C:\...\Terminal\<HASH> --name TelnetMT
 cmdmt install C:\...\Terminal\<HASH> --web https://example.com --web http://localhost:9090
 cmdmt indicador ZigZag
 cmdmt expert run MyEA

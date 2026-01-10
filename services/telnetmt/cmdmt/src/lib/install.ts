@@ -6,6 +6,7 @@ import { isWsl, toWslPath, toWindowsPath } from "./config.js";
 export type InstallSpec = {
   dataPath?: string;
   repoPath?: string;
+  name?: string;
   allowDll: boolean;
   allowLive: boolean;
   web: string[];
@@ -150,14 +151,14 @@ function runPowerShell(script: string): { ok: boolean; out: string } {
   return { ok: res.status === 0, out };
 }
 
-function ensureJunctions(dataPathWin: string, telnetRootWin: string, dryRun: boolean, log: string[]) {
+function ensureJunctions(dataPathWin: string, telnetRootWin: string, name: string, dryRun: boolean, log: string[]) {
   const mql5Root = path.win32.join(dataPathWin, "MQL5");
   const services = path.win32.join(mql5Root, "Services");
   const experts = path.win32.join(mql5Root, "Experts");
   const scripts = path.win32.join(mql5Root, "Scripts");
-  const targetServices = path.win32.join(services, "TelnetMT");
-  const targetExperts = path.win32.join(experts, "TelnetMT");
-  const targetScripts = path.win32.join(scripts, "TelnetMT");
+  const targetServices = path.win32.join(services, name);
+  const targetExperts = path.win32.join(experts, name);
+  const targetScripts = path.win32.join(scripts, name);
   const srcServices = path.win32.join(telnetRootWin, "Services");
   const srcExperts = path.win32.join(telnetRootWin, "Experts");
   const srcScripts = path.win32.join(telnetRootWin, "Scripts");
@@ -207,11 +208,13 @@ export function runInstall(spec: InstallSpec, cwd = process.cwd()): string {
     throw new Error("nao encontrei services/telnetmt. Use --repo <path>.");
   }
   const telnetRootWin = toWinPath(repoRoot);
+  const name = (spec.name || "TelnetMT").trim() || "TelnetMT";
 
   log.push(`mt5 data: ${dataPathWin}`);
   log.push(`telnetmt: ${telnetRootWin}`);
+  log.push(`junction name: ${name}`);
 
-  ensureJunctions(dataPathWin, telnetRootWin, spec.dryRun, log);
+  ensureJunctions(dataPathWin, telnetRootWin, name, spec.dryRun, log);
   if (!spec.dryRun) ensureIniAllows(dataPathWsl, spec, log);
 
   if (spec.web.length) {

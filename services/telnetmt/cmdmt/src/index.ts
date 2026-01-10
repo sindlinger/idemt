@@ -446,8 +446,9 @@ async function main() {
     const web = res.web ?? (Array.isArray(opts.web) ? opts.web : []);
     const dryRun = res.dryRun ?? Boolean(opts.dryRun);
     const repoPath = res.repoPath ?? opts.repo;
+    const name = res.name;
     const output = runInstall(
-      { dataPath, allowDll, allowLive, web, dryRun, repoPath },
+      { dataPath, allowDll, allowLive, web, dryRun, repoPath, name },
       process.cwd()
     );
     if (opts.json) {
