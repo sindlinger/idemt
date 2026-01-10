@@ -396,7 +396,6 @@ export async function runTester(
     });
     child.on("exit", (code) => {
       terminalLog.stream.write(`[${new Date().toISOString()}] exit: ${code ?? 0}\n`);
-      terminalLog.stream.end();
       if (code && code !== 0) {
         if (code === 189) {
           if (tester.allowOpen) {
@@ -404,6 +403,7 @@ export async function runTester(
               "terminal ja esta aberto com o mesmo data path; continuando (allowOpen=true)";
             process.stdout.write(`${msg}\n`);
             terminalLog.stream.write(`[warn] ${msg}\n`);
+            terminalLog.stream.end();
             resolve();
             return;
           }
@@ -412,9 +412,11 @@ export async function runTester(
           );
           return;
         }
+        terminalLog.stream.end();
         reject(new Error(`terminal retornou ${code} (log: ${terminalLog.path})`));
         return;
       }
+      terminalLog.stream.end();
       resolve();
     });
   });
