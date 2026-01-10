@@ -7,6 +7,7 @@ DEFAULT_CMD=("cmdmt" "--runner" "sandbox" "expert" "test" "M5" "DukaEA")
 
 TIMEOUT_SEC="${MT5_SANDBOX_TIMEOUT_SEC:-300}"
 POLL_SEC="${MT5_SANDBOX_POLL_SEC:-2}"
+REFRESH_CRED="${MT5_SANDBOX_REFRESH_CRED:-1}"
 
 if [[ "${1-}" == "--help" || "${1-}" == "-h" ]]; then
   cat <<'EOF'
@@ -37,7 +38,60 @@ if [[ "${1-}" == "--" ]]; then
 fi
 
 LOG_FILE="$(date +%Y%m%d).log"
-LOG_PATH="$SANDBOX_WSL/MQL5/Logs/$LOG_FILE"
+LOG_PATH="$SANDBOX_WSL/Logs/$LOG_FILE"
+
+if [[ "$REFRESH_CRED" == "1" ]]; then
+  echo "[sandbox] Atualizando credenciais via cli-duka-account..."
+  OUT="$(cli-duka-account 2>/dev/null || true)"
+  LOGIN="$(echo "$OUT" | awk -F':' '/login/ {gsub(/ /,"",$2); print $2; exit}')"
+  PASS="$(echo "$OUT" | awk -F':' '/senha/ {sub(/^ /,"",$2); print $2; exit}')"
+  SERVER="$(echo "$OUT" | awk -F':' '/servidor/ {sub(/^ /,"",$2); print $2; exit}')"
+  if [[ -n "$LOGIN" && -n "$PASS" && -n "$SERVER" ]]; then
+    echo "[sandbox] credenciais: $LOGIN / $SERVER"
+    python3 - <<PY
+from pathlib import Path
+import json, re
+login = "$LOGIN"
+pwd = "$PASS"
+server = "$SERVER"
+
+# atualizar common.ini do sandbox
+path = Path("$SANDBOX_WSL/Config/common.ini")
+text = path.read_text(errors='ignore')
+nl = "\\r\\n" if "\\r\\n" in text else "\\n"
+sec_re = re.compile(r'(^\\[Common\\][\\s\\S]*?)(?=^\\[|\\Z)', re.M)
+m = sec_re.search(text)
+if not m:
+    text = "[Common]"+nl+text
+    m = sec_re.search(text)
+block = m.group(1)
+lines = block.splitlines()
+new_lines = [lines[0]]
+for line in lines[1:]:
+    if line.startswith("Login=") or line.startswith("Password=") or line.startswith("Server="):
+        continue
+    if line.strip()=="" and (new_lines and new_lines[-1].strip()==""):
+        continue
+    new_lines.append(line)
+new_lines += [f"Login={login}", f"Password={pwd}", f"Server={server}"]
+new_block = nl.join(new_lines) + nl
+text = text.replace(block, new_block)
+path.write_text(text)
+
+# atualizar config.json do cmdmt
+cfg = Path.home()/".cmdmt"/"config.json"
+if cfg.exists():
+    obj = json.loads(cfg.read_text())
+    tester = obj.setdefault("defaults", {}).setdefault("tester", {})
+    tester["login"] = int(login)
+    tester["password"] = pwd
+    tester["server"] = server
+    cfg.write_text(json.dumps(obj, indent=2, ensure_ascii=False))
+PY
+  else
+    echo "[sandbox] Aviso: nao consegui ler credenciais do cli-duka-account."
+  fi
+fi
 
 echo "[sandbox] Iniciando MT5 portable..."
 powershell.exe -NoProfile -Command \
