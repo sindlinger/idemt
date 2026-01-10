@@ -204,6 +204,7 @@ const EXAMPLES: Record<string, ExampleGroup[]> = {
       title: "install",
       lines: [
         "install C:\\\\Users\\\\...\\\\MetaQuotes\\\\Terminal\\\\<HASH>",
+        "install C:\\\\...\\\\Terminal\\\\<HASH> --name-prefix TelnetMT_",
         "install C:\\\\...\\\\Terminal\\\\<HASH> --name TelnetMT",
         "install C:\\\\...\\\\Terminal\\\\<HASH> --web https://example.com --web http://localhost:9090",
         "install C:\\\\...\\\\Terminal\\\\<HASH> --no-allow-dll --no-allow-live --dry-run"

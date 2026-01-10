@@ -24,7 +24,7 @@ export type DispatchResult =
   | { kind: "error"; message: string }
   | { kind: "multi"; steps: SendAction[]; attach?: AttachInfo; meta?: AttachMeta }
   | { kind: "test"; spec: TestSpec }
-  | { kind: "install"; dataPath: string; allowDll?: boolean; allowLive?: boolean; web?: string[]; dryRun?: boolean; repoPath?: string; name?: string };
+  | { kind: "install"; dataPath: string; allowDll?: boolean; allowLive?: boolean; web?: string[]; dryRun?: boolean; repoPath?: string; name?: string; namePrefix?: string };
 
 
 function err(msg: string): DispatchResult {
@@ -148,12 +148,13 @@ function buildTplName(expert: string, symbol: string, tf: string, params: string
   return `${base}-${hash}.tpl`;
 }
 
-function parseInstallArgs(tokens: string[]): { dataPath: string; allowDll?: boolean; allowLive?: boolean; web?: string[]; dryRun?: boolean; repoPath?: string; name?: string } | null {
+function parseInstallArgs(tokens: string[]): { dataPath: string; allowDll?: boolean; allowLive?: boolean; web?: string[]; dryRun?: boolean; repoPath?: string; name?: string; namePrefix?: string } | null {
   let allowDll: boolean | undefined = undefined;
   let allowLive: boolean | undefined = undefined;
   let dryRun: boolean | undefined = undefined;
   let repoPath: string | undefined = undefined;
   let name: string | undefined = undefined;
+  let namePrefix: string | undefined = undefined;
   const web: string[] = [];
   const rest: string[] = [];
 
@@ -207,12 +208,21 @@ function parseInstallArgs(tokens: string[]): { dataPath: string; allowDll?: bool
       if (val) name = val;
       continue;
     }
+    if (lower === "--name-prefix" || lower.startsWith("--name-prefix=")) {
+      let val = lower.includes("=") ? tok.slice(tok.indexOf("=") + 1) : "";
+      if (!val && i + 1 < tokens.length && !tokens[i + 1].startsWith("--")) {
+        val = tokens[i + 1];
+        i += 1;
+      }
+      if (val) namePrefix = val;
+      continue;
+    }
     rest.push(tok);
   }
 
   if (!rest.length) return null;
   const dataPath = rest.join(" ");
-  return { dataPath, allowDll, allowLive, web, dryRun, repoPath, name };
+  return { dataPath, allowDll, allowLive, web, dryRun, repoPath, name, namePrefix };
 }
 
 export function dispatch(tokens: string[], ctx: Ctx): DispatchResult {
@@ -233,7 +243,7 @@ export function dispatch(tokens: string[], ctx: Ctx): DispatchResult {
   if (cmd === "install") {
     const parsed = parseInstallArgs(rest);
     if (!parsed) {
-    return err("uso: install <MT5_DATA> [--name NOME] [--allow-dll|--no-allow-dll] [--allow-live|--no-allow-live] [--web URL] [--dry-run] [--repo PATH]");
+    return err("uso: install <MT5_DATA> [--name NOME] [--name-prefix PREFIX] [--allow-dll|--no-allow-dll] [--allow-live|--no-allow-live] [--web URL] [--dry-run] [--repo PATH]");
   }
     return { kind: "install", ...parsed };
   }

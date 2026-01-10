@@ -7,6 +7,7 @@ export type InstallSpec = {
   dataPath?: string;
   repoPath?: string;
   name?: string;
+  namePrefix?: string;
   allowDll: boolean;
   allowLive: boolean;
   web: string[];
@@ -151,14 +152,20 @@ function runPowerShell(script: string): { ok: boolean; out: string } {
   return { ok: res.status === 0, out };
 }
 
-function ensureJunctions(dataPathWin: string, telnetRootWin: string, name: string, dryRun: boolean, log: string[]) {
+function ensureJunctions(
+  dataPathWin: string,
+  telnetRootWin: string,
+  names: { services: string; experts: string; scripts: string },
+  dryRun: boolean,
+  log: string[]
+) {
   const mql5Root = path.win32.join(dataPathWin, "MQL5");
   const services = path.win32.join(mql5Root, "Services");
   const experts = path.win32.join(mql5Root, "Experts");
   const scripts = path.win32.join(mql5Root, "Scripts");
-  const targetServices = path.win32.join(services, name);
-  const targetExperts = path.win32.join(experts, name);
-  const targetScripts = path.win32.join(scripts, name);
+  const targetServices = path.win32.join(services, names.services);
+  const targetExperts = path.win32.join(experts, names.experts);
+  const targetScripts = path.win32.join(scripts, names.scripts);
   const srcServices = path.win32.join(telnetRootWin, "Services");
   const srcExperts = path.win32.join(telnetRootWin, "Experts");
   const srcScripts = path.win32.join(telnetRootWin, "Scripts");
@@ -209,12 +216,18 @@ export function runInstall(spec: InstallSpec, cwd = process.cwd()): string {
   }
   const telnetRootWin = toWinPath(repoRoot);
   const name = (spec.name || "TelnetMT").trim() || "TelnetMT";
+  const prefix = spec.namePrefix?.trim() || "";
+  const names = prefix
+    ? { services: `${prefix}Services`, experts: `${prefix}Experts`, scripts: `${prefix}Scripts` }
+    : { services: name, experts: name, scripts: name };
 
   log.push(`mt5 data: ${dataPathWin}`);
   log.push(`telnetmt: ${telnetRootWin}`);
-  log.push(`junction name: ${name}`);
+  log.push(`junction services: ${names.services}`);
+  log.push(`junction experts: ${names.experts}`);
+  log.push(`junction scripts: ${names.scripts}`);
 
-  ensureJunctions(dataPathWin, telnetRootWin, name, spec.dryRun, log);
+  ensureJunctions(dataPathWin, telnetRootWin, names, spec.dryRun, log);
   if (!spec.dryRun) ensureIniAllows(dataPathWsl, spec, log);
 
   if (spec.web.length) {
