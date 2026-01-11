@@ -102,10 +102,12 @@ function main() {
   const mql5Root = path.join(dataPathWsl, "MQL5");
   const filesDir = path.join(mql5Root, "Files");
   const libsDir = path.join(mql5Root, "Libraries");
-  const indDir = path.join(mql5Root, "Indicators", nameArg || "PyPlotMT");
+  const indRoot = path.join(mql5Root, "Indicators");
+  const indDir = path.join(indRoot, nameArg || "PyPlotMT");
 
   ensureDir(filesDir);
   ensureDir(libsDir);
+  ensureDir(indRoot);
   ensureDir(indDir);
 
   if (!fs.existsSync(DLL_SRC)) {
@@ -127,12 +129,16 @@ function main() {
 
   if (fs.existsSync(IND_TEMPLATE)) {
     const indName = `PyPlotMT_${channelArg}.mq5`;
-    const out = path.join(indDir, indName);
     const text = fs.readFileSync(IND_TEMPLATE, "utf8").replace(
       /input string Channel\s*=\s*".*?";/,
       `input string Channel  = "${channelArg}";`
     );
-    fs.writeFileSync(out, text, "utf8");
+    const outSub = path.join(indDir, indName);
+    fs.writeFileSync(outSub, text, "utf8");
+    if (indDir !== indRoot) {
+      const outRoot = path.join(indRoot, indName);
+      fs.writeFileSync(outRoot, text, "utf8");
+    }
   }
 
   console.log("[pypmt-install] OK");
@@ -140,6 +146,7 @@ function main() {
   console.log(`dll:  ${toWinPath(dllDest)}`);
   console.log(`cfg:  ${toWinPath(cfgPath)}`);
   console.log(`ind:  ${toWinPath(indDir)}`);
+  if (indDir !== indRoot) console.log(`ind-root: ${toWinPath(indRoot)}`);
 }
 
 main();

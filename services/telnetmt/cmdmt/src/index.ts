@@ -198,9 +198,19 @@ function findFileRecursive(root: string, fileName: string, maxDepth = 6): string
 function resolveIndicatorFromRunner(name: string, dataPath?: string): string | null {
   if (!dataPath) return null;
   if (!isPlainFileName(name)) return null;
-  if (!/\.(mq5|ex5)$/i.test(name)) return null;
   const base = path.join(toWslPath(dataPath), "MQL5", "Indicators");
-  return findFileRecursive(base, name);
+  const hasExt = /\.(mq5|ex5)$/i.test(name);
+  const candidates = hasExt ? [name] : [`${name}.ex5`, `${name}.mq5`];
+  for (const candidate of candidates) {
+    const found = findFileRecursive(base, candidate);
+    if (found) {
+      let rel = path.relative(base, found);
+      rel = rel.replace(/\\/g, "/");
+      rel = rel.replace(/\.(mq5|ex5)$/i, "");
+      return rel.replace(/\//g, "\\");
+    }
+  }
+  return null;
 }
 
 function isMetaEditorPath(p: string): boolean {
