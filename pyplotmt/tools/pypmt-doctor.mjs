@@ -8,6 +8,25 @@ const APP_DIR = path.join(ROOT, "app", "src", "pyshared_hub");
 const PY_PATH_FILE = path.join(APP_DIR, "pymtplot_python_path.txt");
 const DEFAULT_PY = "C:\\mql\\Python3.12\\venv\\Scripts\\python.exe";
 
+function isWindowsPath(p) {
+  return /^[A-Za-z]:\\/.test(p) || /^\\\\/.test(p);
+}
+
+function isWsl() {
+  return Boolean(process.env.WSL_DISTRO_NAME || process.env.WSL_INTEROP);
+}
+
+function toWslPath(p) {
+  if (!p || !isWsl() || !isWindowsPath(p)) return p;
+  const m = /^([A-Za-z]):\\(.*)$/.exec(p);
+  if (m) {
+    const drive = m[1].toLowerCase();
+    const rest = m[2].replace(/\\/g, "/");
+    return `/mnt/${drive}/${rest}`;
+  }
+  return p;
+}
+
 function readPythonPath() {
   const envPy = process.env.PYMTPLOT_PY?.trim();
   if (envPy) return envPy;
@@ -36,10 +55,18 @@ function resolveConfigPath() {
 }
 
 function checkPython(pyExe) {
-  const exists = fs.existsSync(pyExe);
+  let pathToCheck = pyExe;
+  let exists = fs.existsSync(pathToCheck);
+  if (!exists && isWsl() && isWindowsPath(pyExe)) {
+    const wslPath = toWslPath(pyExe);
+    if (wslPath && wslPath !== pyExe) {
+      pathToCheck = wslPath;
+      exists = fs.existsSync(pathToCheck);
+    }
+  }
   console.log(`Python: ${pyExe} ${exists ? "OK" : "MISSING"}`);
   if (!exists) return;
-  const check = spawnSync(pyExe, ["-c", "import PySide6, numpy"], { stdio: "pipe" });
+  const check = spawnSync(pathToCheck, ["-c", "import PySide6, numpy"], { stdio: "pipe" });
   if (check.status === 0) {
     console.log("PySide6/numpy: OK");
   } else {
@@ -61,7 +88,18 @@ function checkConfig(cfgPath) {
     const obj = JSON.parse(fs.readFileSync(cfgPath, "utf8"));
     const dll = obj.dll_path || "";
     console.log(`dll_path: ${dll}`);
-    if (dll) console.log(`dll_path exists: ${fs.existsSync(dll) ? "OK" : "MISSING"}`);
+    if (dll) {
+      let dllCheck = dll;
+      let dllExists = fs.existsSync(dllCheck);
+      if (!dllExists && isWsl() && isWindowsPath(dll)) {
+        const wslPath = toWslPath(dll);
+        if (wslPath && wslPath !== dll) {
+          dllCheck = wslPath;
+          dllExists = fs.existsSync(dllCheck);
+        }
+      }
+      console.log(`dll_path exists: ${dllExists ? "OK" : "MISSING"}`);
+    }
     return { obj, cfgPath };
   } catch (err) {
     console.log("pyshared_config.json: FAIL to parse");
