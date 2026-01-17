@@ -238,6 +238,65 @@ function resolveIndicatorFromRunner(name: string, dataPath?: string): string | n
   return null;
 }
 
+type ResolvedExpert = { name: string; mq5?: string; ex5?: string };
+
+function normalizeExpertRelName(relPath: string): string {
+  let rel = relPath.replace(/\\/g, "/");
+  rel = rel.replace(/\.(mq5|ex5)$/i, "");
+  return rel.replace(/\//g, "\\");
+}
+
+function resolveExpertFromRunner(input: string, dataPath?: string): ResolvedExpert | null {
+  if (!dataPath || !input) return null;
+  const base = path.join(toWslPath(dataPath), "MQL5", "Experts");
+  const hasExt = /\.(mq5|ex5)$/i.test(input);
+  const hasSeparators = input.includes("/") || input.includes("\\");
+  const candidates = hasExt ? [input] : [`${input}.ex5`, `${input}.mq5`];
+
+  if (hasSeparators) {
+    const localRaw = isWindowsPath(input) ? toWslPath(input) : input;
+    if (fs.existsSync(localRaw)) {
+      if (localRaw.startsWith(base)) {
+        const rel = path.relative(base, localRaw);
+        const name = normalizeExpertRelName(rel);
+        const mq5 = localRaw.toLowerCase().endsWith(".mq5") ? localRaw : undefined;
+        const ex5 = localRaw.toLowerCase().endsWith(".ex5") ? localRaw : undefined;
+        return { name, mq5, ex5 };
+      }
+      const name = normalizeExpertRelName(path.basename(localRaw));
+      const mq5 = localRaw.toLowerCase().endsWith(".mq5") ? localRaw : undefined;
+      const ex5 = localRaw.toLowerCase().endsWith(".ex5") ? localRaw : undefined;
+      return { name, mq5, ex5 };
+    }
+    let relInput = input.replace(/^[/\\]+/, "");
+    relInput = relInput.replace(/^mql5[\\/]/i, "");
+    relInput = relInput.replace(/^experts[\\/]/i, "");
+    const relCandidates = hasExt ? [relInput] : [`${relInput}.ex5`, `${relInput}.mq5`];
+    for (const candidate of relCandidates) {
+      const full = path.join(base, candidate);
+      if (fs.existsSync(full)) {
+        const name = normalizeExpertRelName(candidate);
+        const mq5 = full.toLowerCase().endsWith(".mq5") ? full : undefined;
+        const ex5 = full.toLowerCase().endsWith(".ex5") ? full : undefined;
+        return { name, mq5, ex5 };
+      }
+    }
+    return null;
+  }
+
+  for (const candidate of candidates) {
+    const found = findFileRecursive(base, candidate);
+    if (found) {
+      const rel = path.relative(base, found);
+      const name = normalizeExpertRelName(rel);
+      const mq5 = found.toLowerCase().endsWith(".mq5") ? found : undefined;
+      const ex5 = found.toLowerCase().endsWith(".ex5") ? found : undefined;
+      return { name, mq5, ex5 };
+    }
+  }
+  return null;
+}
+
 function resolveMqSourceFromRunner(input: string, dataPath?: string): string | null {
   if (!dataPath || !input) return null;
   const base = path.join(toWslPath(dataPath), "MQL5");
@@ -291,6 +350,17 @@ function buildMetaEditorArgs(src: string, args: string[]): string[] {
     ? logArg.slice(5)
     : path.win32.join(path.win32.dirname(srcWin), "mt5-compile.log");
   return [`/compile:${srcWin}`, `/log:${logPath}`];
+}
+
+async function compileMqSource(src: string, resolved: { compilePath?: string }): Promise<void> {
+  let compilePath = resolveCompilePath(resolved);
+  if (!compilePath) {
+    throw new Error(
+      "compile nao configurado. Use --compile-path, CMDMT_COMPILE ou defaults.compilePath no config."
+    );
+  }
+  const args = isMetaEditorPath(compilePath) ? buildMetaEditorArgs(src, []) : [src];
+  await runCompile(compilePath, toWindowsArgsIfNeeded(args, compilePath));
 }
 
 async function runCompile(pathOrCmd: string, args: string[]): Promise<void> {
@@ -664,6 +734,28 @@ async function main() {
           process.exitCode = 1;
           return;
         }
+      }
+    }
+    if (saveStep) {
+      try {
+        const runner = requireRunner(resolved);
+        const resolvedExpert = resolveExpertFromRunner(saveStep.params[0] ?? "", runner.dataPath);
+        if (resolvedExpert?.name) {
+          saveStep.params[0] = resolvedExpert.name;
+        }
+        if (resolvedExpert?.mq5) {
+          await compileMqSource(resolvedExpert.mq5, resolved);
+        } else if (!resolvedExpert?.ex5) {
+          process.stderr.write("ERR expert nao encontrado em MQL5/Experts (mq5/ex5)\n");
+          process.exitCode = 1;
+          return;
+        } else {
+          process.stderr.write("WARN sem fonte .mq5; pulando compile.\n");
+        }
+      } catch (err) {
+        process.stderr.write(`ERR preflight_compile: ${String(err)}\n`);
+        process.exitCode = 1;
+        return;
       }
     }
     let steps = [...res.steps];
