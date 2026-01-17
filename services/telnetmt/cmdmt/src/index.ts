@@ -244,21 +244,150 @@ function findFileRecursive(root: string, fileName: string, maxDepth = 6): string
   return null;
 }
 
+function normalizeIndicatorRel(rel: string): string {
+  let out = rel.replace(/\\/g, "/");
+  out = out.replace(/\.(mq5|ex5)$/i, "");
+  out = out.replace(/^[/\\]+/, "");
+  return out.replace(/\//g, "\\");
+}
+
+function normalizeIndicatorKey(name: string): string {
+  return name
+    .toLowerCase()
+    .replace(/\.(mq5|ex5)$/i, "")
+    .replace(/[^a-z0-9]+/g, "");
+}
+
+function buildIndicatorAcronym(name: string): string {
+  const tokens = name
+    .replace(/\.(mq5|ex5)$/i, "")
+    .split(/[^a-z0-9]+/i)
+    .filter(Boolean);
+  if (!tokens.length) return "";
+  return tokens.map((t) => t[0]!.toLowerCase()).join("");
+}
+
+type IndicatorFile = { full: string; rel: string; base: string; ext: string; depth: number };
+
+function listIndicatorFiles(root: string, maxDepth = 6): IndicatorFile[] {
+  const out: IndicatorFile[] = [];
+  const queue: Array<{ dir: string; depth: number }> = [{ dir: root, depth: 0 }];
+  while (queue.length) {
+    const { dir, depth } = queue.shift()!;
+    let entries: fs.Dirent[];
+    try {
+      entries = fs.readdirSync(dir, { withFileTypes: true });
+    } catch {
+      continue;
+    }
+    for (const entry of entries) {
+      const full = path.join(dir, entry.name);
+      let isFile = entry.isFile();
+      let isDir = entry.isDirectory();
+      if (entry.isSymbolicLink()) {
+        try {
+          const stat = fs.statSync(full);
+          if (stat.isFile()) isFile = true;
+          if (stat.isDirectory()) isDir = true;
+        } catch {
+          // ignore broken symlink
+        }
+      }
+      if (isFile && /\.(mq5|ex5)$/i.test(entry.name)) {
+        const rel = path.relative(root, full);
+        const ext = path.extname(entry.name).toLowerCase();
+        const base = path.basename(entry.name, ext);
+        out.push({ full, rel, base, ext, depth });
+        continue;
+      }
+      if (isDir && depth < maxDepth) {
+        queue.push({ dir: full, depth: depth + 1 });
+      }
+    }
+  }
+  return out;
+}
+
 function resolveIndicatorFromRunner(name: string, dataPath?: string): string | null {
   if (!dataPath) return null;
-  if (!isPlainFileName(name)) return null;
+  if (!name) return null;
+  const trimmed = name.trim().replace(/^"+|"+$/g, "");
+  if (!trimmed) return null;
+
   const base = path.join(toWslPath(dataPath), "MQL5", "Indicators");
-  const hasExt = /\.(mq5|ex5)$/i.test(name);
-  const candidates = hasExt ? [name] : [`${name}.ex5`, `${name}.mq5`];
+  const hasExt = /\.(mq5|ex5)$/i.test(trimmed);
+
+  const tryResolveAbsolute = (absPath: string): string | null => {
+    const normalized = absPath.replace(/\\/g, path.sep);
+    if (!fs.existsSync(normalized)) return null;
+    if (!normalized.startsWith(base)) return null;
+    const rel = path.relative(base, normalized);
+    return normalizeIndicatorRel(rel);
+  };
+
+  if (isWindowsPath(trimmed)) {
+    const rel = tryResolveAbsolute(toWslPath(trimmed));
+    if (rel) return rel;
+  } else if (path.isAbsolute(trimmed)) {
+    const rel = tryResolveAbsolute(trimmed);
+    if (rel) return rel;
+  }
+
+  let relInput = trimmed.replace(/^[/\\]+/, "");
+  relInput = relInput.replace(/^mql5[\\/]/i, "");
+  relInput = relInput.replace(/^indicators[\\/]/i, "");
+  const relFs = relInput.replace(/\\/g, path.sep);
+  if (hasExt && fs.existsSync(path.join(base, relFs))) {
+    return normalizeIndicatorRel(relInput);
+  }
+  if (!hasExt) {
+    if (fs.existsSync(path.join(base, `${relFs}.ex5`))) {
+      return normalizeIndicatorRel(`${relInput}.ex5`);
+    }
+    if (fs.existsSync(path.join(base, `${relFs}.mq5`))) {
+      return normalizeIndicatorRel(`${relInput}.mq5`);
+    }
+  }
+
+  if (!isPlainFileName(trimmed)) return null;
+  const candidates = hasExt ? [trimmed] : [`${trimmed}.ex5`, `${trimmed}.mq5`];
   for (const candidate of candidates) {
     const found = findFileRecursive(base, candidate);
     if (found) {
-      let rel = path.relative(base, found);
-      rel = rel.replace(/\\/g, "/");
-      rel = rel.replace(/\.(mq5|ex5)$/i, "");
-      return rel.replace(/\//g, "\\");
+      const rel = path.relative(base, found);
+      return normalizeIndicatorRel(rel);
     }
   }
+
+  const target = normalizeIndicatorKey(trimmed);
+  if (!target) return null;
+  const acronym = buildIndicatorAcronym(trimmed);
+  const files = listIndicatorFiles(base);
+  let best: { rel: string; score: number; extRank: number; depth: number } | null = null;
+  for (const f of files) {
+    const norm = normalizeIndicatorKey(f.base);
+    if (!norm) continue;
+    let score = 0;
+    if (norm === target) {
+      score = 10000 + norm.length;
+    } else if (acronym && norm === acronym) {
+      score = 9000 + norm.length;
+    } else if (target.includes(norm) || norm.includes(target)) {
+      score = 1000 + Math.min(norm.length, target.length);
+    }
+    if (score <= 0) continue;
+    const extRank = f.ext === ".ex5" ? 2 : 1;
+    const depth = f.depth;
+    if (
+      !best ||
+      score > best.score ||
+      (score === best.score && extRank > best.extRank) ||
+      (score === best.score && extRank === best.extRank && depth < best.depth)
+    ) {
+      best = { rel: f.rel, score, extRank, depth };
+    }
+  }
+  if (best) return normalizeIndicatorRel(best.rel);
   return null;
 }
 
