@@ -23,6 +23,7 @@ export type DispatchResult =
   | { kind: "exit" }
   | { kind: "error"; message: string }
   | { kind: "multi"; steps: SendAction[]; attach?: AttachInfo; meta?: AttachMeta }
+  | { kind: "ind_detach_index"; sym: string; tf: string; sub: string; index: number }
   | { kind: "test"; spec: TestSpec }
   | { kind: "install"; dataPath: string; allowDll?: boolean; allowLive?: boolean; web?: string[]; dryRun?: boolean; repoPath?: string; name?: string; namePrefix?: string };
 
@@ -249,6 +250,103 @@ export function dispatch(tokens: string[], ctx: Ctx): DispatchResult {
   if (cmd === "examples" || cmd === "exemplos") {
     const key = rest.join(" ").trim();
     return { kind: "local", output: renderExamples(key) };
+  }
+  if (cmd === "add" || cmd === "del") {
+    const isAdd = cmd === "add";
+    let args = rest;
+    let mode: "indicator" | "expert" = "indicator";
+    if (args.length) {
+      const head = args[0].toLowerCase();
+      if (["ea", "expert", "experts"].includes(head)) {
+        mode = "expert";
+        args = args.slice(1);
+      } else if (["ind", "indicator", "indicators"].includes(head)) {
+        mode = "indicator";
+        args = args.slice(1);
+      }
+    }
+
+    if (mode === "indicator") {
+      if (isAdd) {
+        const r = parseSymTfDefault(args, ctx);
+        if (r.rest.length < 1)
+          return err("uso: add [SYMBOL TF] INDICADOR [SUB|sub=N] [--params k=v ...]");
+        const { params, rest: rest2, meta } = parseParamsAndMeta(r.rest);
+        const { sub: subw, rest: rest3 } = parseSub(rest2, ctx);
+        if (!params && hasImplicitParams(rest3)) {
+          return err(PARAMS_HINT);
+        }
+        let name = rest3.join(" ");
+        name = maybeResolveLocalPath(name);
+        const payload = [r.sym, r.tf, name, subw];
+        if (params) payload.push(params);
+        return {
+          kind: "send",
+          type: "ATTACH_IND_FULL",
+          params: payload,
+          attach: { kind: "indicator", name, symbol: r.sym, tf: r.tf, sub: Number(subw) },
+          meta
+        };
+      }
+      const r = parseSymTfDefault(args, ctx);
+      if (r.rest.length < 1)
+        return err("uso: del [SYMBOL TF] INDICADOR|INDEX [SUB|sub=N]");
+      const hasExplicitSub = r.rest.some((t) => {
+        const low = t.toLowerCase();
+        if (low.startsWith("sub=")) return true;
+        if ((t.startsWith("#") || t.startsWith("@")) && /^\d+$/.test(t.slice(1))) return true;
+        return false;
+      });
+      const subParsed = hasExplicitSub ? parseSub(r.rest, ctx) : { sub: String(ctx.sub ?? 1), rest: r.rest };
+      const { sub: subw, rest: rest2 } = subParsed;
+      const name = rest2.join(" ");
+      if (/^\d+$/.test(name)) {
+        return { kind: "ind_detach_index", sym: r.sym, tf: r.tf, sub: subw, index: parseInt(name, 10) };
+      }
+      return { kind: "send", type: "DETACH_IND_FULL", params: [r.sym, r.tf, name, subw] };
+    }
+
+    if (isAdd) {
+      const r = parseSymTfDefault(args, ctx);
+      if (r.rest.length < 1) return err("uso: add ea [SYMBOL TF] EA [BASE_TPL] [--params k=v ...]");
+      const { params, rest: rest2, meta } = parseParamsAndMeta(r.rest);
+      if (rest2.length === 1 && rest2[0].toLowerCase().endsWith(".tpl") && !params) {
+        return { kind: "send", type: "APPLY_TPL", params: [r.sym, r.tf, rest2[0]] };
+      }
+      let baseTpl = "";
+      const tplIdx = rest2.findIndex((t) => t.toLowerCase().endsWith(".tpl"));
+      if (tplIdx >= 0) {
+        baseTpl = rest2[tplIdx];
+        rest2.splice(tplIdx, 1);
+      }
+      if (!baseTpl && ctx.baseTpl) {
+        baseTpl = ctx.baseTpl;
+      }
+      if (!params && hasImplicitParams(rest2)) {
+        return err(PARAMS_HINT);
+      }
+      const name = rest2.join(" ");
+      if (!name) return err("uso: add ea [SYMBOL TF] EA [BASE_TPL] [--params k=v ...]");
+      const hash = stableHash(`${name}|${r.sym}|${r.tf}|${params}`);
+      const outTpl = `cmdmt_ea_${hash}.tpl`;
+      const saveParams = [name, outTpl];
+      if (baseTpl) saveParams.push(baseTpl);
+      if (params) saveParams.push(params);
+      const steps: SendAction[] = [
+        { type: "SAVE_TPL_EA", params: saveParams },
+        { type: "APPLY_TPL", params: [r.sym, r.tf, outTpl] }
+      ];
+      return {
+        kind: "multi",
+        steps,
+        attach: { kind: "expert", name, symbol: r.sym, tf: r.tf },
+        meta
+      };
+    }
+
+    const r = resolveSymTf(args, ctx, false);
+    if (!r || !r.sym || !r.tf) return err("uso: del ea [SYMBOL TF]");
+    return { kind: "send", type: "DETACH_EA_FULL", params: [r.sym, r.tf] };
   }
   if (cmd === "exit" || cmd === "quit") {
     return { kind: "exit" };

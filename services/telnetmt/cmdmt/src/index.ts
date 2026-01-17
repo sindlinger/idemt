@@ -47,6 +47,12 @@ function isErrorResponse(resp: string): boolean {
   return up.startsWith("ERR") || up.includes(" ERR ") || up.includes("CODE=");
 }
 
+function extractDataLines(resp: string): string[] {
+  const lines = resp.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+  while (lines.length && lines[0].toUpperCase().startsWith("OK")) lines.shift();
+  return lines;
+}
+
 function maybeExplainError(resp: string): void {
   const low = resp.toLowerCase();
   const has4802 = low.includes("code=4802") || low.includes(" 4802");
@@ -814,10 +820,75 @@ async function main() {
     return;
   }
 
+  if (res.kind === "ind_detach_index") {
+    const transport = requireTransport(resolved);
+    const detachResp = await executeSend(
+      { type: "DETACH_IND_INDEX", params: [res.sym, res.tf, res.sub, String(res.index)] },
+      transport
+    );
+    const lower = detachResp.toLowerCase();
+    const unsupported = lower.includes("unknown") || lower.includes("code=4113");
+    if (unsupported) {
+      const nameResp = await executeSend(
+        { type: "IND_NAME", params: [res.sym, res.tf, res.sub, String(res.index)] },
+        transport
+      );
+      if (isErrorResponse(nameResp)) {
+        if (opts.json) {
+          process.stdout.write(JSON.stringify({ kind: "send", type: "IND_NAME", params: [res.sym, res.tf, res.sub, String(res.index)], response: nameResp }) + "\n");
+        } else {
+          process.stdout.write(nameResp);
+          maybeExplainError(nameResp);
+        }
+        process.exitCode = 1;
+        return;
+      }
+      const lines = extractDataLines(nameResp);
+      const name = lines[0] ?? "";
+      if (!name) {
+        process.stderr.write("ERR indicador nao encontrado nesse indice\n");
+        process.exitCode = 1;
+        return;
+      }
+      const fallbackResp = await executeSend(
+        { type: "DETACH_IND_FULL", params: [res.sym, res.tf, name, res.sub] },
+        transport
+      );
+      if (opts.json) {
+        process.stdout.write(JSON.stringify({ kind: "send", type: "DETACH_IND_FULL", params: [res.sym, res.tf, name, res.sub], response: fallbackResp }) + "\n");
+      } else {
+        process.stdout.write(fallbackResp);
+        if (isErrorResponse(fallbackResp)) maybeExplainError(fallbackResp);
+      }
+      if (isErrorResponse(fallbackResp)) process.exitCode = 1;
+      return;
+    }
+    if (opts.json) {
+      process.stdout.write(JSON.stringify({ kind: "send", type: "DETACH_IND_INDEX", params: [res.sym, res.tf, res.sub, String(res.index)], response: detachResp }) + "\n");
+    } else {
+      process.stdout.write(detachResp);
+      if (isErrorResponse(detachResp)) maybeExplainError(detachResp);
+    }
+    if (isErrorResponse(detachResp)) process.exitCode = 1;
+    return;
+  }
+
   const transport = requireTransport(resolved);
 
   if (res.kind === "send") {
     let logStart = null as null | { file: string; offset: number };
+    if (res.type === "DETACH_IND_FULL") {
+      try {
+        const runner = requireRunner(resolved);
+        const p = res.params[2] ?? "";
+        const resolvedPath = resolveIndicatorFromRunner(p, runner.dataPath);
+        if (resolvedPath) {
+          res.params[2] = path.win32.basename(resolvedPath);
+        }
+      } catch {
+        // ignore resolve failure
+      }
+    }
     if (res.attach) {
       try {
         const runner = requireRunner(resolved);

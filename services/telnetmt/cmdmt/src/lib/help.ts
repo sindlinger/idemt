@@ -221,6 +221,26 @@ const EXAMPLES: Record<string, ExampleGroup[]> = {
       ]
     }
   ],
+  add: [
+    {
+      title: "add",
+      lines: [
+        "add ZigZag",
+        "add EURUSD H1 \"Bulls Power\"",
+        "add ea MyEA base.tpl --params lots=0.1"
+      ]
+    }
+  ],
+  del: [
+    {
+      title: "del",
+      lines: [
+        "del 0",
+        "del ZigZag",
+        "del ea EURUSD H1"
+      ]
+    }
+  ],
   chart: [
     { title: "open", lines: ["chart open", "chart open EURUSD H1"] },
     { title: "close", lines: ["chart close", "chart close EURUSD H1"] },

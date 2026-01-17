@@ -859,6 +859,32 @@ bool H_DetachInd(string &p[], string &m, string &d[])
   return (deleted>0);
 }
 
+bool H_DetachIndIndex(string &p[], string &m, string &d[])
+{
+  if(ArraySize(p)<4){ m="params"; return false; }
+  string sym=p[0]; string tfstr=p[1]; int sub=SubwindowSafe(p[2]); int idx=(int)StringToInteger(p[3]);
+  ENUM_TIMEFRAMES tf=TfFromString(tfstr); if(tf==0){ m="tf"; return false; }
+  if(!EnsureSymbol(sym))
+  {
+    if(UseChartDefaults(sym, tfstr))
+    {
+      tf=TfFromString(tfstr); if(tf==0){ m="tf"; return false; }
+    }
+    else { m="symbol"; return false; }
+  }
+  long cid=FindChartBySymbolTf(sym, tf);
+  if(cid==0) cid=ChartOpen(sym, tf);
+  if(cid==0){ m="ChartOpen"; return false; }
+  string name=ChartIndicatorName(cid, sub-1, idx);
+  if(name==""){ m="not_found"; return false; }
+  if(ChartIndicatorDelete(cid, sub-1, name))
+  {
+    m="detached=1";
+    return true;
+  }
+  return FailLast(m, "ChartIndicatorDelete", name);
+}
+
 bool H_IndTotal(string &p[], string &m, string &d[])
 {
   if(ArraySize(p)<3){ m="params"; return false; }
@@ -1445,6 +1471,7 @@ bool Dispatch(string type, string &params[], string &msg, string &data[])
   else if(type=="SNAPSHOT_LIST") ok = H_SnapshotList(params,msg,data);
   else if(type=="ATTACH_IND_FULL") ok = H_AttachInd(params,msg,data);
   else if(type=="DETACH_IND_FULL") ok = H_DetachInd(params,msg,data);
+  else if(type=="DETACH_IND_INDEX") ok = H_DetachIndIndex(params,msg,data);
   else if(type=="IND_TOTAL") ok = H_IndTotal(params,msg,data);
   else if(type=="IND_NAME") ok = H_IndName(params,msg,data);
   else if(type=="IND_HANDLE") ok = H_IndHandle(params,msg,data);
