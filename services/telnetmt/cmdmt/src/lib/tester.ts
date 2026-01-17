@@ -125,11 +125,22 @@ function findExpertByName(base: string, name: string): Array<{ path: string; ext
     }
     for (const entry of entries) {
       const p = path.join(dir, entry.name);
-      if (entry.isDirectory()) {
+      let isDir = entry.isDirectory();
+      let isFile = entry.isFile();
+      if (entry.isSymbolicLink()) {
+        try {
+          const stat = fs.statSync(p);
+          if (stat.isDirectory()) isDir = true;
+          if (stat.isFile()) isFile = true;
+        } catch {
+          // ignore broken symlink
+        }
+      }
+      if (isDir) {
         stack.push(p);
         continue;
       }
-      if (!entry.isFile()) continue;
+      if (!isFile) continue;
       const lower = entry.name.toLowerCase();
       if (lower === `${name.toLowerCase()}.ex5`) results.push({ path: p, ext: ".ex5" });
       if (lower === `${name.toLowerCase()}.mq5`) results.push({ path: p, ext: ".mq5" });

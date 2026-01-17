@@ -209,10 +209,21 @@ function findFileRecursive(root: string, fileName: string, maxDepth = 6): string
     }
     for (const entry of entries) {
       const full = path.join(dir, entry.name);
-      if (entry.isFile() && entry.name.toLowerCase() === fileName.toLowerCase()) {
+      let isFile = entry.isFile();
+      let isDir = entry.isDirectory();
+      if (entry.isSymbolicLink()) {
+        try {
+          const stat = fs.statSync(full);
+          if (stat.isFile()) isFile = true;
+          if (stat.isDirectory()) isDir = true;
+        } catch {
+          // ignore broken symlink
+        }
+      }
+      if (isFile && entry.name.toLowerCase() === fileName.toLowerCase()) {
         return full;
       }
-      if (entry.isDirectory() && depth < maxDepth) {
+      if (isDir && depth < maxDepth) {
         queue.push({ dir: full, depth: depth + 1 });
       }
     }
