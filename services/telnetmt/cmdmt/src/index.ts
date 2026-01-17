@@ -213,6 +213,41 @@ function resolveIndicatorFromRunner(name: string, dataPath?: string): string | n
   return null;
 }
 
+function resolveMqSourceFromRunner(input: string, dataPath?: string): string | null {
+  if (!dataPath || !input) return null;
+  const base = path.join(toWslPath(dataPath), "MQL5");
+  const hasExt = /\.(mq4|mq5)$/i.test(input);
+  const candidates = hasExt ? [input] : [`${input}.mq5`, `${input}.mq4`];
+  const hasSeparators = input.includes("/") || input.includes("\\");
+  for (const candidate of candidates) {
+    if (hasSeparators) {
+      const rel = candidate.replace(/^[/\\]+/, "");
+      const full = path.join(base, rel);
+      if (fs.existsSync(full)) return full;
+      continue;
+    }
+    const found = findFileRecursive(base, candidate);
+    if (found) return found;
+  }
+  return null;
+}
+
+function toWindowsArgsIfNeeded(args: string[], compilePath: string): string[] {
+  if (!isWsl()) return args;
+  const lower = compilePath.toLowerCase();
+  const isWinTarget = isWindowsPath(compilePath) || lower.endsWith(".cmd") || lower.endsWith(".bat");
+  if (!isWinTarget) return args;
+  return args.map((arg) => {
+    if (!arg) return arg;
+    const lowerArg = arg.toLowerCase();
+    if (lowerArg.startsWith("/compile:") || lowerArg.startsWith("/log:")) return arg;
+    if (arg.includes("/") || arg.includes("\\")) {
+      return isWindowsPath(arg) ? arg : toWindowsPath(arg);
+    }
+    return arg;
+  });
+}
+
 function isMetaEditorPath(p: string): boolean {
   const base = path.basename(p).toLowerCase();
   return base.includes("metaeditor") && base.endsWith(".exe");
@@ -411,6 +446,12 @@ async function main() {
         "compile nao configurado. Use --compile-path, CMDMT_COMPILE ou defaults.compilePath no config."
       );
     }
+    if (compileArgs.length) {
+      const resolvedSrc = resolveMqSourceFromRunner(compileArgs[0], resolved.runner?.dataPath);
+      if (resolvedSrc) {
+        compileArgs[0] = resolvedSrc;
+      }
+    }
     if (compileArgs.length && looksLikeMqSource(compileArgs[0]) && !userSpecified) {
       try {
         const runner = requireRunner(resolved);
@@ -424,7 +465,7 @@ async function main() {
     const finalArgs = isMetaEditorPath(compilePath) && compileArgs.length
       ? buildMetaEditorArgs(compileArgs[0], compileArgs)
       : compileArgs;
-    await runCompile(compilePath, finalArgs);
+    await runCompile(compilePath, toWindowsArgsIfNeeded(finalArgs, compilePath));
     return;
   }
   const res = dispatch(tokens, ctx);
