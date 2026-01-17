@@ -463,6 +463,12 @@ async function main() {
     .option("--hosts <hosts>", "lista separada por virgula")
     .option("-p, --port <port>", "porta", (v) => parseInt(v, 10), 9090)
     .option("-t, --timeout <ms>", "timeout em ms", (v) => parseInt(v, 10), 3000)
+    .option("--visual", "tester visual (override)")
+    .option("--no-visual", "tester sem visual (override)")
+    .option("--win <WxH>", "tamanho da janela do terminal (ex: 1400x900)")
+    .option("--pos <X,Y>", "posicao da janela do terminal (ex: 100,40)")
+    .option("--fullscreen", "terminal fullscreen (override)")
+    .option("--no-fullscreen", "terminal sem fullscreen (override)")
     .option("--json", "saida em JSON", false)
     .option("--quiet", "nao imprime banner no modo interativo", false)
     .option("--trace", "debug: loga comandos/respostas e verificacoes", false)
@@ -502,6 +508,31 @@ async function main() {
     mt5Path: opts.mt5Path,
     mt5Data: opts.mt5Data
   });
+
+  const testerOverride: Record<string, number> = {};
+  if (typeof opts.visual === "boolean") testerOverride.visual = opts.visual ? 1 : 0;
+  if (typeof opts.fullscreen === "boolean") testerOverride.windowFullscreen = opts.fullscreen ? 1 : 0;
+  if (opts.win) {
+    const m = String(opts.win).match(/^(\d+)\s*[x,]\s*(\d+)$/i);
+    if (m) {
+      testerOverride.windowWidth = parseInt(m[1], 10);
+      testerOverride.windowHeight = parseInt(m[2], 10);
+    } else {
+      process.stderr.write("WARN --win esperado no formato WxH (ex: 1400x900)\n");
+    }
+  }
+  if (opts.pos) {
+    const m = String(opts.pos).match(/^(-?\d+)\s*[,x]\s*(-?\d+)$/i);
+    if (m) {
+      testerOverride.windowLeft = parseInt(m[1], 10);
+      testerOverride.windowTop = parseInt(m[2], 10);
+    } else {
+      process.stderr.write("WARN --pos esperado no formato X,Y (ex: 100,40)\n");
+    }
+  }
+  if (Object.keys(testerOverride).length) {
+    resolved.tester = { ...resolved.tester, ...testerOverride };
+  }
 
   const ctx: Ctx = {
     symbol: resolved.context.symbol,

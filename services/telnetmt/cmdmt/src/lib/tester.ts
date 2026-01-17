@@ -203,6 +203,17 @@ function updateIniValue(text: string, section: string, key: string, value: strin
   return text.replace(block, updated);
 }
 
+function readIniValue(text: string, section: string, key: string): string | null {
+  const escapedSection = section.replace(/[[\]{}()*+?.\\^$|]/g, "\\$&");
+  const sectionRe = new RegExp(`^\\[${escapedSection}\\][\\s\\S]*?(?=^\\[|\\Z)`, "m");
+  const match = text.match(sectionRe);
+  if (!match) return null;
+  const block = match[0];
+  const lineRe = new RegExp(`^${key}=(.*)$`, "m");
+  const lm = block.match(lineRe);
+  return lm ? lm[1] : null;
+}
+
 function syncCommonIni(dataPathWsl: string, tester: TesterConfig) {
   const commonPath = path.join(dataPathWsl, "config", "common.ini");
   if (!fs.existsSync(commonPath)) return;
@@ -222,6 +233,48 @@ function syncCommonIni(dataPathWsl: string, tester: TesterConfig) {
   next = updateIniValue(next, "Charts", "MaxBars", tester.maxBars);
   next = updateIniValue(next, "Charts", "MaxBarsInChart", tester.maxBarsInChart);
   if (next !== text) writeTextWithEncoding(commonPath, next, encoding, bom);
+}
+
+function syncTerminalIni(dataPathWsl: string, tester: TesterConfig) {
+  const terminalPath = path.join(dataPathWsl, "config", "terminal.ini");
+  if (!fs.existsSync(terminalPath)) return;
+  const wantsWindow =
+    tester.windowLeft !== undefined ||
+    tester.windowTop !== undefined ||
+    tester.windowRight !== undefined ||
+    tester.windowBottom !== undefined ||
+    tester.windowWidth !== undefined ||
+    tester.windowHeight !== undefined ||
+    tester.windowFullscreen !== undefined;
+  if (!wantsWindow) return;
+
+  const { text, encoding, bom } = readTextWithEncoding(terminalPath);
+  const curLeft = parseInt(readIniValue(text, "Window", "Left") ?? "0", 10);
+  const curTop = parseInt(readIniValue(text, "Window", "Top") ?? "0", 10);
+  const curRight = parseInt(readIniValue(text, "Window", "Right") ?? "0", 10);
+  const curBottom = parseInt(readIniValue(text, "Window", "Bottom") ?? "0", 10);
+
+  let left = tester.windowLeft ?? curLeft;
+  let top = tester.windowTop ?? curTop;
+  let right = tester.windowRight ?? curRight;
+  let bottom = tester.windowBottom ?? curBottom;
+
+  if (tester.windowWidth !== undefined) right = left + tester.windowWidth;
+  if (tester.windowHeight !== undefined) bottom = top + tester.windowHeight;
+
+  let next = text;
+  next = updateIniValue(next, "Window", "Left", left);
+  next = updateIniValue(next, "Window", "Top", top);
+  next = updateIniValue(next, "Window", "Right", right);
+  next = updateIniValue(next, "Window", "Bottom", bottom);
+  next = updateIniValue(next, "Window", "LSave", left);
+  next = updateIniValue(next, "Window", "TSave", top);
+  next = updateIniValue(next, "Window", "RSave", right);
+  next = updateIniValue(next, "Window", "BSave", bottom);
+  if (tester.windowFullscreen !== undefined) {
+    next = updateIniValue(next, "Window", "Fullscreen", tester.windowFullscreen);
+  }
+  if (next !== text) writeTextWithEncoding(terminalPath, next, encoding, bom);
 }
 
 function ensureExpertReady(
@@ -283,6 +336,7 @@ export async function runTester(
   const { terminalPath, dataPath } = resolveRunnerPaths(runner);
   const dataPathWsl = resolveDataPathWsl(dataPath);
   syncCommonIni(dataPathWsl, tester);
+  syncTerminalIni(dataPathWsl, tester);
 
   const inputs = parseParams(spec.params);
   const hash = stableHash(`${spec.expert}|${spec.symbol}|${spec.tf}|${spec.params ?? ""}`);

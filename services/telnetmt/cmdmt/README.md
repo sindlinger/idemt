@@ -85,6 +85,10 @@ Se algum valor obrigatorio estiver ausente (ex: host, symbol, runner), o CLI ret
 - `--tf <tf>`
 - `--sub <n>`
 - `--base-tpl <tpl>`
+- `--visual` / `--no-visual` (override do modo visual do tester)
+- `--win WxH` (tamanho da janela, ex: `1400x900`)
+- `--pos X,Y` (posicao da janela, ex: `100,40`)
+- `--fullscreen` / `--no-fullscreen`
 - `--host <host>` / `--hosts <a,b>`
 - `--mt5-path <path>` / `--mt5-data <path>`
 - `--compile-path <path>`
@@ -132,6 +136,7 @@ npm run validate-params
 ```bash
 cmdmt expert run M5 MyEA base.tpl --params lots=0.1
 cmdmt expert run MyEA
+cmdmt expert run EURUSD H1 MyEA --visual --win 1400x900 --pos 100,40
 ```
 Resolve o Expert (compila se existir `.mq5` via `metaeditorPath`), gera `tester.tpl` em `MQL5/Profiles/Templates`,
 atualiza `common.ini` (login/servidor/barras) se configurado e executa o tester via `/config`.

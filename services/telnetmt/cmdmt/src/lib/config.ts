@@ -42,6 +42,13 @@ export type TesterConfig = {
   toDate?: string;
   forwardMode?: number | string;
   forwardDate?: string;
+  windowLeft?: number | string;
+  windowTop?: number | string;
+  windowRight?: number | string;
+  windowBottom?: number | string;
+  windowWidth?: number | string;
+  windowHeight?: number | string;
+  windowFullscreen?: number | string;
 };
 
 export type RunnerConfig = {
@@ -263,7 +270,14 @@ function normalizeTester(cfg?: TesterConfig): Required<Pick<TesterConfig, "artif
     replaceReport: coerceNumber(merged.replaceReport),
     shutdownTerminal: coerceNumber(merged.shutdownTerminal),
     deposit: coerceNumber(merged.deposit),
-    forwardMode: coerceNumber(merged.forwardMode)
+    forwardMode: coerceNumber(merged.forwardMode),
+    windowLeft: coerceNumber(merged.windowLeft),
+    windowTop: coerceNumber(merged.windowTop),
+    windowRight: coerceNumber(merged.windowRight),
+    windowBottom: coerceNumber(merged.windowBottom),
+    windowWidth: coerceNumber(merged.windowWidth),
+    windowHeight: coerceNumber(merged.windowHeight),
+    windowFullscreen: coerceNumber(merged.windowFullscreen)
   };
 }
 
