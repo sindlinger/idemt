@@ -183,6 +183,15 @@ function compileMq5(mq5Path: string, metaeditorPath?: string, logPath?: string) 
   const result = spawnSync(execPath, args, { stdio: "inherit" });
   if (result.error) throw result.error;
   if (result.status && result.status !== 0) {
+    let tail = "";
+    if (logPath && fs.existsSync(logPath)) {
+      const { text } = readTextWithEncoding(logPath);
+      const lines = text.split(/\r?\n/).filter((l) => l.trim().length > 0);
+      tail = lines.slice(-40).join("\n");
+    }
+    if (tail) {
+      throw new Error(`metaeditor retornou ${result.status}\n${tail}`);
+    }
     throw new Error(`metaeditor retornou ${result.status}`);
   }
 }
