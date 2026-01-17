@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
-import { spawn } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
+import { fileURLToPath } from "node:url";
 import { Command } from "commander";
 import { handleError } from "./lib/errors.js";
 import { Ctx, splitArgs } from "./lib/args.js";
@@ -28,6 +29,72 @@ type AttachReport = Awaited<ReturnType<typeof buildAttachReport>>;
 let TRACE = false;
 function trace(msg: string): void {
   if (TRACE) process.stderr.write(`[trace] ${msg}\n`);
+}
+
+function currentCmdmtRoot(): string {
+  const here = path.dirname(fileURLToPath(import.meta.url));
+  return path.resolve(here, "..");
+}
+
+function resolveRepoRoot(repoPath?: string): string | null {
+  if (!repoPath) return null;
+  let root = isWindowsPath(repoPath) ? toWslPath(repoPath) : repoPath;
+  root = path.resolve(root);
+  const nested = path.join(root, "services", "telnetmt", "cmdmt");
+  if (fs.existsSync(path.join(nested, "package.json"))) return nested;
+  if (fs.existsSync(path.join(root, "package.json"))) return root;
+  return null;
+}
+
+function shouldBuild(repoRoot: string, distPath: string): boolean {
+  if (!fs.existsSync(distPath)) return true;
+  const distStat = fs.statSync(distPath);
+  const srcRoot = path.join(repoRoot, "src");
+  if (fs.existsSync(srcRoot)) {
+    const stack: string[] = [srcRoot];
+    while (stack.length) {
+      const dir = stack.pop();
+      if (!dir) continue;
+      for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+        const full = path.join(dir, entry.name);
+        if (entry.isDirectory()) {
+          stack.push(full);
+          continue;
+        }
+        if (!entry.isFile()) continue;
+        if (!/\.(ts|tsx)$/.test(entry.name)) continue;
+        if (fs.statSync(full).mtimeMs > distStat.mtimeMs) return true;
+      }
+    }
+  }
+  const pkg = path.join(repoRoot, "package.json");
+  if (fs.existsSync(pkg) && fs.statSync(pkg).mtimeMs > distStat.mtimeMs) return true;
+  const tsconfig = path.join(repoRoot, "tsconfig.json");
+  if (fs.existsSync(tsconfig) && fs.statSync(tsconfig).mtimeMs > distStat.mtimeMs) return true;
+  return false;
+}
+
+function maybeDelegateToRepo(repoRoot: string, autoBuild: boolean): boolean {
+  const currentRoot = currentCmdmtRoot();
+  if (path.resolve(repoRoot) === path.resolve(currentRoot)) return false;
+  const distPath = path.join(repoRoot, "dist", "index.js");
+  if (autoBuild && shouldBuild(repoRoot, distPath)) {
+    const build = spawnSync("npm", ["run", "build"], { cwd: repoRoot, stdio: "inherit" });
+    if (build.status !== 0) {
+      process.exitCode = build.status ?? 1;
+      return true;
+    }
+  }
+  if (!fs.existsSync(distPath)) {
+    process.stderr.write("WARN repoPath configurado mas dist/index.js nao encontrado; usando cmdmt atual.\n");
+    return false;
+  }
+  const result = spawnSync(process.execPath, [distPath, ...process.argv.slice(2)], {
+    stdio: "inherit",
+    env: { ...process.env, CMDMT_DELEGATED: "1" }
+  });
+  process.exitCode = result.status ?? 1;
+  return true;
 }
 
 function formatTraceResponse(resp: string): string {
@@ -660,6 +727,7 @@ async function main() {
     sub: opts.sub,
     baseTpl: opts.baseTpl,
     compilePath: opts.compilePath,
+    repoPath: opts.repo,
     host: opts.host,
     hosts: opts.hosts,
     port: opts.port,
@@ -667,6 +735,14 @@ async function main() {
     mt5Path: opts.mt5Path,
     mt5Data: opts.mt5Data
   });
+
+  if (!process.env.CMDMT_DELEGATED) {
+    const repoRoot = resolveRepoRoot(resolved.repoPath ?? opts.repo);
+    if (repoRoot) {
+      const autoBuild = resolved.repoAutoBuild !== false;
+      if (maybeDelegateToRepo(repoRoot, autoBuild)) return;
+    }
+  }
 
   const testerOverride: Record<string, number> = {};
   if (typeof opts.visual === "boolean") testerOverride.visual = opts.visual ? 1 : 0;

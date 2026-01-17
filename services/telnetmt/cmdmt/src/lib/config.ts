@@ -65,6 +65,8 @@ export type ConfigLayer = {
   runner?: string;
   baseTpl?: string;
   compilePath?: string;
+  repoPath?: string;
+  repoAutoBuild?: boolean;
   tester?: TesterConfig;
 };
 
@@ -88,6 +90,7 @@ export type CliOptions = {
   sub?: number;
   baseTpl?: string;
   compilePath?: string;
+  repoPath?: string;
   mt5Path?: string;
   mt5Data?: string;
 };
@@ -99,6 +102,8 @@ export type ResolvedConfig = {
   context: { symbol?: string; tf?: string; sub?: number };
   baseTpl?: string;
   compilePath?: string;
+  repoPath?: string;
+  repoAutoBuild?: boolean;
   runnerId?: string;
   runner?: RunnerConfig;
   tester: Required<Pick<TesterConfig, "artifactsDir" | "reportDir">> & TesterConfig;
@@ -238,6 +243,8 @@ function mergeLayer(base: ConfigLayer, overlay: ConfigLayer): ConfigLayer {
     runner: overlay.runner ?? base.runner,
     baseTpl: overlay.baseTpl ?? base.baseTpl,
     compilePath: overlay.compilePath ?? base.compilePath,
+    repoPath: overlay.repoPath ?? base.repoPath,
+    repoAutoBuild: overlay.repoAutoBuild ?? base.repoAutoBuild,
     tester: mergeDefined(base.tester ?? {}, overlay.tester)
   };
 }
@@ -351,7 +358,9 @@ export function resolveConfig(cli: CliOptions, env = process.env): ResolvedConfi
     },
     runner: env.CMDMT_RUNNER,
     baseTpl: env.CMDMT_BASE_TPL,
-    compilePath: env.CMDMT_COMPILE
+    compilePath: env.CMDMT_COMPILE,
+    repoPath: env.CMDMT_REPO,
+    repoAutoBuild: env.CMDMT_REPO_AUTOBUILD === undefined ? undefined : env.CMDMT_REPO_AUTOBUILD !== "0"
   };
   const cliLayer: ConfigLayer = {
     transport: {
@@ -367,7 +376,8 @@ export function resolveConfig(cli: CliOptions, env = process.env): ResolvedConfi
     },
     runner: cli.runner,
     baseTpl: cli.baseTpl,
-    compilePath: cli.compilePath
+    compilePath: cli.compilePath,
+    repoPath: cli.repoPath
   };
 
   const merged = [defaultsLayer, profileLayer ?? {}, configLayer, envLayer, cliLayer].reduce(
@@ -405,6 +415,8 @@ export function resolveConfig(cli: CliOptions, env = process.env): ResolvedConfi
     context,
     baseTpl: merged.baseTpl,
     compilePath: merged.compilePath,
+    repoPath: merged.repoPath,
+    repoAutoBuild: merged.repoAutoBuild,
     runnerId,
     runner,
     tester
