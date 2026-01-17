@@ -6,4 +6,18 @@ if command -v readlink >/dev/null 2>&1; then
 fi
 DIR="$(cd "$(dirname "$SOURCE")" && pwd)"
 ROOT="$(cd "$DIR/.." && pwd)"
-exec node "$ROOT/dist/index.js" "$@"
+DIST="$ROOT/dist/index.js"
+need_build=0
+if [[ ! -f "$DIST" ]]; then
+  need_build=1
+else
+  if find "$ROOT/src" -type f \( -name '*.ts' -o -name '*.tsx' \) -newer "$DIST" | grep -q .; then
+    need_build=1
+  elif [[ "$ROOT/package.json" -nt "$DIST" || "$ROOT/tsconfig.json" -nt "$DIST" ]]; then
+    need_build=1
+  fi
+fi
+if [[ $need_build -eq 1 ]]; then
+  (cd "$ROOT" && npm run build >/dev/null)
+fi
+exec node "$DIST" "$@"
