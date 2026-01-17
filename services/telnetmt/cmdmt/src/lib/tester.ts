@@ -254,13 +254,21 @@ function syncTerminalIni(dataPathWsl: string, tester: TesterConfig) {
   const curRight = parseInt(readIniValue(text, "Window", "Right") ?? "0", 10);
   const curBottom = parseInt(readIniValue(text, "Window", "Bottom") ?? "0", 10);
 
-  let left = tester.windowLeft ?? curLeft;
-  let top = tester.windowTop ?? curTop;
-  let right = tester.windowRight ?? curRight;
-  let bottom = tester.windowBottom ?? curBottom;
+  const coerceInt = (val: string | number | undefined, fallback: number): number => {
+    if (val === undefined || val === "") return fallback;
+    const n = typeof val === "number" ? val : parseInt(String(val), 10);
+    return Number.isFinite(n) ? n : fallback;
+  };
 
-  if (tester.windowWidth !== undefined) right = left + tester.windowWidth;
-  if (tester.windowHeight !== undefined) bottom = top + tester.windowHeight;
+  let left = coerceInt(tester.windowLeft, Number.isFinite(curLeft) ? curLeft : 0);
+  let top = coerceInt(tester.windowTop, Number.isFinite(curTop) ? curTop : 0);
+  let right = coerceInt(tester.windowRight, Number.isFinite(curRight) ? curRight : left + 1280);
+  let bottom = coerceInt(tester.windowBottom, Number.isFinite(curBottom) ? curBottom : top + 720);
+
+  const width = tester.windowWidth !== undefined ? coerceInt(tester.windowWidth, right - left) : undefined;
+  const height = tester.windowHeight !== undefined ? coerceInt(tester.windowHeight, bottom - top) : undefined;
+  if (width !== undefined) right = left + width;
+  if (height !== undefined) bottom = top + height;
 
   let next = text;
   next = updateIniValue(next, "Window", "Left", left);
