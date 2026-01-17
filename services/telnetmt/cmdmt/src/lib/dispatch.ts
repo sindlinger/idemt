@@ -251,7 +251,7 @@ export function dispatch(tokens: string[], ctx: Ctx): DispatchResult {
     const key = rest.join(" ").trim();
     return { kind: "local", output: renderExamples(key) };
   }
-  if (cmd === "add" || cmd === "del") {
+  if (cmd === "add" || cmd === "del" || cmd === "rm") {
     const isAdd = cmd === "add";
     let args = rest;
     let mode: "indicator" | "expert" = "indicator";

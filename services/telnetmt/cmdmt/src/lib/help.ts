@@ -241,6 +241,16 @@ const EXAMPLES: Record<string, ExampleGroup[]> = {
       ]
     }
   ],
+  rm: [
+    {
+      title: "rm",
+      lines: [
+        "rm 0",
+        "rm \"Bulls Power\"",
+        "rm ea EURUSD H1"
+      ]
+    }
+  ],
   chart: [
     { title: "open", lines: ["chart open", "chart open EURUSD H1"] },
     { title: "close", lines: ["chart close", "chart close EURUSD H1"] },
