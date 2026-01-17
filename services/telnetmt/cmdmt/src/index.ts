@@ -25,6 +25,23 @@ import { runInstall } from "./lib/install.js";
 
 type AttachReport = Awaited<ReturnType<typeof buildAttachReport>>;
 
+let TRACE = false;
+function trace(msg: string): void {
+  if (TRACE) process.stderr.write(`[trace] ${msg}\n`);
+}
+
+function formatTraceResponse(resp: string): string {
+  const trimmed = resp.replace(/\s+$/, "");
+  const lines = trimmed.split(/\r?\n/);
+  if (lines.length > 80) {
+    return lines.slice(0, 80).join("\n") + `\n... (${lines.length} lines)`;
+  }
+  if (trimmed.length > 4000) {
+    return trimmed.slice(0, 4000) + `\n... (${trimmed.length} chars)`;
+  }
+  return trimmed;
+}
+
 function isErrorResponse(resp: string): boolean {
   const up = resp.trim().toUpperCase();
   return up.startsWith("ERR") || up.includes(" ERR ") || up.includes("CODE=");
@@ -104,16 +121,21 @@ async function verifyExpertAttached(
   const charts = parseChartList(listResp);
   const targetTf = normalizeTf(tf);
   const candidates = charts.filter((c) => c.sym === sym && c.tf === targetTf);
+  trace(`verify_ea charts=${charts.length} match=${candidates.length} sym=${sym} tf=${targetTf}`);
   if (!candidates.length) return false;
 
   const templatesDir = path.join(toWslPath(dataPath), "MQL5", "Profiles", "Templates");
   const expCandidates = expertNameCandidates(expertName).map((v) => v.toLowerCase());
+  trace(`verify_ea names=${expCandidates.join(",")}`);
 
   for (const chart of candidates) {
     const checkName = `__cmdmt_check_${Date.now()}_${chart.id}`;
     await executeSend({ type: "CHART_SAVE_TPL", params: [chart.id, checkName] }, transport);
     const tplPath = path.join(templatesDir, `${checkName}.tpl`);
-    if (!fs.existsSync(tplPath)) continue;
+    if (!fs.existsSync(tplPath)) {
+      trace(`verify_ea tpl_missing=${tplPath}`);
+      continue;
+    }
     const txt = readTextMaybeUtf16(tplPath);
     try {
       fs.unlinkSync(tplPath);
@@ -126,7 +148,10 @@ async function verifyExpertAttached(
     const e = lower.indexOf("</expert>", s);
     if (e < 0) continue;
     const block = lower.slice(s, e);
-    if (expCandidates.some((exp) => block.includes(`name=${exp}`))) return true;
+    if (expCandidates.some((exp) => block.includes(`name=${exp}`))) {
+      trace(`verify_ea ok chart=${chart.id}`);
+      return true;
+    }
   }
   return false;
 }
@@ -293,7 +318,10 @@ async function runCompile(pathOrCmd: string, args: string[]): Promise<void> {
 async function executeSend(action: SendAction, transport: { hosts: string[]; port: number; timeoutMs: number }): Promise<string> {
   if (action.type === "RAW") {
     const line = action.params[0] ?? "";
-    return sendLine(line, transport);
+    trace(`send RAW ${line}`);
+    const resp = await sendLine(line, transport);
+    trace(`resp ${formatTraceResponse(resp)}`);
+    return resp;
   }
   if (action.type === "JSON") {
     const raw = action.params[0] ?? "";
@@ -303,12 +331,18 @@ async function executeSend(action: SendAction, transport: { hosts: string[]; por
     } catch {
       // keep raw
     }
-    return sendJson(obj, transport);
+    trace(`send JSON ${typeof obj === "string" ? obj : JSON.stringify(obj)}`);
+    const resp = await sendJson(obj, transport);
+    trace(`resp ${formatTraceResponse(resp)}`);
+    return resp;
   }
 
   const id = Date.now().toString();
   const line = [id, action.type, ...action.params].join("|");
-  return sendLine(line, transport);
+  trace(`send ${line}`);
+  const resp = await sendLine(line, transport);
+  trace(`resp ${formatTraceResponse(resp)}`);
+  return resp;
 }
 
 function extractErrorLines(resp: string): string {
@@ -361,6 +395,7 @@ async function main() {
     .option("-t, --timeout <ms>", "timeout em ms", (v) => parseInt(v, 10), 3000)
     .option("--json", "saida em JSON", false)
     .option("--quiet", "nao imprime banner no modo interativo", false)
+    .option("--trace", "debug: loga comandos/respostas e verificacoes", false)
     .argument("[cmd...]", "comando e parametros")
     .option("--repo <path>", "override do caminho do repo TelnetMT")
     .option("--no-allow-dll", "desabilitar AllowDllImport (padrao: habilitado)")
@@ -379,6 +414,7 @@ async function main() {
 
   await program.parseAsync(process.argv);
   const opts = program.opts();
+  TRACE = Boolean(opts.trace || process.env.CMDMT_TRACE);
 
   const resolved = resolveConfig({
     configPath: opts.config,
@@ -542,6 +578,7 @@ async function main() {
         if (logFile && fs.existsSync(logFile)) {
           const stat = fs.statSync(logFile);
           logStart = { file: logFile, offset: stat.size };
+          trace(`logStart ${logFile} offset=${stat.size}`);
         }
       } catch {
         // ignore logStart
@@ -597,6 +634,7 @@ async function main() {
         if (logFile && fs.existsSync(logFile)) {
           const stat = fs.statSync(logFile);
           logStart = { file: logFile, offset: stat.size };
+          trace(`logStart ${logFile} offset=${stat.size}`);
         }
       } catch {
         // ignore logStart

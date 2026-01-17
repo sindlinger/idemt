@@ -54,14 +54,48 @@ function readTextFromOffset(p: string, offset: number): string {
   return raw.slice(start).toString("utf8");
 }
 
-function latestFile(dir: string): string | null {
+type FileInfo = { file: string; mtimeMs: number };
+
+function latestFileInfo(dir: string): FileInfo | null {
   if (!fs.existsSync(dir)) return null;
   const items = fs
     .readdirSync(dir)
-    .map((name) => ({ name, stat: fs.statSync(path.join(dir, name)) }))
+    .map((name) => {
+      const full = path.join(dir, name);
+      const stat = fs.statSync(full);
+      return { file: full, stat };
+    })
     .filter((e) => e.stat.isFile())
     .sort((a, b) => b.stat.mtimeMs - a.stat.mtimeMs);
-  return items.length ? path.join(dir, items[0].name) : null;
+  if (!items.length) return null;
+  return { file: items[0].file, mtimeMs: items[0].stat.mtimeMs };
+}
+
+function pickLatest(infos: Array<FileInfo | null>): string | null {
+  const valid = infos.filter((i): i is FileInfo => Boolean(i));
+  if (!valid.length) return null;
+  valid.sort((a, b) => b.mtimeMs - a.mtimeMs);
+  return valid[0].file;
+}
+
+function latestLogCandidates(dataPath?: string): string[] {
+  if (!dataPath) return [];
+  const base = isWindowsPath(dataPath) ? toWslPath(dataPath) : dataPath;
+  const dirs = [
+    path.join(base, "MQL5", "Logs"),
+    path.join(base, "logs"),
+    path.join(base, "Logs")
+  ];
+  const infos = dirs.map((d) => latestFileInfo(d)).filter((v): v is FileInfo => Boolean(v));
+  infos.sort((a, b) => b.mtimeMs - a.mtimeMs);
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const info of infos) {
+    if (seen.has(info.file)) continue;
+    seen.add(info.file);
+    out.push(info.file);
+  }
+  return out;
 }
 
 function tailMatchLines(file: string, needles: string[], maxLines: number): string[] {
@@ -86,10 +120,8 @@ function tailLines(file: string, maxLines: number): string[] {
 }
 
 export function findLatestLogFile(dataPath?: string): string | null {
-  if (!dataPath) return null;
-  const base = isWindowsPath(dataPath) ? toWslPath(dataPath) : dataPath;
-  const mqlLogsDir = path.join(base, "MQL5", "Logs");
-  return latestFile(mqlLogsDir);
+  const files = latestLogCandidates(dataPath);
+  return files.length ? files[0] : null;
 }
 
 function readLinesFromOffset(file: string, offset: number): string[] {
@@ -226,20 +258,44 @@ export async function buildAttachReport(opts: {
 
   const dataPath = opts.runner.dataPath ? (isWindowsPath(opts.runner.dataPath) ? toWslPath(opts.runner.dataPath) : opts.runner.dataPath) : "";
   if (dataPath) {
-    const logFile = opts.logStart?.file ?? findLatestLogFile(dataPath);
+    const logFiles = latestLogCandidates(dataPath);
+    let logFile = opts.logStart?.file ?? (logFiles.length ? logFiles[0] : null);
+    const baseName = path.win32.basename(opts.name);
+    let lines: string[] = [];
+    let mode: "match" | "tail" | undefined;
+
     if (logFile && opts.logStart && opts.logStart.file === logFile) {
-      const lines = readLinesFromOffset(logFile, opts.logStart.offset).slice(-opts.meta.logTail);
-      report.logs = { file: logFile, lines, mode: "tail" };
-    } else {
-      const baseName = path.win32.basename(opts.name);
-      let lines = logFile ? tailMatchLines(logFile, [opts.name, baseName], opts.meta.logTail) : [];
-      let mode: "match" | "tail" | undefined = lines.length ? "match" : undefined;
-      if (logFile && lines.length === 0) {
+      lines = readLinesFromOffset(logFile, opts.logStart.offset).slice(-opts.meta.logTail);
+      mode = "tail";
+    } else if (logFile) {
+      lines = tailMatchLines(logFile, [opts.name, baseName], opts.meta.logTail);
+      mode = lines.length ? "match" : undefined;
+      if (lines.length === 0) {
         lines = tailLines(logFile, opts.meta.logTail);
         mode = "tail";
       }
-      report.logs = logFile ? { file: logFile, lines, mode } : null;
     }
+
+    if (logFile && lines.length === 0 && logFiles.length > 1) {
+      for (const alt of logFiles) {
+        if (alt === logFile) continue;
+        const altMatch = tailMatchLines(alt, [opts.name, baseName], opts.meta.logTail);
+        if (altMatch.length) {
+          logFile = alt;
+          lines = altMatch;
+          mode = "match";
+          break;
+        }
+        const altTail = tailLines(alt, opts.meta.logTail);
+        if (altTail.length) {
+          logFile = alt;
+          lines = altTail;
+          mode = "tail";
+          break;
+        }
+      }
+    }
+    report.logs = logFile ? { file: logFile, lines, mode } : null;
   }
 
   if (opts.meta.shot) {
