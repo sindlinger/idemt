@@ -47,6 +47,19 @@ function isErrorResponse(resp: string): boolean {
   return up.startsWith("ERR") || up.includes(" ERR ") || up.includes("CODE=");
 }
 
+function maybeExplainError(resp: string): void {
+  const low = resp.toLowerCase();
+  const has4802 = low.includes("code=4802") || low.includes(" 4802");
+  const icustom = low.includes("icustom") || low.includes("indicator cannot be created");
+  if (has4802 && icustom) {
+    process.stderr.write(
+      "AVISO: indicador nao pode ser criado (4802).\n" +
+      "Verifique se o .ex5 existe em MQL5/Indicators (nao em MQL5/Files) e se o nome/caminho esta correto.\n" +
+      "Use caminho relativo sem extensao, ex: Subpasta\\\\NomeIndicador\n"
+    );
+  }
+}
+
 function isBaseTplError(resp: string): boolean {
   const low = resp.toLowerCase();
   return low.includes("base_tpl") || low.includes("invalid file name");
@@ -723,7 +736,10 @@ async function main() {
       process.stdout.write(response);
       if (report) process.stdout.write(formatAttachReport(report) + "\n");
     }
-    if (isErrorResponse(response)) process.exitCode = 1;
+    if (isErrorResponse(response)) {
+      maybeExplainError(response);
+      process.exitCode = 1;
+    }
     return;
   }
 
@@ -829,6 +845,7 @@ async function main() {
       const response = await executeSend(step, transport);
       responses.push({ type: step.type, params: step.params, response });
       if (isErrorResponse(response)) {
+        maybeExplainError(response);
         if (step.type === "SAVE_TPL_EA" && isBaseTplError(response)) {
           hadBaseTplError = true;
           const applyStep = res.steps.find((s) => s.type === "APPLY_TPL");
