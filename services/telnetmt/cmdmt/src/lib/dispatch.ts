@@ -256,13 +256,29 @@ export function dispatch(tokens: string[], ctx: Ctx): DispatchResult {
     let args = rest;
     let mode: "indicator" | "expert" = "indicator";
     if (args.length) {
-      const head = args[0].toLowerCase();
-      if (["ea", "expert", "experts"].includes(head)) {
-        mode = "expert";
-        args = args.slice(1);
-      } else if (["ind", "indicator", "indicators"].includes(head)) {
-        mode = "indicator";
-        args = args.slice(1);
+      const filtered: string[] = [];
+      for (const tok of args) {
+        const lower = tok.toLowerCase();
+        if (["--ind", "--indicator"].includes(lower)) {
+          mode = "indicator";
+          continue;
+        }
+        if (["--exp", "--ea", "--expert"].includes(lower)) {
+          mode = "expert";
+          continue;
+        }
+        filtered.push(tok);
+      }
+      args = filtered;
+      if (args.length) {
+        const head = args[0].toLowerCase();
+        if (["ea", "expert", "experts"].includes(head)) {
+          mode = "expert";
+          args = args.slice(1);
+        } else if (["ind", "indicator", "indicators"].includes(head)) {
+          mode = "indicator";
+          args = args.slice(1);
+        }
       }
     }
 

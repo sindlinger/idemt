@@ -227,7 +227,8 @@ const EXAMPLES: Record<string, ExampleGroup[]> = {
       lines: [
         "add ZigZag",
         "add EURUSD H1 \"Bulls Power\"",
-        "add ea MyEA base.tpl --params lots=0.1"
+        "add --ind \"Bulls Power\"",
+        "add --exp MyEA base.tpl --params lots=0.1"
       ]
     }
   ],
@@ -237,7 +238,8 @@ const EXAMPLES: Record<string, ExampleGroup[]> = {
       lines: [
         "del 0",
         "del ZigZag",
-        "del ea EURUSD H1"
+        "del ea EURUSD H1",
+        "del --exp EURUSD H1"
       ]
     }
   ],
