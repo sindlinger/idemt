@@ -1,0 +1,3 @@
+/mnt/c/git/mt5ide/dll/SpectralCLBridge/build/CMakeFiles/SpectralCLBridge.dir
+/mnt/c/git/mt5ide/dll/SpectralCLBridge/build/CMakeFiles/edit_cache.dir
+/mnt/c/git/mt5ide/dll/SpectralCLBridge/build/CMakeFiles/rebuild_cache.dir

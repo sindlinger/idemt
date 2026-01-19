@@ -13,7 +13,7 @@ export type InstallSpec = {
   allowDll: boolean;
   allowLive: boolean;
   syncCommon?: boolean;
-  login?: string;
+  login?: string | number;
   password?: string;
   server?: string;
   web: string[];

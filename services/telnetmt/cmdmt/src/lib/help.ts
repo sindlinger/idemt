@@ -82,7 +82,7 @@ const VERSION = resolveVersion();
 export type HelpSection = { title: string; items: string[] };
 
 const SECTIONS: HelpSection[] = [
-  { title: "basic", items: ["ping", "debug", "compile", "use", "ctx", "help", "add", "del", "rm", "indicador", "install"] },
+  { title: "basic", items: ["ping", "debug", "compile", "use", "ctx", "help", "install"] },
   { title: "chart", items: ["open", "close", "list", "closeall", "redraw", "detachall", "find"] },
   { title: "template", items: ["apply", "save", "saveea", "savechart"] },
   { title: "indicator", items: ["attach", "detach", "total", "name", "handle", "get", "release"] },
@@ -213,47 +213,22 @@ const EXAMPLES: Record<string, ExampleGroup[]> = {
       ]
     }
   ],
-  indicador: [
+  indicator: [
     {
-      title: "indicador",
+      title: "attach",
       lines: [
-        "indicador ZigZag",
-        "indicador M5 ZigZag sub=1 --params depth=12 deviation=5 backstep=3",
-        "indicador M5 ZigZag --buffers 10 --log 50 --shot"
+        "indicator attach ZigZag sub=1 --params depth=12 deviation=5 backstep=3",
+        "indicator attach EURUSD H1 ZigZag sub=1 --params depth=12 deviation=5 backstep=3",
+        "indicator attach EURUSD H1 \"Bulls Power\"",
+        "indicator attach EURUSD H1 ZigZag --buffers 10 --log 50 --shot"
       ]
-    }
-  ],
-  add: [
-    {
-      title: "add",
-      lines: [
-        "add ZigZag",
-        "add EURUSD H1 \"Bulls Power\"",
-        "add --ind \"Bulls Power\"",
-        "add --exp MyEA base.tpl --params lots=0.1"
-      ]
-    }
-  ],
-  del: [
-    {
-      title: "del",
-      lines: [
-        "del 0",
-        "del ZigZag",
-        "del ea EURUSD H1",
-        "del --exp EURUSD H1"
-      ]
-    }
-  ],
-  rm: [
-    {
-      title: "rm",
-      lines: [
-        "rm 0",
-        "rm \"Bulls Power\"",
-        "rm ea EURUSD H1"
-      ]
-    }
+    },
+    { title: "detach", lines: ["indicator detach ZigZag sub=1", "indicator detach EURUSD H1 ZigZag sub=1"] },
+    { title: "total", lines: ["indicator total", "indicator total EURUSD H1"] },
+    { title: "name", lines: ["indicator name 0", "indicator name EURUSD H1 0"] },
+    { title: "handle", lines: ["indicator handle ZigZag sub=1", "indicator handle EURUSD H1 ZigZag sub=1"] },
+    { title: "get", lines: ["indicator get ZigZag sub=1", "indicator get EURUSD H1 ZigZag sub=1"] },
+    { title: "release", lines: ["indicator release 123456"] }
   ],
   chart: [
     { title: "open", lines: ["chart open", "chart open EURUSD H1"] },
@@ -269,22 +244,6 @@ const EXAMPLES: Record<string, ExampleGroup[]> = {
     { title: "save", lines: ["template save snap.tpl", "template save EURUSD H1 snap.tpl"] },
     { title: "saveea", lines: ["template saveea MyEA out.tpl base.tpl lots=0.1"] },
     { title: "savechart", lines: ["template savechart 123456 snap.tpl"] }
-  ],
-  indicator: [
-    {
-      title: "attach",
-      lines: [
-        "indicator attach ZigZag sub=1 --params depth=12 deviation=5 backstep=3",
-        "indicator attach EURUSD H1 ZigZag sub=1 --params depth=12 deviation=5 backstep=3",
-        "indicator attach EURUSD H1 ZigZag --buffers 10 --log 50 --shot"
-      ]
-    },
-    { title: "detach", lines: ["indicator detach ZigZag sub=1", "indicator detach EURUSD H1 ZigZag sub=1"] },
-    { title: "total", lines: ["indicator total", "indicator total EURUSD H1"] },
-    { title: "name", lines: ["indicator name 0", "indicator name EURUSD H1 0"] },
-    { title: "handle", lines: ["indicator handle ZigZag sub=1", "indicator handle EURUSD H1 ZigZag sub=1"] },
-    { title: "get", lines: ["indicator get ZigZag sub=1", "indicator get EURUSD H1 ZigZag sub=1"] },
-    { title: "release", lines: ["indicator release 123456"] }
   ],
   expert: [
     {
@@ -360,7 +319,6 @@ function renderIndex(): string {
     "examples use",
     "examples ctx",
     "examples help",
-    "examples indicador",
     "examples chart",
     "examples template",
     "examples indicator",

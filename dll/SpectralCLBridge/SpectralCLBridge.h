@@ -33,6 +33,8 @@ SCL_EXPORT int SCL_TryGetAtIndex(int64_t key,
 
 SCL_EXPORT int SCL_GetStats(int64_t key, double* out, int out_len);
 
+SCL_EXPORT int SCL_Shutdown();
+
 SCL_EXPORT int SCL_Periodogram(const double* x, int x_len, double fs, const char* window, int nfft,
                                int detrend_type, int return_onesided, const char* scaling,
                                double* freqs, int freqs_len, double* pxx, int pxx_len);

@@ -1,0 +1,1 @@
+/usr/bin/c++ -fPIC -shared -Wl,-soname,libSpectralCLBridge.so -o libSpectralCLBridge.so CMakeFiles/SpectralCLBridge.dir/SpectralCLBridge.cpp.o  /usr/lib/x86_64-linux-gnu/libOpenCL.so 

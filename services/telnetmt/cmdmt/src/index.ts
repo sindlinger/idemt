@@ -686,6 +686,10 @@ async function main() {
     .option("--hosts <hosts>", "lista separada por virgula")
     .option("-p, --port <port>", "porta", (v) => parseInt(v, 10), 9090)
     .option("-t, --timeout <ms>", "timeout em ms", (v) => parseInt(v, 10), 3000)
+    .option("--mirror-from <path>", "install: espelha MQL5 do data path fonte")
+    .option("--mirror-dirs <a,b,c>", "install: dirs dentro de MQL5 a espelhar (csv)")
+    .option("--sync-common", "install: escreve Login/Password/Server em common.ini")
+    .option("--no-sync-common", "install: nao escreve Login/Password/Server em common.ini")
     .option("--visual", "tester visual (override)")
     .option("--no-visual", "tester sem visual (override)")
     .option("--win <WxH>", "tamanho da janela do terminal (ex: 1400x900)")
@@ -877,14 +881,33 @@ async function main() {
     const password = resolved.tester.password;
     const server = resolved.tester.server;
     const syncCommon =
-      res.syncCommon ?? (resolved.tester.syncCommon ?? (login || password || server ? true : undefined));
+      res.syncCommon ?? opts.syncCommon ?? (resolved.tester.syncCommon ?? (login || password || server ? true : undefined));
     const web = res.web ?? (Array.isArray(opts.web) ? opts.web : []);
     const dryRun = res.dryRun ?? Boolean(opts.dryRun);
     const repoPath = res.repoPath ?? opts.repo;
     const name = res.name;
     const namePrefix = res.namePrefix;
+    const mirrorFrom = res.mirrorFrom ?? opts.mirrorFrom;
+    const mirrorDirs =
+      res.mirrorDirs ??
+      (typeof opts.mirrorDirs === "string" ? opts.mirrorDirs.split(",").map((v: string) => v.trim()).filter(Boolean) : undefined);
     const output = runInstall(
-      { dataPath, allowDll, allowLive, syncCommon, login, password, server, web, dryRun, repoPath, name, namePrefix },
+      {
+        dataPath,
+        allowDll,
+        allowLive,
+        syncCommon,
+        login,
+        password,
+        server,
+        web,
+        dryRun,
+        repoPath,
+        name,
+        namePrefix,
+        mirrorFrom,
+        mirrorDirs
+      },
       process.cwd()
     );
     if (opts.json) {

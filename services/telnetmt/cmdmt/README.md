@@ -131,10 +131,12 @@ cmdmt install "C:\\Users\\pichau\\AppData\\Roaming\\MetaQuotes\\Terminal\\SEU_HA
 cmdmt install "C:\\Users\\pichau\\AppData\\Roaming\\MetaQuotes\\Terminal\\SEU_HASH" --mirror-from "C:\\Users\\pichau\\AppData\\Roaming\\MetaQuotes\\Terminal\\OUTRO_HASH"
 ```
 
-### Indicador (com defaults)
+### Indicador
 ```bash
-cmdmt indicador M5 ZigZag sub=1 --params depth=12 deviation=5 backstep=3
-cmdmt indicador ZigZag
+cmdmt indicator attach EURUSD H1 ZigZag
+cmdmt indicator attach EURUSD H1 "Bulls Power"
+cmdmt indicator attach EURUSD H1 ZigZag --buffers 10 --log 50 --shot
+cmdmt indicator detach EURUSD H1 ZigZag
 ```
 
 ### Data import (CSV -> simbolo custom)
@@ -153,9 +155,9 @@ Obs: coloque as flags antes de `--params`.
 
 Exemplos:
 ```bash
-cmdmt indicador ZigZag --buffers 10 --log 50
-cmdmt indicador ZigZag --shot --shotname zigzag.png
-cmdmt indicador ZigZag --report --params depth=12 deviation=5 backstep=3
+cmdmt indicator attach EURUSD H1 ZigZag --buffers 10 --log 50
+cmdmt indicator attach EURUSD H1 ZigZag --shot --shotname zigzag.png
+cmdmt indicator attach EURUSD H1 ZigZag --report --params depth=12 deviation=5 backstep=3
 ```
 
 ### Indicador completo (compatibilidade)
@@ -163,18 +165,6 @@ cmdmt indicador ZigZag --report --params depth=12 deviation=5 backstep=3
 cmdmt indicator attach EURUSD M5 ZigZag sub=1 --params depth=12 deviation=5 backstep=3
 ```
 
-### Atalhos add/del/rm (indicador ou expert)
-```bash
-cmdmt add ZigZag
-cmdmt add EURUSD H1 "Bulls Power"
-cmdmt add --ind "Bulls Power"
-cmdmt add --exp MyEA base.tpl --params lots=0.1
-
-cmdmt del ZigZag
-cmdmt rm 0
-cmdmt del --exp EURUSD H1
-```
-Use `--ind`/`--exp` (ou `ea/ind`) para forcar o tipo. `del` e `rm` sao aliases.
 
 ### Validar parsing de --params (sem MT5)
 ```bash
@@ -223,9 +213,7 @@ Gera `.set` em `MQL5/Profiles/Tester`, cria `.ini` e executa o terminal com `/co
 
 ## Shims/aliases
 Copie ou adicione ao PATH:
-- WSL: `cmdmt/shims/cmdmt` e `cmdmt/shims/indicador`
-
-O alias `indicador` usa `CMDMT_INVOKE_AS=indicador` para simplificar a sintaxe.
+- WSL: `cmdmt/shims/cmdmt`
 
 ## Notas sobre paths (WSL/Windows)
 - Se estiver em WSL, `terminalPath` e `dataPath` podem ser informados como `C:\\...`.
