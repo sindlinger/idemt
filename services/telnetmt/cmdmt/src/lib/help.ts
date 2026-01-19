@@ -208,6 +208,7 @@ const EXAMPLES: Record<string, ExampleGroup[]> = {
         "install C:\\\\...\\\\Terminal\\\\<HASH> --name MinhaInterface",
         "install C:\\\\...\\\\Terminal\\\\<HASH> --name-prefix TelnetMT_",
         "install C:\\\\...\\\\Terminal\\\\<HASH> --web https://example.com --web http://localhost:9090",
+        "install C:\\\\...\\\\Terminal\\\\<HASH> --sync-common",
         "install C:\\\\...\\\\Terminal\\\\<HASH> --no-allow-dll --no-allow-live --dry-run"
       ]
     }

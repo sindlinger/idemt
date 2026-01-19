@@ -873,13 +873,18 @@ async function main() {
     const dataPath = res.dataPath;
     const allowDll = res.allowDll ?? opts.allowDll;
     const allowLive = res.allowLive ?? opts.allowLive;
+    const login = resolved.tester.login;
+    const password = resolved.tester.password;
+    const server = resolved.tester.server;
+    const syncCommon =
+      res.syncCommon ?? (resolved.tester.syncCommon ?? (login || password || server ? true : undefined));
     const web = res.web ?? (Array.isArray(opts.web) ? opts.web : []);
     const dryRun = res.dryRun ?? Boolean(opts.dryRun);
     const repoPath = res.repoPath ?? opts.repo;
     const name = res.name;
     const namePrefix = res.namePrefix;
     const output = runInstall(
-      { dataPath, allowDll, allowLive, web, dryRun, repoPath, name, namePrefix },
+      { dataPath, allowDll, allowLive, syncCommon, login, password, server, web, dryRun, repoPath, name, namePrefix },
       process.cwd()
     );
     if (opts.json) {

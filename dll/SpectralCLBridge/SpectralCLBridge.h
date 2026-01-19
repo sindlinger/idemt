@@ -9,6 +9,7 @@
 #endif
 
 SCL_EXPORT int SCL_Submit(int64_t key,
+                          int64_t bar_time,
                           const double* price, int price_len,
                           const double* wave, int wave_len,
                           int window_min, int window_max,

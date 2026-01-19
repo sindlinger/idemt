@@ -114,6 +114,7 @@ Se `envPath` estiver definido no config, esse arquivo `.env` eh carregado antes 
 - `--compile-path <path>`
 - `--mirror-from <MT5_DATA>` (espelha MQL5 do fonte via junction)
 - `--mirror-dirs <a,b,c>` (dirs dentro de MQL5 a espelhar; default: Indicators,Experts,Include,Libraries,Files,Profiles,Presets,Services,Scripts)
+- `--sync-common` / `--no-sync-common` (install: escreve Login/Password/Server no `config/common.ini`)
 
 ## Comandos
 ### Basicos
@@ -121,6 +122,13 @@ Se `envPath` estiver definido no config, esse arquivo `.env` eh carregado antes 
 cmdmt ping
 cmdmt help
 cmdmt compile
+```
+
+### Install (sandbox)
+Atualiza `config/common.ini` e `config/terminal.ini` no MT5 data folder informado.
+```bash
+cmdmt install "C:\\Users\\pichau\\AppData\\Roaming\\MetaQuotes\\Terminal\\SEU_HASH" --allow-dll --allow-live --sync-common
+cmdmt install "C:\\Users\\pichau\\AppData\\Roaming\\MetaQuotes\\Terminal\\SEU_HASH" --mirror-from "C:\\Users\\pichau\\AppData\\Roaming\\MetaQuotes\\Terminal\\OUTRO_HASH"
 ```
 
 ### Indicador (com defaults)

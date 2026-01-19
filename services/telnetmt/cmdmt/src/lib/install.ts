@@ -12,6 +12,10 @@ export type InstallSpec = {
   mirrorDirs?: string[];
   allowDll: boolean;
   allowLive: boolean;
+  syncCommon?: boolean;
+  login?: string;
+  password?: string;
+  server?: string;
   web: string[];
   dryRun: boolean;
 };
@@ -123,8 +127,21 @@ function ensureIniAllows(dataPathWsl: string, spec: InstallSpec, log: string[]) 
     let next = text;
     next = updateIniValue(next, "Experts", "AllowDllImport", spec.allowDll ? 1 : 0);
     next = updateIniValue(next, "Experts", "AllowLiveTrading", spec.allowLive ? 1 : 0);
+    const wantsSync =
+      spec.syncCommon === true ||
+      spec.login !== undefined ||
+      spec.password !== undefined ||
+      spec.server !== undefined;
+    if (wantsSync) {
+      next = updateIniValue(next, "Common", "Login", spec.login);
+      next = updateIniValue(next, "Common", "Password", spec.password);
+      next = updateIniValue(next, "Common", "Server", spec.server);
+    }
     if (next !== text) writeTextWithEncoding(commonPath, next, encoding, bom);
     log.push(`common.ini atualizado: AllowDllImport=${spec.allowDll ? 1 : 0}, AllowLiveTrading=${spec.allowLive ? 1 : 0}`);
+    if (wantsSync) {
+      log.push("common.ini atualizado: Login/Password/Server");
+    }
   }
 
   if (spec.web.length) {

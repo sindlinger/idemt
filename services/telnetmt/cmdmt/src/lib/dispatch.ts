@@ -26,7 +26,7 @@ export type DispatchResult =
   | { kind: "multi"; steps: SendAction[]; attach?: AttachInfo; meta?: AttachMeta }
   | { kind: "ind_detach_index"; sym: string; tf: string; sub: string; index: number }
   | { kind: "test"; spec: TestSpec }
-  | { kind: "install"; dataPath: string; allowDll?: boolean; allowLive?: boolean; web?: string[]; dryRun?: boolean; repoPath?: string; name?: string; namePrefix?: string; mirrorFrom?: string; mirrorDirs?: string[] }
+  | { kind: "install"; dataPath: string; allowDll?: boolean; allowLive?: boolean; syncCommon?: boolean; web?: string[]; dryRun?: boolean; repoPath?: string; name?: string; namePrefix?: string; mirrorFrom?: string; mirrorDirs?: string[] }
   | {
       kind: "data_import";
       mode: "rates" | "ticks";
@@ -275,9 +275,10 @@ function buildTplName(expert: string, symbol: string, tf: string, params: string
   return `${base}-${hash}.tpl`;
 }
 
-function parseInstallArgs(tokens: string[]): { dataPath: string; allowDll?: boolean; allowLive?: boolean; web?: string[]; dryRun?: boolean; repoPath?: string; name?: string; namePrefix?: string; mirrorFrom?: string; mirrorDirs?: string[] } | null {
+function parseInstallArgs(tokens: string[]): { dataPath: string; allowDll?: boolean; allowLive?: boolean; syncCommon?: boolean; web?: string[]; dryRun?: boolean; repoPath?: string; name?: string; namePrefix?: string; mirrorFrom?: string; mirrorDirs?: string[] } | null {
   let allowDll: boolean | undefined = undefined;
   let allowLive: boolean | undefined = undefined;
+  let syncCommon: boolean | undefined = undefined;
   let dryRun: boolean | undefined = undefined;
   let repoPath: string | undefined = undefined;
   let name: string | undefined = undefined;
@@ -304,6 +305,14 @@ function parseInstallArgs(tokens: string[]): { dataPath: string; allowDll?: bool
     }
     if (lower === "--no-allow-live") {
       allowLive = false;
+      continue;
+    }
+    if (lower === "--sync-common") {
+      syncCommon = true;
+      continue;
+    }
+    if (lower === "--no-sync-common") {
+      syncCommon = false;
       continue;
     }
     if (lower === "--dry-run") {
@@ -371,7 +380,7 @@ function parseInstallArgs(tokens: string[]): { dataPath: string; allowDll?: bool
 
   if (!rest.length) return null;
   const dataPath = rest.join(" ");
-  return { dataPath, allowDll, allowLive, web, dryRun, repoPath, name, namePrefix, mirrorFrom, mirrorDirs };
+  return { dataPath, allowDll, allowLive, syncCommon, web, dryRun, repoPath, name, namePrefix, mirrorFrom, mirrorDirs };
 }
 
 export function dispatch(tokens: string[], ctx: Ctx): DispatchResult {
@@ -505,7 +514,7 @@ export function dispatch(tokens: string[], ctx: Ctx): DispatchResult {
   if (cmd === "install") {
     const parsed = parseInstallArgs(rest);
     if (!parsed) {
-    return err("uso: install <MT5_DATA> [--name NOME] [--name-prefix PREFIX] [--allow-dll|--no-allow-dll] [--allow-live|--no-allow-live] [--web URL] [--dry-run] [--repo PATH] [--mirror-from PATH] [--mirror-dirs a,b,c]");
+    return err("uso: install <MT5_DATA> [--name NOME] [--name-prefix PREFIX] [--allow-dll|--no-allow-dll] [--allow-live|--no-allow-live] [--sync-common|--no-sync-common] [--web URL] [--dry-run] [--repo PATH] [--mirror-from PATH] [--mirror-dirs a,b,c]");
   }
     return { kind: "install", ...parsed };
   }
