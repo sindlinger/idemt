@@ -4,13 +4,15 @@ import { splitArgs, Ctx } from "./lib/args.js";
 import { dispatch } from "./lib/dispatch.js";
 import type { SendAction } from "./lib/dispatch.js";
 import { sendLine, sendJson, TransportOpts } from "./lib/transport.js";
-import { requireRunner } from "./lib/config.js";
+import { requireRunner, requireTestRunner, requireTestTransport } from "./lib/config.js";
+import { ensureExpertInRunner } from "./lib/expert_sync.js";
 import type { ResolvedConfig } from "./lib/config.js";
 import { runTester } from "./lib/tester.js";
 import { createExpertTemplate } from "./lib/template.js";
 import { buildAttachReport, formatAttachReport, DEFAULT_ATTACH_META, findLatestLogFile } from "./lib/attach_report.js";
 import { renderBanner } from "./lib/banner.js";
 import { runInstall } from "./lib/install.js";
+import { performDataImport } from "./lib/data_import.js";
 
 export type ReplOpts = TransportOpts & { json?: boolean; quiet?: boolean };
 
@@ -68,7 +70,14 @@ async function handleCommand(tokens: string[], ctx: Ctx, opts: ReplOpts, resolve
     return;
   }
   if (res.kind === "test") {
-    const runner = requireRunner(resolved);
+    const runner = requireTestRunner(resolved);
+    if (res.spec.csv) {
+      const transport = requireTestTransport(resolved);
+      await performDataImport(res.spec.csv, runner, transport);
+    }
+    if (resolved.testerRunner && resolved.runner && resolved.testerRunner.dataPath !== resolved.runner.dataPath) {
+      ensureExpertInRunner(res.spec.expert, resolved.runner, runner);
+    }
     const result = await runTester(res.spec, runner, resolved.tester);
     process.stdout.write(`tester: ${result.runDir}\n`);
     if (result.terminalLogPath) process.stdout.write(`terminal-log: ${result.terminalLogPath}\n`);

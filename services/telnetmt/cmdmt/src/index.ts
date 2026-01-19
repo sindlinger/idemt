@@ -13,7 +13,9 @@ import { runRepl } from "./repl.js";
 import { renderBanner } from "./lib/banner.js";
 import {
   requireRunner,
+  requireTestRunner,
   requireTransport,
+  requireTestTransport,
   resolveConfig,
   toWslPath,
   toWindowsPath,
@@ -24,6 +26,9 @@ import { runTester } from "./lib/tester.js";
 import { createExpertTemplate } from "./lib/template.js";
 import { buildAttachReport, formatAttachReport, DEFAULT_ATTACH_META, findLatestLogFile } from "./lib/attach_report.js";
 import { runInstall } from "./lib/install.js";
+import { resolveExpertFromRunner } from "./lib/expert_resolve.js";
+import { ensureExpertInRunner } from "./lib/expert_sync.js";
+import { performDataImport } from "./lib/data_import.js";
 
 type AttachReport = Awaited<ReturnType<typeof buildAttachReport>>;
 
@@ -269,8 +274,7 @@ function resolveCompilePath(resolved: { compilePath?: string }): string | null {
     resolved.compilePath,
     env,
     "/mnt/c/git/mt5ide/services/telnetmt/tools/mt5-compile.exe",
-    "/mnt/c/mql/mt5-shellscripts/CLI/mt5-compile.exe",
-    "/mnt/c/mql/mt5-shellscripts/compile.cmd"
+    "/mnt/c/mql/mt5-shellscripts/CLI/mt5-compile.exe"
   ].filter(Boolean) as string[];
   for (const c of candidates) {
     if (existsPath(c)) return c;
@@ -465,64 +469,6 @@ function resolveIndicatorFromRunner(name: string, dataPath?: string): string | n
   return null;
 }
 
-type ResolvedExpert = { name: string; mq5?: string; ex5?: string };
-
-function normalizeExpertRelName(relPath: string): string {
-  let rel = relPath.replace(/\\/g, "/");
-  rel = rel.replace(/\.(mq5|ex5)$/i, "");
-  return rel.replace(/\//g, "\\");
-}
-
-function resolveExpertFromRunner(input: string, dataPath?: string): ResolvedExpert | null {
-  if (!dataPath || !input) return null;
-  const base = path.join(toWslPath(dataPath), "MQL5", "Experts");
-  const hasExt = /\.(mq5|ex5)$/i.test(input);
-  const hasSeparators = input.includes("/") || input.includes("\\");
-  const candidates = hasExt ? [input] : [`${input}.ex5`, `${input}.mq5`];
-
-  if (hasSeparators) {
-    const localRaw = isWindowsPath(input) ? toWslPath(input) : input;
-    if (fs.existsSync(localRaw)) {
-      if (localRaw.startsWith(base)) {
-        const rel = path.relative(base, localRaw);
-        const name = normalizeExpertRelName(rel);
-        const mq5 = localRaw.toLowerCase().endsWith(".mq5") ? localRaw : undefined;
-        const ex5 = localRaw.toLowerCase().endsWith(".ex5") ? localRaw : undefined;
-        return { name, mq5, ex5 };
-      }
-      const name = normalizeExpertRelName(path.basename(localRaw));
-      const mq5 = localRaw.toLowerCase().endsWith(".mq5") ? localRaw : undefined;
-      const ex5 = localRaw.toLowerCase().endsWith(".ex5") ? localRaw : undefined;
-      return { name, mq5, ex5 };
-    }
-    let relInput = input.replace(/^[/\\]+/, "");
-    relInput = relInput.replace(/^mql5[\\/]/i, "");
-    relInput = relInput.replace(/^experts[\\/]/i, "");
-    const relCandidates = hasExt ? [relInput] : [`${relInput}.ex5`, `${relInput}.mq5`];
-    for (const candidate of relCandidates) {
-      const full = path.join(base, candidate);
-      if (fs.existsSync(full)) {
-        const name = normalizeExpertRelName(candidate);
-        const mq5 = full.toLowerCase().endsWith(".mq5") ? full : undefined;
-        const ex5 = full.toLowerCase().endsWith(".ex5") ? full : undefined;
-        return { name, mq5, ex5 };
-      }
-    }
-    return null;
-  }
-
-  for (const candidate of candidates) {
-    const found = findFileRecursive(base, candidate);
-    if (found) {
-      const rel = path.relative(base, found);
-      const name = normalizeExpertRelName(rel);
-      const mq5 = found.toLowerCase().endsWith(".mq5") ? found : undefined;
-      const ex5 = found.toLowerCase().endsWith(".ex5") ? found : undefined;
-      return { name, mq5, ex5 };
-    }
-  }
-  return null;
-}
 
 function resolveMqSourceFromRunner(input: string, dataPath?: string): string | null {
   if (!dataPath || !input) return null;
@@ -592,15 +538,8 @@ async function compileMqSource(src: string, resolved: { compilePath?: string }):
 
 async function runCompile(pathOrCmd: string, args: string[]): Promise<void> {
   return new Promise((resolve, reject) => {
-    const isCmd = pathOrCmd.toLowerCase().endsWith(".cmd") || pathOrCmd.toLowerCase().endsWith(".bat");
-    if (isWsl() && (isWindowsPath(pathOrCmd) || isCmd)) {
-      const winPath = isWindowsPath(pathOrCmd) ? pathOrCmd : toWindowsPath(pathOrCmd);
-      const cmdArgs = ["/C", winPath, ...args];
-      const child = spawn("cmd.exe", cmdArgs, { stdio: "inherit" });
-      child.on("error", reject);
-      child.on("exit", (code: number | null) =>
-        code && code !== 0 ? reject(new Error(`compile retornou ${code}`)) : resolve()
-      );
+    if (pathOrCmd.toLowerCase().endsWith(".cmd") || pathOrCmd.toLowerCase().endsWith(".bat")) {
+      reject(new Error("compile nao suporta .cmd/.bat (CMD desabilitado). Use metaeditor.exe ou mt5-compile.exe."));
       return;
     }
     const execPath = isWsl() && isWindowsPath(pathOrCmd) ? toWslPath(pathOrCmd) : pathOrCmd;
@@ -652,6 +591,58 @@ function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+async function pingTransport(transport: { hosts: string[]; port: number; timeoutMs: number }): Promise<boolean> {
+  try {
+    const resp = await executeSend({ type: "PING", params: [] }, transport);
+    return !isErrorResponse(resp);
+  } catch {
+    return false;
+  }
+}
+
+function startTerminalMinimized(terminalPath: string) {
+  const winPath = toWindowsPath(terminalPath);
+  spawnSync("cmd.exe", ["/c", "start", "\"\"", "/min", winPath], { stdio: "ignore" });
+}
+
+function stopTerminalByPath(terminalPath: string) {
+  const winPath = toWindowsPath(terminalPath);
+  const script =
+    "Get-Process terminal64 -ErrorAction SilentlyContinue | " +
+    "Where-Object { $_.Path -eq '" +
+    winPath.replace(/'/g, "''") +
+    "' } | Stop-Process -Force";
+  spawnSync("powershell.exe", ["-NoProfile", "-Command", script], { stdio: "ignore" });
+}
+
+function isTerminalRunning(terminalPath: string): boolean {
+  const winPath = toWindowsPath(terminalPath);
+  const script =
+    "Get-Process terminal64 -ErrorAction SilentlyContinue | " +
+    "Where-Object { $_.Path -eq '" +
+    winPath.replace(/'/g, "''") +
+    "' } | Select-Object -First 1 -ExpandProperty Id";
+  const result = spawnSync("powershell.exe", ["-NoProfile", "-Command", script], { encoding: "utf8" });
+  const out = typeof result.stdout === "string" ? result.stdout.trim() : "";
+  return out.length > 0;
+}
+
+async function ensureServiceAvailable(
+  runner: { terminalPath?: string },
+  transport: { hosts: string[]; port: number; timeoutMs: number },
+  attempts = 15,
+  waitMs = 800
+): Promise<{ started: boolean }> {
+  if (await pingTransport(transport)) return { started: false };
+  if (!runner.terminalPath) return { started: false };
+  startTerminalMinimized(runner.terminalPath);
+  for (let i = 0; i < attempts; i++) {
+    await sleep(waitMs);
+    if (await pingTransport(transport)) return { started: true };
+  }
+  return { started: true };
+}
+
 function resolveBaseTplName(
   baseTpl: string,
   dataPath: string
@@ -679,6 +670,11 @@ async function main() {
     .option("--config <path>", "caminho do config JSON")
     .option("--profile <name>", "perfil do config")
     .option("--runner <id>", "runner do config")
+    .option("--test-runner <id>", "runner para expert run/test (sandbox)")
+    .option("--test-host <host>", "host do sandbox (override)")
+    .option("--test-hosts <hosts>", "hosts do sandbox (override)")
+    .option("--test-port <port>", "porta do sandbox", (v) => parseInt(v, 10))
+    .option("--test-timeout <ms>", "timeout do sandbox", (v) => parseInt(v, 10))
     .option("--symbol <symbol>", "symbol default")
     .option("--tf <tf>", "timeframe default")
     .option("--sub <n>", "subwindow/indice default", (v) => parseInt(v, 10))
@@ -696,6 +692,7 @@ async function main() {
     .option("--pos <X,Y>", "posicao da janela do terminal (ex: 100,40)")
     .option("--fullscreen", "terminal fullscreen (override)")
     .option("--no-fullscreen", "terminal sem fullscreen (override)")
+    .option("--keep-open", "nao fecha o terminal sandbox e nao encerra ao final do tester")
     .option("--json", "saida em JSON", false)
     .option("--quiet", "nao imprime banner no modo interativo", false)
     .option("--trace", "debug: loga comandos/respostas e verificacoes", false)
@@ -723,6 +720,7 @@ async function main() {
     configPath: opts.config,
     profile: opts.profile,
     runner: opts.runner,
+    testRunner: opts.testRunner,
     symbol: opts.symbol,
     tf: opts.tf,
     sub: opts.sub,
@@ -733,6 +731,10 @@ async function main() {
     hosts: opts.hosts,
     port: opts.port,
     timeoutMs: opts.timeout,
+    testHost: opts.testHost,
+    testHosts: opts.testHosts,
+    testPort: opts.testPort,
+    testTimeoutMs: opts.testTimeout,
     mt5Path: opts.mt5Path,
     mt5Data: opts.mt5Data
   });
@@ -745,6 +747,7 @@ async function main() {
     }
   }
 
+  const visualOverrideProvided = typeof opts.visual === "boolean";
   const testerOverride: Record<string, number> = {};
   if (typeof opts.visual === "boolean") testerOverride.visual = opts.visual ? 1 : 0;
   if (typeof opts.fullscreen === "boolean") testerOverride.windowFullscreen = opts.fullscreen ? 1 : 0;
@@ -768,6 +771,9 @@ async function main() {
   }
   if (Object.keys(testerOverride).length) {
     resolved.tester = { ...resolved.tester, ...testerOverride };
+  }
+  if (opts.keepOpen) {
+    resolved.tester = { ...resolved.tester, allowOpen: true, shutdownTerminal: 0 };
   }
 
   const ctx: Ctx = {
@@ -884,15 +890,71 @@ async function main() {
     return;
   }
   if (res.kind === "test") {
-    const runner = requireRunner(resolved);
-    const result = await runTester(res.spec, runner, resolved.tester);
+    const runner = requireTestRunner(resolved);
+    if (res.spec.csv) {
+      const transport = requireTestTransport(resolved);
+      let started = false;
+      try {
+        const svc = await ensureServiceAvailable(runner, transport);
+        started = svc.started;
+        await performDataImport(res.spec.csv, runner, transport);
+      } catch (err) {
+        process.stderr.write(String(err) + "\n");
+        process.exitCode = 1;
+        return;
+      } finally {
+        if (started) stopTerminalByPath(runner.terminalPath ?? "");
+      }
+    }
+    if (resolved.testerRunner && resolved.runner && resolved.testerRunner.dataPath !== resolved.runner.dataPath) {
+      const sync = ensureExpertInRunner(res.spec.expert, resolved.runner, runner);
+      if (TRACE && sync.copied) {
+        process.stderr.write(`[trace] synced expert to sandbox: ${sync.details.join(", ")}\n`);
+      }
+    }
+    const testerConfig = { ...resolved.tester };
+    const shouldRestartSandbox =
+      Boolean(resolved.testerRunnerId) && Boolean(runner.terminalPath) && !testerConfig.allowOpen;
+    if (shouldRestartSandbox && runner.terminalPath && isTerminalRunning(runner.terminalPath)) {
+      if (TRACE) {
+        process.stderr.write(`[trace] sandbox aberto; encerrando antes do run\n`);
+      }
+      stopTerminalByPath(runner.terminalPath);
+      await sleep(1200);
+    }
+    if (res.spec.oneShot && !visualOverrideProvided) {
+      testerConfig.visual = 1;
+    }
+    const visualMode = Number(testerConfig.visual) === 1 ? "visual" : "headless";
+    if (TRACE) {
+      process.stderr.write(
+        `[trace] tester mode=${visualMode} symbol=${res.spec.symbol} tf=${res.spec.tf} expert=${res.spec.expert}\n`
+      );
+      process.stderr.write(
+        `[trace] runner terminalPath=${runner.terminalPath ?? ""} dataPath=${runner.dataPath ?? ""}\n`
+      );
+    }
+    const result = await runTester(res.spec, runner, testerConfig);
     if (opts.json) {
       process.stdout.write(JSON.stringify({ kind: "test", result }) + "\n");
     } else {
+      process.stdout.write(`mode: ${visualMode}\n`);
       process.stdout.write(`tester: ${result.runDir}\n`);
       if (result.terminalLogPath) process.stdout.write(`terminal-log: ${result.terminalLogPath}\n`);
       if (result.copiedReport) process.stdout.write(`report: ${result.copiedReport}\n`);
       if (result.copiedLogs.length) process.stdout.write(`logs: ${result.copiedLogs.join(", ")}\n`);
+    }
+    return;
+  }
+  if (res.kind === "data_import") {
+    const runner = requireRunner(resolved);
+    const transport = requireTransport(resolved);
+    try {
+      await performDataImport(res, runner, transport);
+    } catch (err) {
+      process.stderr.write(String(err) + "\n");
+      process.exitCode = 1;
+      return;
     }
     return;
   }

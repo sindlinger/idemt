@@ -36,6 +36,14 @@ DEMO_PHONE_COUNTRY=BR
 DEMO_PHONE_NUMBER=11999999999
 ```
 
+### .env compartilhado (opcional)
+Se existir um `.env` compartilhado no repo (ex.: `C:\git\mt5ide\.env`), o script
+carrega esse arquivo primeiro. As credenciais MT5 (`MT5_LOGIN`, `MT5_PASSWORD`,
+`MT5_SERVER`) e os defaults de demo (`DEMO_LANGUAGE`, `DEMO_TRADER_CURRENCY`,
+`DEMO_TRADER_BALANCE`, `DEMO_MT5_CURRENCY`, `DEMO_MT5_BALANCE`) são lidos do
+`.env` compartilhado quando presentes. As demais variáveis continuam vindo do
+`.env` local do `cli-duka-account`.
+
 ## Uso
 - Pipeline completo (formulário + e-mail):
   ```bash

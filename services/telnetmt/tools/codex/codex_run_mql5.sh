@@ -76,7 +76,6 @@ Deixar defaults obrigatorios prontos para o usuario. Ele so digita TF e nome do 
 - Garantir que `cmdmt` e `indicador` funcionem de qualquer lugar.
 - Disponibilizar wrappers/shims:
   - WSL: symlink em `/usr/local/bin` ou similar.
-  - Windows: `indicador.cmd`/`cmdmt.cmd` no PATH, chamando o binario real.
 - Nada deve depender do cwd.
 
 5) OneShot (experts e execucao)

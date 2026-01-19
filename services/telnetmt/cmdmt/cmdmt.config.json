@@ -1,0 +1,27 @@
+{
+  "runner": "duka",
+  "testerRunner": "sandbox",
+  "transport": {
+    "host": "192.168.64.1",
+    "port": 9090
+  },
+  "tester": {
+    "shutdownTerminal": 1
+  },
+  "runners": {
+    "duka": {
+      "terminalPath": "C:\\git\\Dukascopy MetaTrader 5\\terminal64.exe",
+      "dataPath": "C:\\Users\\pichau\\AppData\\Roaming\\MetaQuotes\\Terminal\\5A55C0E97D87E9624F10296888E21801",
+      "metaeditorPath": "C:\\git\\Dukascopy MetaTrader 5\\MetaEditor64.exe",
+      "portable": false
+    },
+    "sandbox": {
+      "terminalPath": "C:\\mql\\mt5-sandbox\\terminal\\terminal64.exe",
+      "dataPath": "C:\\Users\\pichau\\AppData\\Roaming\\MetaQuotes\\Terminal\\57B848CCFE11848ECA6DFBC374CEE02B",
+      "metaeditorPath": "C:\\mql\\mt5-sandbox\\terminal\\MetaEditor64.exe",
+      "portable": false
+    }
+  },
+  "baseTpl": "base.tpl",
+  "envPath": "C:\\git\\mt5ide\\.env"
+}

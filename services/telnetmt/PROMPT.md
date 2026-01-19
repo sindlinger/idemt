@@ -16,7 +16,7 @@ O que precisaria ser alterado (não aplicado):
 - `cmdmt/src/lib/args.ts`: estender `Ctx` para carregar `baseTpl` (e opcionalmente `profile` para mensagens).
 - `cmdmt/src/lib/help.ts`: atualizar help e exemplos para `indicador`, `expert run`, `expert test`.
 - `cmdmt/src/lib/tester.ts` (novo): gerar `.ini` e `.set`, escolher runner `active|special`, executar terminal com `/config`, coletar logs e report HTML.
-- Wrappers: `cmdmt/shims/cmdmt`, `cmdmt/shims/indicador`, `cmdmt/shims/cmdmt.cmd`, `cmdmt/shims/indicador.cmd`, todos apontando para `cmdmt/dist/index.js` com `CMDMT_INVOKE_AS=indicador` no wrapper do alias.
+- Wrappers: `cmdmt/shims/cmdmt`, `cmdmt/shims/indicador`, ambos apontando para `cmdmt/dist/index.js` com `CMDMT_INVOKE_AS=indicador` no wrapper do alias.
 - Docs: `cmdmt/README.md` com schema do config, env vars e exemplos.
 
 Bloqueios adicionais encontrados:
@@ -42,7 +42,7 @@ O que precisaria ser alterado (não aplicado):
 - `cmdmt/src/lib/args.ts`: estender `Ctx` para carregar `baseTpl` (e opcionalmente `profile` para mensagens).
 - `cmdmt/src/lib/help.ts`: atualizar help e exemplos para `indicador`, `expert run`, `expert test`.
 - `cmdmt/src/lib/tester.ts` (novo): gerar `.ini` e `.set`, escolher runner `active|special`, executar terminal com `/config`, coletar logs e report HTML.
-- Wrappers: `cmdmt/shims/cmdmt`, `cmdmt/shims/indicador`, `cmdmt/shims/cmdmt.cmd`, `cmdmt/shims/indicador.cmd`, todos apontando para `cmdmt/dist/index.js` com `CMDMT_INVOKE_AS=indicador` no wrapper do alias.
+- Wrappers: `cmdmt/shims/cmdmt`, `cmdmt/shims/indicador`, ambos apontando para `cmdmt/dist/index.js` com `CMDMT_INVOKE_AS=indicador` no wrapper do alias.
 - Docs: `cmdmt/README.md` com schema do config, env vars e exemplos.
 
 Bloqueios adicionais encontrados:

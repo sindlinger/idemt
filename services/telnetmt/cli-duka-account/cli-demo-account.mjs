@@ -4,14 +4,41 @@ import * as readline from 'node:readline/promises';
 import { stdin as input, stdout as output } from 'node:process';
 import dotenv from 'dotenv';
 import path from 'node:path';
+import fs from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { ImapFlow } from 'imapflow';
 import process from 'node:process';
 
-// Carrega .env do diretório do script (independe do cwd)
+// Carrega .env compartilhado (repo) + .env local
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const repoRoot = path.resolve(__dirname, '..', '..', '..');
+const sharedEnvPath =
+  process.env.ENV_SHARED ||
+  process.env.ENV_PATH_SHARED ||
+  path.join(repoRoot, '.env');
+let sharedParsed = {};
+if (fs.existsSync(sharedEnvPath)) {
+  sharedParsed = dotenv.config({ path: sharedEnvPath }).parsed || {};
+}
 const envPath = process.env.ENV_PATH || path.join(__dirname, '.env');
-dotenv.config({ path: envPath });
+const localParsed = dotenv.config({ path: envPath }).parsed || {};
+
+// Garante que credenciais e defaults venham do .env compartilhado quando presentes
+const sharedKeys = [
+  'MT5_LOGIN',
+  'MT5_PASSWORD',
+  'MT5_SERVER',
+  'DEMO_LANGUAGE',
+  'DEMO_TRADER_CURRENCY',
+  'DEMO_TRADER_BALANCE',
+  'DEMO_MT5_CURRENCY',
+  'DEMO_MT5_BALANCE'
+];
+for (const key of sharedKeys) {
+  if (sharedParsed[key] !== undefined) {
+    process.env[key] = sharedParsed[key];
+  }
+}
 
 // ---------------------------
 // CLI args (subcommands/flags)

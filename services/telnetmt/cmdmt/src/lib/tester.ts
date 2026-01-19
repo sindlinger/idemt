@@ -13,6 +13,19 @@ export type TestSpec = {
   params?: string;
   oneShot?: boolean;
   baseTpl?: string;
+  csv?: {
+    mode: "rates" | "ticks";
+    csv: string;
+    symbol: string;
+    tf?: string;
+    base?: string;
+    digits?: number;
+    spread?: number;
+    tz?: number;
+    sep?: string;
+    recreate?: boolean;
+    common?: boolean;
+  };
 };
 
 export type TestResult = {
@@ -199,6 +212,7 @@ function compileMq5(mq5Path: string, metaeditorPath?: string, logPath?: string) 
 function updateIniValue(text: string, section: string, key: string, value: string | number | undefined): string {
   if (value === undefined || value === "") return text;
   const escapedSection = section.replace(/[[\]{}()*+?.\\^$|]/g, "\\$&");
+  const escapedKey = key.replace(/[[\]{}()*+?.\\^$|]/g, "\\$&");
   const sectionRe = new RegExp(`(^\\[${escapedSection}\\][\\s\\S]*?)(?=^\\[|\\Z)`, "m");
   const match = text.match(sectionRe);
   const newline = text.includes("\r\n") ? "\r\n" : "\n";
@@ -209,8 +223,9 @@ function updateIniValue(text: string, section: string, key: string, value: strin
   const block = match[1];
   const lines = block.split(/\r?\n/);
   let found = false;
+  const keyRe = new RegExp(`^\\s*${escapedKey}\\s*=`, "i");
   for (let i = 1; i < lines.length; i++) {
-    if (lines[i].startsWith(`${key}=`)) {
+    if (keyRe.test(lines[i])) {
       lines[i] = line;
       found = true;
       break;
@@ -225,11 +240,12 @@ function updateIniValue(text: string, section: string, key: string, value: strin
 
 function readIniValue(text: string, section: string, key: string): string | null {
   const escapedSection = section.replace(/[[\]{}()*+?.\\^$|]/g, "\\$&");
+  const escapedKey = key.replace(/[[\]{}()*+?.\\^$|]/g, "\\$&");
   const sectionRe = new RegExp(`^\\[${escapedSection}\\][\\s\\S]*?(?=^\\[|\\Z)`, "m");
   const match = text.match(sectionRe);
   if (!match) return null;
   const block = match[0];
-  const lineRe = new RegExp(`^${key}=(.*)$`, "m");
+  const lineRe = new RegExp(`^\\s*${escapedKey}\\s*=\\s*(.*)$`, "mi");
   const lm = block.match(lineRe);
   return lm ? lm[1] : null;
 }
@@ -367,20 +383,21 @@ export async function runTester(
   syncTerminalIni(dataPathWsl, tester);
 
   const inputs = parseParams(spec.params);
-  const hash = stableHash(`${spec.expert}|${spec.symbol}|${spec.tf}|${spec.params ?? ""}`);
-  const baseName = safeFileBase(`${spec.expert}-${spec.symbol}-${spec.tf}`);
   const runDirRoot = tester.artifactsDir || "cmdmt-artifacts";
   const runDir = path.isAbsolute(runDirRoot) || isWindowsPath(runDirRoot)
     ? resolveDataPathWsl(runDirRoot)
     : path.join(dataPathWsl, runDirRoot);
   ensureDir(runDir);
 
-  const runId = `${Date.now()}-${hash}`;
+  const tempHash = stableHash(`${spec.expert}|${spec.symbol}|${spec.tf}|${spec.params ?? ""}`);
+  const runId = `${Date.now()}-${tempHash}`;
   const runDirFinal = path.join(runDir, runId);
   ensureDir(runDirFinal);
 
   const expertReady = ensureExpertReady(dataPathWsl, spec.expert, runner.metaeditorPath, runDirFinal);
   const expertId = expertReady.expertId;
+  const hash = stableHash(`${expertId}|${spec.symbol}|${spec.tf}|${spec.params ?? ""}`);
+  const baseName = safeFileBase(`${expertId}-${spec.symbol}-${spec.tf}`);
 
   if (spec.oneShot) {
     let baseTpl = spec.baseTpl?.trim() ?? "";
@@ -405,12 +422,14 @@ export async function runTester(
   const profilesTesterDir = path.join(dataPathWsl, "MQL5", "Profiles", "Tester");
   ensureDir(profilesTesterDir);
 
-  const setFileName = `${baseName}-${hash}.set`;
+  const fileBaseRaw = baseName || "run";
+  const fileBase = fileBaseRaw.length > 48 ? fileBaseRaw.slice(0, 48) : fileBaseRaw;
+  const setFileName = `${fileBase}-${hash}.set`;
   const setFilePath = path.join(profilesTesterDir, setFileName);
   writeSetFile(setFilePath, inputs);
 
   const reportDir = tester.reportDir || "reports";
-  const reportFile = `${baseName}-${hash}.html`;
+  const reportFile = `${fileBase}-${hash}.html`;
   const reportDirIsAbs = path.isAbsolute(reportDir) || isWindowsPath(reportDir);
   const reportAbs = reportDirIsAbs
     ? path.join(resolveDataPathWsl(reportDir), reportFile)
@@ -446,7 +465,7 @@ export async function runTester(
   };
 
   const iniContent = formatIniSection("Tester", iniEntries);
-  const iniPath = path.join(runDirFinal, `${baseName}-${hash}.ini`);
+  const iniPath = path.join(runDirFinal, `${fileBase}-${hash}.ini`);
   fs.writeFileSync(iniPath, iniContent, "utf8");
 
   const terminalExec = isWsl() && isWindowsPath(terminalPath) ? toWslPath(terminalPath) : terminalPath;

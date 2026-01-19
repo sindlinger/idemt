@@ -1,13 +1,15 @@
 import fs from "node:fs";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
-import { isWsl, toWslPath, toWindowsPath } from "./config.js";
+import { isWsl, toWslPath, toWindowsPath, isWindowsPath } from "./config.js";
 
 export type InstallSpec = {
   dataPath?: string;
   repoPath?: string;
   name?: string;
   namePrefix?: string;
+  mirrorFrom?: string;
+  mirrorDirs?: string[];
   allowDll: boolean;
   allowLive: boolean;
   web: string[];
@@ -30,10 +32,14 @@ function normalizeDataPath(raw?: string): string | null {
 function findTelnetMtRoot(start: string): string | null {
   let dir = path.resolve(start);
   for (let i = 0; i < 6; i++) {
-    const candidate = path.join(dir, "services", "telnetmt", "Services");
-    if (fs.existsSync(candidate)) return path.join(dir, "services", "telnetmt");
-    const alt = path.join(dir, "telnetmt", "Services");
-    if (fs.existsSync(alt)) return path.join(dir, "telnetmt");
+    const candidates = [
+      { probe: path.join(dir, "services", "telnetmt", "Services"), root: path.join(dir, "services", "telnetmt") },
+      { probe: path.join(dir, "Services", "telnetmt", "Services"), root: path.join(dir, "Services", "telnetmt") },
+      { probe: path.join(dir, "telnetmt", "Services"), root: path.join(dir, "telnetmt") }
+    ];
+    for (const cand of candidates) {
+      if (fs.existsSync(cand.probe)) return cand.root;
+    }
     const parent = path.dirname(dir);
     if (parent === dir) break;
     dir = parent;
@@ -217,6 +223,63 @@ function ensureJunctions(
   log.push("junctions criadas para Services/Experts/Scripts");
 }
 
+function normalizeMirrorDirs(raw?: string[]): string[] {
+  if (!raw || raw.length === 0) {
+    return [
+      "Indicators",
+      "Experts",
+      "Include",
+      "Libraries",
+      "Files",
+      "Profiles",
+      "Presets",
+      "Services",
+      "Scripts"
+    ];
+  }
+  const out = raw
+    .map((d) => d.trim())
+    .filter(Boolean)
+    .map((d) => d.replace(/[\\/]+$/, ""));
+  return Array.from(new Set(out));
+}
+
+function ensureMql5Mirror(
+  dataPathWin: string,
+  mirrorFromWin: string,
+  dirs: string[],
+  dryRun: boolean,
+  log: string[]
+) {
+  const targetRoot = path.win32.join(dataPathWin, "MQL5");
+  const sourceRoot = path.win32.join(mirrorFromWin, "MQL5");
+  const entries = dirs.map((dir) => ({
+    dir,
+    target: path.win32.join(targetRoot, dir),
+    source: path.win32.join(sourceRoot, dir)
+  }));
+
+  if (dryRun) {
+    log.push("dry-run mirror MQL5:");
+    for (const e of entries) log.push(`  ${e.target} -> ${e.source}`);
+    return;
+  }
+
+  const ps = [
+    "$ErrorActionPreference='Stop'",
+    `New-Item -ItemType Directory -Force -Path '${psEscape(targetRoot)}' | Out-Null`
+  ];
+  for (const e of entries) {
+    ps.push(`if (Test-Path '${psEscape(e.target)}') { Remove-Item -Force -Recurse '${psEscape(e.target)}' }`);
+    ps.push(`New-Item -ItemType Junction -Path '${psEscape(e.target)}' -Target '${psEscape(e.source)}' | Out-Null`);
+  }
+  const res = runPowerShell(ps.join("; "));
+  if (!res.ok) {
+    throw new Error(`falha ao criar mirror MQL5: ${res.out || "erro desconhecido"}`);
+  }
+  log.push(`mirror MQL5 criado (${dirs.length} dirs)`);
+}
+
 export function runInstall(spec: InstallSpec, cwd = process.cwd()): string {
   const log: string[] = [];
   const dataPathRaw = normalizeDataPath(spec.dataPath);
@@ -224,7 +287,22 @@ export function runInstall(spec: InstallSpec, cwd = process.cwd()): string {
   const dataPathWsl = isWsl() && /^[A-Za-z]:/.test(dataPathRaw) ? toWslPath(dataPathRaw) : dataPathRaw;
   const dataPathWin = toWinPath(dataPathWsl);
 
-  const repoRoot = spec.repoPath ? path.resolve(spec.repoPath) : findTelnetMtRoot(cwd) ?? "";
+  const repoInput = spec.repoPath
+    ? (isWindowsPath(spec.repoPath) ? toWslPath(spec.repoPath) : spec.repoPath)
+    : undefined;
+  let repoRoot = repoInput ? path.resolve(repoInput) : findTelnetMtRoot(cwd) ?? "";
+  if (repoRoot) {
+    const svcNested = path.join(repoRoot, "Services", "telnetmt", "Services");
+    const svcNestedLower = path.join(repoRoot, "services", "telnetmt", "Services");
+    if (fs.existsSync(svcNested)) {
+      repoRoot = path.join(repoRoot, "Services", "telnetmt");
+    } else if (fs.existsSync(svcNestedLower)) {
+      repoRoot = path.join(repoRoot, "services", "telnetmt");
+    } else if (!fs.existsSync(path.join(repoRoot, "Services"))) {
+      const nested = findTelnetMtRoot(repoRoot);
+      if (nested) repoRoot = nested;
+    }
+  }
   if (!repoRoot) {
     throw new Error("nao encontrei services/telnetmt. Use --repo <path>.");
   }
@@ -245,6 +323,19 @@ export function runInstall(spec: InstallSpec, cwd = process.cwd()): string {
 
   ensureJunctions(dataPathWin, telnetRootWin, names, spec.dryRun, log);
   if (!spec.dryRun) ensureIniAllows(dataPathWsl, spec, log);
+
+  if (spec.mirrorFrom) {
+    const mirrorFromRaw = normalizeDataPath(spec.mirrorFrom);
+    if (!mirrorFromRaw) {
+      throw new Error("mirror-from invalido.");
+    }
+    const mirrorFromWsl = isWsl() && /^[A-Za-z]:/.test(mirrorFromRaw) ? toWslPath(mirrorFromRaw) : mirrorFromRaw;
+    const mirrorFromWin = toWinPath(mirrorFromWsl);
+    const dirs = normalizeMirrorDirs(spec.mirrorDirs);
+    log.push(`mirror-from: ${mirrorFromWin}`);
+    log.push(`mirror-dirs: ${dirs.join(", ")}`);
+    ensureMql5Mirror(dataPathWin, mirrorFromWin, dirs, spec.dryRun, log);
+  }
 
   if (spec.web.length) {
     log.push(`webrequest allowlist: ${spec.web.join(", ")}`);

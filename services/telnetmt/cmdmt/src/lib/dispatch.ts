@@ -5,6 +5,7 @@ import { renderHelp, renderExamples } from "./help.js";
 import { safeFileBase, stableHash } from "./naming.js";
 import type { TestSpec } from "./tester.js";
 import type { AttachMeta } from "./attach_report.js";
+import type { CsvImportSpec } from "./data_import.js";
 import { DEFAULT_ATTACH_META } from "./attach_report.js";
 
 export type SendAction = { type: string; params: string[] };
@@ -25,7 +26,21 @@ export type DispatchResult =
   | { kind: "multi"; steps: SendAction[]; attach?: AttachInfo; meta?: AttachMeta }
   | { kind: "ind_detach_index"; sym: string; tf: string; sub: string; index: number }
   | { kind: "test"; spec: TestSpec }
-  | { kind: "install"; dataPath: string; allowDll?: boolean; allowLive?: boolean; web?: string[]; dryRun?: boolean; repoPath?: string; name?: string; namePrefix?: string };
+  | { kind: "install"; dataPath: string; allowDll?: boolean; allowLive?: boolean; web?: string[]; dryRun?: boolean; repoPath?: string; name?: string; namePrefix?: string; mirrorFrom?: string; mirrorDirs?: string[] }
+  | {
+      kind: "data_import";
+      mode: "rates" | "ticks";
+      csv: string;
+      symbol: string;
+      tf?: string;
+      base?: string;
+      digits?: number;
+      spread?: number;
+      tz?: number;
+      sep?: string;
+      recreate?: boolean;
+      common?: boolean;
+    };
 
 
 function err(msg: string): DispatchResult {
@@ -68,6 +83,104 @@ function parseIntFlag(val: string | undefined, min: number, max: number): number
   const n = parseInt(val, 10);
   if (!Number.isFinite(n)) return null;
   return Math.max(min, Math.min(max, n));
+}
+
+function parseCsvFlags(tokens: string[]): { csv?: CsvImportSpec; rest: string[] } {
+  let csv: CsvImportSpec | undefined;
+  const rest: string[] = [];
+
+  const readValue = (tok: string, i: number): { value: string; skip: number } => {
+    if (tok.includes("=")) {
+      return { value: tok.slice(tok.indexOf("=") + 1), skip: 0 };
+    }
+    if (i + 1 < tokens.length && !tokens[i + 1].startsWith("--")) {
+      return { value: tokens[i + 1], skip: 1 };
+    }
+    return { value: "", skip: 0 };
+  };
+
+  for (let i = 0; i < tokens.length; i++) {
+    const tok = tokens[i];
+    const lower = tok.toLowerCase();
+
+    if (lower === "--csv-rates" || lower.startsWith("--csv-rates=")) {
+      const { value, skip } = readValue(tok, i);
+      i += skip;
+      csv = { mode: "rates", csv: value, symbol: "" };
+      continue;
+    }
+    if (lower === "--csv-ticks" || lower.startsWith("--csv-ticks=")) {
+      const { value, skip } = readValue(tok, i);
+      i += skip;
+      csv = { mode: "ticks", csv: value, symbol: "" };
+      continue;
+    }
+    if (lower === "--csv-symbol" || lower.startsWith("--csv-symbol=")) {
+      const { value, skip } = readValue(tok, i);
+      i += skip;
+      csv = csv ?? { mode: "rates", csv: "", symbol: "" };
+      csv.symbol = value;
+      continue;
+    }
+    if (lower === "--csv-tf" || lower.startsWith("--csv-tf=")) {
+      const { value, skip } = readValue(tok, i);
+      i += skip;
+      csv = csv ?? { mode: "rates", csv: "", symbol: "" };
+      csv.tf = value;
+      continue;
+    }
+    if (lower === "--csv-base" || lower.startsWith("--csv-base=")) {
+      const { value, skip } = readValue(tok, i);
+      i += skip;
+      csv = csv ?? { mode: "rates", csv: "", symbol: "" };
+      csv.base = value;
+      continue;
+    }
+    if (lower === "--csv-digits" || lower.startsWith("--csv-digits=")) {
+      const { value, skip } = readValue(tok, i);
+      i += skip;
+      const n = parseIntFlag(value, 0, 12);
+      csv = csv ?? { mode: "rates", csv: "", symbol: "" };
+      if (n !== null) csv.digits = n;
+      continue;
+    }
+    if (lower === "--csv-spread" || lower.startsWith("--csv-spread=")) {
+      const { value, skip } = readValue(tok, i);
+      i += skip;
+      const n = parseIntFlag(value, 0, 1000000);
+      csv = csv ?? { mode: "rates", csv: "", symbol: "" };
+      if (n !== null) csv.spread = n;
+      continue;
+    }
+    if (lower === "--csv-tz" || lower.startsWith("--csv-tz=")) {
+      const { value, skip } = readValue(tok, i);
+      i += skip;
+      const n = parseIntFlag(value, -24, 24);
+      csv = csv ?? { mode: "rates", csv: "", symbol: "" };
+      if (n !== null) csv.tz = n;
+      continue;
+    }
+    if (lower === "--csv-sep" || lower.startsWith("--csv-sep=")) {
+      const { value, skip } = readValue(tok, i);
+      i += skip;
+      csv = csv ?? { mode: "rates", csv: "", symbol: "" };
+      csv.sep = value;
+      continue;
+    }
+    if (lower === "--csv-recreate") {
+      csv = csv ?? { mode: "rates", csv: "", symbol: "" };
+      csv.recreate = true;
+      continue;
+    }
+    if (lower === "--csv-common") {
+      csv = csv ?? { mode: "rates", csv: "", symbol: "" };
+      csv.common = true;
+      continue;
+    }
+
+    rest.push(tok);
+  }
+  return { csv, rest };
 }
 
 function parseParamsAndMeta(tokens: string[]): { params: string; rest: string[]; meta: AttachMeta } {
@@ -162,13 +275,15 @@ function buildTplName(expert: string, symbol: string, tf: string, params: string
   return `${base}-${hash}.tpl`;
 }
 
-function parseInstallArgs(tokens: string[]): { dataPath: string; allowDll?: boolean; allowLive?: boolean; web?: string[]; dryRun?: boolean; repoPath?: string; name?: string; namePrefix?: string } | null {
+function parseInstallArgs(tokens: string[]): { dataPath: string; allowDll?: boolean; allowLive?: boolean; web?: string[]; dryRun?: boolean; repoPath?: string; name?: string; namePrefix?: string; mirrorFrom?: string; mirrorDirs?: string[] } | null {
   let allowDll: boolean | undefined = undefined;
   let allowLive: boolean | undefined = undefined;
   let dryRun: boolean | undefined = undefined;
   let repoPath: string | undefined = undefined;
   let name: string | undefined = undefined;
   let namePrefix: string | undefined = undefined;
+  let mirrorFrom: string | undefined = undefined;
+  let mirrorDirs: string[] | undefined = undefined;
   const web: string[] = [];
   const rest: string[] = [];
 
@@ -231,12 +346,32 @@ function parseInstallArgs(tokens: string[]): { dataPath: string; allowDll?: bool
       if (val) namePrefix = val;
       continue;
     }
+    if (lower === "--mirror-from" || lower.startsWith("--mirror-from=")) {
+      let val = lower.includes("=") ? tok.slice(tok.indexOf("=") + 1) : "";
+      if (!val && i + 1 < tokens.length && !tokens[i + 1].startsWith("--")) {
+        val = tokens[i + 1];
+        i += 1;
+      }
+      if (val) mirrorFrom = val;
+      continue;
+    }
+    if (lower === "--mirror-dirs" || lower.startsWith("--mirror-dirs=")) {
+      let val = lower.includes("=") ? tok.slice(tok.indexOf("=") + 1) : "";
+      if (!val && i + 1 < tokens.length && !tokens[i + 1].startsWith("--")) {
+        val = tokens[i + 1];
+        i += 1;
+      }
+      if (val) {
+        mirrorDirs = val.split(",").map((v) => v.trim()).filter(Boolean);
+      }
+      continue;
+    }
     rest.push(tok);
   }
 
   if (!rest.length) return null;
   const dataPath = rest.join(" ");
-  return { dataPath, allowDll, allowLive, web, dryRun, repoPath, name, namePrefix };
+  return { dataPath, allowDll, allowLive, web, dryRun, repoPath, name, namePrefix, mirrorFrom, mirrorDirs };
 }
 
 export function dispatch(tokens: string[], ctx: Ctx): DispatchResult {
@@ -370,7 +505,7 @@ export function dispatch(tokens: string[], ctx: Ctx): DispatchResult {
   if (cmd === "install") {
     const parsed = parseInstallArgs(rest);
     if (!parsed) {
-    return err("uso: install <MT5_DATA> [--name NOME] [--name-prefix PREFIX] [--allow-dll|--no-allow-dll] [--allow-live|--no-allow-live] [--web URL] [--dry-run] [--repo PATH]");
+    return err("uso: install <MT5_DATA> [--name NOME] [--name-prefix PREFIX] [--allow-dll|--no-allow-dll] [--allow-live|--no-allow-live] [--web URL] [--dry-run] [--repo PATH] [--mirror-from PATH] [--mirror-dirs a,b,c]");
   }
     return { kind: "install", ...parsed };
   }
@@ -560,13 +695,19 @@ export function dispatch(tokens: string[], ctx: Ctx): DispatchResult {
         baseTpl = restArgs[tplIdx];
         restArgs.splice(tplIdx, 1);
       }
-      const { params, rest: rest2 } = parseParamsAndMeta(restArgs);
+      const { csv, rest: restCsv } = parseCsvFlags(restArgs);
+      const { params, rest: rest2 } = parseParamsAndMeta(restCsv);
       if (!params && hasImplicitParams(rest2)) {
         return err(PARAMS_HINT);
       }
       const name = rest2.join(" ");
       if (!name) return err("uso: expert run [TF] NOME [BASE_TPL] [--params k=v ...]");
-      const spec: TestSpec = { expert: name, symbol, tf, params, oneShot: true, baseTpl };
+      if (csv) {
+        if (!csv.csv) return err("uso: --csv-rates/--csv-ticks exige caminho do CSV");
+        if (!csv.symbol) csv.symbol = symbol;
+        if (csv.mode === "rates" && !csv.tf) csv.tf = tf;
+      }
+      const spec: TestSpec = { expert: name, symbol, tf, params, oneShot: true, baseTpl, csv };
       return { kind: "test", spec };
     }
     if (sub === "test") {
@@ -581,13 +722,19 @@ export function dispatch(tokens: string[], ctx: Ctx): DispatchResult {
         tf = restArgs[0];
         restArgs = restArgs.slice(1);
       }
-      const { params, rest: rest2 } = parseParamsAndMeta(restArgs);
+      const { csv, rest: restCsv } = parseCsvFlags(restArgs);
+      const { params, rest: rest2 } = parseParamsAndMeta(restCsv);
       if (!params && hasImplicitParams(rest2)) {
         return err(PARAMS_HINT);
       }
       const name = rest2.join(" ");
       if (!name) return err("uso: expert test [TF] NOME [--params k=v ...]");
-      const spec: TestSpec = { expert: name, symbol, tf, params };
+      if (csv) {
+        if (!csv.csv) return err("uso: --csv-rates/--csv-ticks exige caminho do CSV");
+        if (!csv.symbol) csv.symbol = symbol;
+        if (csv.mode === "rates" && !csv.tf) csv.tf = tf;
+      }
+      const spec: TestSpec = { expert: name, symbol, tf, params, csv };
       return { kind: "test", spec };
     }
     if (sub === "oneshot") {
@@ -602,13 +749,19 @@ export function dispatch(tokens: string[], ctx: Ctx): DispatchResult {
         restArgs.splice(tplIdx, 1);
       }
       if (!baseTpl) return err("base template ausente. Use --base-tpl/CMDMT_BASE_TPL ou defaults.baseTpl.");
-      const { params, rest: rest2 } = parseParamsAndMeta(restArgs);
+      const { csv, rest: restCsv } = parseCsvFlags(restArgs);
+      const { params, rest: rest2 } = parseParamsAndMeta(restCsv);
       if (!params && hasImplicitParams(rest2)) {
         return err(PARAMS_HINT);
       }
       const name = rest2.join(" ");
       if (!name) return err("uso: expert oneshot TF NOME [BASE_TPL] [--params k=v ...]");
-      const spec: TestSpec = { expert: name, symbol, tf, params, oneShot: true, baseTpl };
+      if (csv) {
+        if (!csv.csv) return err("uso: --csv-rates/--csv-ticks exige caminho do CSV");
+        if (!csv.symbol) csv.symbol = symbol;
+        if (csv.mode === "rates" && !csv.tf) csv.tf = tf;
+      }
+      const spec: TestSpec = { expert: name, symbol, tf, params, oneShot: true, baseTpl, csv };
       return { kind: "test", spec };
     }
     if (sub === "attach") {
@@ -664,6 +817,67 @@ export function dispatch(tokens: string[], ctx: Ctx): DispatchResult {
       if (!r || !r.sym || !r.tf || r.rest.length < 1)
         return err("uso: script run [SYMBOL TF] TEMPLATE");
       return { kind: "send", type: "RUN_SCRIPT", params: [r.sym, r.tf, r.rest.join(" ")] };
+    }
+  }
+
+  if (cmd === "data") {
+    if (rest.length === 0) return err("uso: data import <rates|ticks> CSV SYMBOL [TF] [--base SYM] [--digits N] [--spread N] [--tz H] [--sep auto|tab|comma|semicolon] [--common] [--recreate|--no-recreate]");
+    const sub = rest[0].toLowerCase();
+    const args = rest.slice(1);
+    if (sub === "import") {
+      if (args.length < 3) return err("uso: data import <rates|ticks> CSV SYMBOL [TF] [--base SYM] [--digits N] [--spread N] [--tz H] [--sep auto|tab|comma|semicolon] [--common] [--recreate|--no-recreate]");
+      const mode = args[0].toLowerCase();
+      if (mode !== "rates" && mode !== "ticks") return err("modo invalido. use rates ou ticks");
+      let i = 1;
+      const csv = args[i++] ?? "";
+      const symbol = args[i++] ?? "";
+      if (!csv || !symbol) return err("uso: data import <rates|ticks> CSV SYMBOL [TF] ...");
+      let tf = "";
+      if (mode === "rates" && i < args.length && isTf(args[i])) {
+        tf = args[i];
+        i++;
+      }
+      let base: string | undefined;
+      let digits: number | undefined;
+      let spread: number | undefined;
+      let tz: number | undefined;
+      let sep: string | undefined;
+      let recreate = true;
+      let common = false;
+      for (; i < args.length; i++) {
+        const tok = args[i];
+        const lower = tok.toLowerCase();
+        if (lower === "--common") { common = true; continue; }
+        if (lower === "--no-common") { common = false; continue; }
+        if (lower === "--recreate") { recreate = true; continue; }
+        if (lower === "--no-recreate") { recreate = false; continue; }
+        const eq = tok.indexOf("=");
+        const key = (eq >= 0 ? tok.slice(0, eq) : tok).toLowerCase();
+        let val = eq >= 0 ? tok.slice(eq + 1) : "";
+        if (!val && i + 1 < args.length && !args[i + 1].startsWith("--")) {
+          val = args[i + 1];
+          i++;
+        }
+        if (key === "--base") base = val;
+        else if (key === "--digits") digits = parseInt(val, 10);
+        else if (key === "--spread") spread = parseInt(val, 10);
+        else if (key === "--tz") tz = parseInt(val, 10);
+        else if (key === "--sep") sep = val;
+      }
+      return {
+        kind: "data_import",
+        mode: mode as "rates" | "ticks",
+        csv,
+        symbol,
+        tf: tf || undefined,
+        base,
+        digits: Number.isFinite(digits as number) ? digits : undefined,
+        spread: Number.isFinite(spread as number) ? spread : undefined,
+        tz: Number.isFinite(tz as number) ? tz : undefined,
+        sep,
+        recreate,
+        common
+      };
     }
   }
 

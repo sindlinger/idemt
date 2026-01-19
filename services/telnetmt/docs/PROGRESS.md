@@ -12,6 +12,7 @@
 ## CLI (cmdmt)
 - [x] Config deterministica (defaults/profiles/runners)
 - [x] Alias `indicador` com defaults
+- [x] Atalhos `add`/`del`/`rm` (indicador/expert)
 - [x] `expert run` (SAVE_TPL_EA + APPLY_TPL)
 - [x] `expert test` com .ini/.set e artifacts
 - [x] Shims para WSL/Windows

@@ -82,12 +82,13 @@ const VERSION = resolveVersion();
 export type HelpSection = { title: string; items: string[] };
 
 const SECTIONS: HelpSection[] = [
-  { title: "basic", items: ["ping", "debug", "compile", "use", "ctx", "help", "indicador", "install"] },
+  { title: "basic", items: ["ping", "debug", "compile", "use", "ctx", "help", "add", "del", "rm", "indicador", "install"] },
   { title: "chart", items: ["open", "close", "list", "closeall", "redraw", "detachall", "find"] },
   { title: "template", items: ["apply", "save", "saveea", "savechart"] },
   { title: "indicator", items: ["attach", "detach", "total", "name", "handle", "get", "release"] },
   { title: "expert", items: ["attach", "detach", "find", "run", "test"] },
   { title: "script", items: ["run"] },
+  { title: "data", items: ["import"] },
   { title: "trade", items: ["buy", "sell", "list", "closeall"] },
   { title: "global", items: ["set", "get", "del", "delprefix", "list"] },
   { title: "input", items: ["list", "set"] },
@@ -299,6 +300,15 @@ const EXAMPLES: Record<string, ExampleGroup[]> = {
     { title: "test", lines: ["expert test MyEA --params lots=0.1", "expert test M5 MyEA --params lots=0.1"] }
   ],
   script: [{ title: "run", lines: ["script run MeuScript.tpl", "script run EURUSD H1 MeuScript.tpl"] }],
+  data: [
+    {
+      title: "import",
+      lines: [
+        "data import rates C:\\\\Users\\\\pichau\\\\Documents\\\\EURUSD_H1_200809101700_202510212200.csv EURUSD_H1_CSV H1",
+        "data import ticks C:\\\\Users\\\\pichau\\\\Documents\\\\BTCUSD_Ticks_2024.01.01_2024.12.31.csv BTCUSD_TICKS_2024 --digits 1"
+      ]
+    }
+  ],
   trade: [
     { title: "buy", lines: ["trade buy 0.1", "trade buy EURUSD 0.1"] },
     { title: "sell", lines: ["trade sell 0.1", "trade sell EURUSD 0.1"] },

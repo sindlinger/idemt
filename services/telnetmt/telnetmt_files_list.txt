@@ -356,9 +356,7 @@ cmdmt/node_modules/undici-types/websocket.d.ts
 cmdmt/package-lock.json
 cmdmt/package.json
 cmdmt/shims/cmdmt
-cmdmt/shims/cmdmt.cmd
 cmdmt/shims/indicador
-cmdmt/shims/indicador.cmd
 cmdmt/src/index.ts
 cmdmt/src/lib/args.ts
 cmdmt/src/lib/attach_report.ts

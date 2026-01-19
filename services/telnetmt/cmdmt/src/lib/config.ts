@@ -2,6 +2,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { execFileSync } from "node:child_process";
+import { fileURLToPath } from "node:url";
 
 export type TransportConfig = {
   host?: string;
@@ -60,9 +61,12 @@ export type RunnerConfig = {
 };
 
 export type ConfigLayer = {
+  envPath?: string;
   transport?: TransportConfig;
+  testerTransport?: TransportConfig;
   context?: ContextConfig;
   runner?: string;
+  testerRunner?: string;
   baseTpl?: string;
   compilePath?: string;
   repoPath?: string;
@@ -81,6 +85,11 @@ export type CliOptions = {
   configPath?: string;
   profile?: string;
   runner?: string;
+  testRunner?: string;
+  testHost?: string;
+  testHosts?: string;
+  testPort?: number;
+  testTimeoutMs?: number;
   host?: string;
   hosts?: string;
   port?: number;
@@ -99,6 +108,7 @@ export type ResolvedConfig = {
   configPath: string;
   profile?: string;
   transport: { hosts: string[]; port: number; timeoutMs: number };
+  testerTransport?: { hosts: string[]; port: number; timeoutMs: number };
   context: { symbol?: string; tf?: string; sub?: number };
   baseTpl?: string;
   compilePath?: string;
@@ -106,6 +116,8 @@ export type ResolvedConfig = {
   repoAutoBuild?: boolean;
   runnerId?: string;
   runner?: RunnerConfig;
+  testerRunnerId?: string;
+  testerRunner?: RunnerConfig;
   tester: Required<Pick<TesterConfig, "artifactsDir" | "reportDir">> & TesterConfig;
 };
 
@@ -113,6 +125,13 @@ const DEFAULT_PORT = 9090;
 const DEFAULT_TIMEOUT = 3000;
 const DEFAULT_HOSTS = ["host.docker.internal", "127.0.0.1"];
 const DEFAULT_CONFIG_PATH = path.join(os.homedir(), ".cmdmt", "config.json");
+const LOCAL_CONFIG_FILENAME = "cmdmt.config.json";
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const LOCAL_CONFIG_PATHS = [
+  path.join(process.cwd(), LOCAL_CONFIG_FILENAME),
+  path.resolve(__dirname, "..", "..", LOCAL_CONFIG_FILENAME)
+];
 const DEFAULT_TESTER: Required<Pick<TesterConfig, "artifactsDir" | "reportDir">> & TesterConfig = {
   artifactsDir: "cmdmt-artifacts",
   reportDir: "reports",
@@ -127,6 +146,86 @@ const DEFAULT_TESTER: Required<Pick<TesterConfig, "artifactsDir" | "reportDir">>
   replaceReport: 1,
   shutdownTerminal: 1
 };
+
+function parseDotEnv(text: string): Record<string, string> {
+  const out: Record<string, string> = {};
+  const lines = text.split(/\r?\n/);
+  for (let raw of lines) {
+    let line = raw.trim();
+    if (!line || line.startsWith("#")) continue;
+    if (line.startsWith("export ")) line = line.slice(7).trim();
+    const idx = line.indexOf("=");
+    if (idx <= 0) continue;
+    const key = line.slice(0, idx).trim();
+    let val = line.slice(idx + 1).trim();
+    if ((val.startsWith("\"") && val.endsWith("\"")) || (val.startsWith("'") && val.endsWith("'"))) {
+      val = val.slice(1, -1);
+      val = val.replace(/\\n/g, "\n").replace(/\\r/g, "\r").replace(/\\t/g, "\t");
+    }
+    if (key) out[key] = val;
+  }
+  return out;
+}
+
+function applyEnv(
+  base: Record<string, string | undefined>,
+  extra: Record<string, string>,
+  opts: { override?: boolean; locked?: Set<string> } = {}
+): Record<string, string | undefined> {
+  const out = { ...base };
+  for (const [k, v] of Object.entries(extra)) {
+    if (opts.locked?.has(k)) continue;
+    if (!opts.override && out[k] !== undefined) continue;
+    out[k] = v;
+  }
+  return out;
+}
+
+function loadDotEnvFile(filePath: string): Record<string, string> {
+  try {
+    if (!fs.existsSync(filePath)) return {};
+    const text = fs.readFileSync(filePath, "utf8");
+    return parseDotEnv(text);
+  } catch {
+    return {};
+  }
+}
+
+function collectEnv(
+  cliPath?: string,
+  env = process.env,
+  opts: { profile?: string; runner?: string } = {}
+): Record<string, string | undefined> {
+  const locked = new Set(Object.keys(env));
+  let merged: Record<string, string | undefined> = { ...env };
+  const baseCandidates: string[] = [];
+  const fromEnv = env.CMDMT_ENV?.trim();
+  if (fromEnv) {
+    baseCandidates.push(expandHome(fromEnv));
+  } else {
+    baseCandidates.push(path.join(process.cwd(), ".env"));
+    baseCandidates.push(path.join(os.homedir(), ".cmdmt", ".env"));
+  }
+  if (cliPath) {
+    baseCandidates.push(path.join(path.dirname(cliPath), ".env"));
+  }
+
+  for (const p of baseCandidates) {
+    merged = applyEnv(merged, loadDotEnvFile(p), { override: false, locked });
+  }
+
+  const overrideCandidates: string[] = [];
+  const suffixes = [opts.profile, opts.runner].filter(Boolean) as string[];
+  for (const suffix of suffixes) {
+    for (const base of baseCandidates) {
+      overrideCandidates.push(`${base}.${suffix}`);
+    }
+  }
+  for (const p of overrideCandidates) {
+    merged = applyEnv(merged, loadDotEnvFile(p), { override: true, locked });
+  }
+  return merged;
+}
 
 function expandHome(p: string): string {
   if (p.startsWith("~")) return path.join(os.homedir(), p.slice(1));
@@ -191,6 +290,16 @@ function coerceNumber(value?: number | string): number | undefined {
   return undefined;
 }
 
+function coerceBool(value?: string | number | boolean): boolean | undefined {
+  if (value === undefined || value === null) return undefined;
+  if (typeof value === "boolean") return value;
+  if (typeof value === "number") return value !== 0;
+  const v = String(value).trim().toLowerCase();
+  if (["1", "true", "yes", "y", "on"].includes(v)) return true;
+  if (["0", "false", "no", "n", "off"].includes(v)) return false;
+  return undefined;
+}
+
 function parseHostsValue(value?: string | string[]): string[] {
   if (!value) return [];
   if (Array.isArray(value)) return value.map((h) => h.trim()).filter(Boolean);
@@ -239,8 +348,10 @@ function mergeLayer(base: ConfigLayer, overlay: ConfigLayer): ConfigLayer {
 
   return {
     transport: mergeDefined(base.transport ?? {}, overlay.transport),
+    testerTransport: mergeDefined(base.testerTransport ?? {}, overlay.testerTransport),
     context: mergeDefined(base.context ?? {}, overlay.context),
     runner: overlay.runner ?? base.runner,
+    testerRunner: overlay.testerRunner ?? base.testerRunner,
     baseTpl: overlay.baseTpl ?? base.baseTpl,
     compilePath: overlay.compilePath ?? base.compilePath,
     repoPath: overlay.repoPath ?? base.repoPath,
@@ -328,39 +439,71 @@ function loadConfigFile(filePath: string, required: boolean): ConfigFile {
 }
 
 export function resolveConfigPath(cliPath?: string, env = process.env): string {
-  const p = cliPath ?? env.CMDMT_CONFIG ?? DEFAULT_CONFIG_PATH;
-  return normalizePath(p) ?? p;
+  const p = cliPath ?? env.CMDMT_CONFIG;
+  if (!p) {
+    for (const candidate of LOCAL_CONFIG_PATHS) {
+      try {
+        if (fs.existsSync(candidate)) return normalizePath(candidate) ?? candidate;
+      } catch {
+        // ignore
+      }
+    }
+  }
+  const fallback = p ?? DEFAULT_CONFIG_PATH;
+  return normalizePath(fallback) ?? fallback;
 }
 
 export function resolveConfig(cli: CliOptions, env = process.env): ResolvedConfig {
-  const configPath = resolveConfigPath(cli.configPath, env);
-  const configFile = loadConfigFile(configPath, Boolean(cli.configPath || env.CMDMT_CONFIG));
+  const envPre = collectEnv(cli.configPath, env);
+  const configPath = resolveConfigPath(cli.configPath, envPre);
+  const configFile = loadConfigFile(configPath, Boolean(cli.configPath || envPre.CMDMT_CONFIG));
+  const envOverride =
+    configFile.envPath && !env.CMDMT_ENV ? { ...env, CMDMT_ENV: configFile.envPath } : env;
+  const envBase = collectEnv(configPath, envOverride);
 
-  const profile = cli.profile ?? env.CMDMT_PROFILE ?? configFile.profile;
+  const profile = cli.profile ?? envBase.CMDMT_PROFILE ?? configFile.profile;
   const profileLayer = profile ? configFile.profiles?.[profile] : undefined;
   if (profile && !profileLayer) {
     throw new Error(`perfil nao encontrado: ${profile}`);
   }
 
+  const runnerHint = cli.runner ?? envBase.CMDMT_RUNNER ?? profileLayer?.runner ?? configFile.runner;
+  const envMerged = collectEnv(cli.configPath, env, { profile, runner: runnerHint });
+
   const defaultsLayer = configFile.defaults ?? {};
   const configLayer = pickConfigLayer(configFile);
   const envLayer: ConfigLayer = {
     transport: {
-      host: env.CMDMT_HOST,
-      hosts: env.CMDMT_HOSTS,
-      port: env.CMDMT_PORT,
-      timeoutMs: env.CMDMT_TIMEOUT
+      host: envMerged.CMDMT_HOST,
+      hosts: envMerged.CMDMT_HOSTS,
+      port: envMerged.CMDMT_PORT,
+      timeoutMs: envMerged.CMDMT_TIMEOUT
+    },
+    testerTransport: {
+      host: envMerged.CMDMT_TEST_HOST,
+      hosts: envMerged.CMDMT_TEST_HOSTS,
+      port: envMerged.CMDMT_TEST_PORT,
+      timeoutMs: envMerged.CMDMT_TEST_TIMEOUT
     },
     context: {
-      symbol: env.CMDMT_SYMBOL,
-      tf: env.CMDMT_TF,
-      sub: env.CMDMT_SUB
+      symbol: envMerged.CMDMT_SYMBOL,
+      tf: envMerged.CMDMT_TF,
+      sub: envMerged.CMDMT_SUB
     },
-    runner: env.CMDMT_RUNNER,
-    baseTpl: env.CMDMT_BASE_TPL,
-    compilePath: env.CMDMT_COMPILE,
-    repoPath: env.CMDMT_REPO,
-    repoAutoBuild: env.CMDMT_REPO_AUTOBUILD === undefined ? undefined : env.CMDMT_REPO_AUTOBUILD !== "0"
+    runner: envMerged.CMDMT_RUNNER,
+    testerRunner: envMerged.CMDMT_TEST_RUNNER,
+    baseTpl: envMerged.CMDMT_BASE_TPL,
+    compilePath: envMerged.CMDMT_COMPILE,
+    repoPath: envMerged.CMDMT_REPO,
+    repoAutoBuild: envMerged.CMDMT_REPO_AUTOBUILD === undefined ? undefined : envMerged.CMDMT_REPO_AUTOBUILD !== "0",
+    tester: {
+      login: envMerged.CMDMT_LOGIN ?? envMerged.MT5_LOGIN,
+      password: envMerged.CMDMT_PASSWORD ?? envMerged.MT5_PASSWORD,
+      server: envMerged.CMDMT_SERVER ?? envMerged.MT5_SERVER,
+      syncCommon: coerceBool(envMerged.CMDMT_SYNC_COMMON),
+      maxBars: envMerged.CMDMT_MAXBARS,
+      maxBarsInChart: envMerged.CMDMT_MAXBARS_CHART
+    }
   };
   const cliLayer: ConfigLayer = {
     transport: {
@@ -369,12 +512,19 @@ export function resolveConfig(cli: CliOptions, env = process.env): ResolvedConfi
       port: cli.port,
       timeoutMs: cli.timeoutMs
     },
+    testerTransport: {
+      host: cli.testHost,
+      hosts: cli.testHosts,
+      port: cli.testPort,
+      timeoutMs: cli.testTimeoutMs
+    },
     context: {
       symbol: cli.symbol,
       tf: cli.tf,
       sub: cli.sub
     },
     runner: cli.runner,
+    testerRunner: cli.testRunner,
     baseTpl: cli.baseTpl,
     compilePath: cli.compilePath,
     repoPath: cli.repoPath
@@ -389,11 +539,35 @@ export function resolveConfig(cli: CliOptions, env = process.env): ResolvedConfi
   const port = coerceNumber(merged.transport?.port) ?? DEFAULT_PORT;
   const timeoutMs = coerceNumber(merged.transport?.timeoutMs) ?? DEFAULT_TIMEOUT;
 
+  const testHosts = (() => {
+    const t = merged.testerTransport;
+    if (!t) return undefined;
+    const list = parseHostsValue(t.hosts);
+    if (list.length) return list;
+    const host = t.host?.trim();
+    return host ? [host] : undefined;
+  })();
+  const testPort = coerceNumber(merged.testerTransport?.port);
+  const testTimeout = coerceNumber(merged.testerTransport?.timeoutMs);
+  const hasTestTransport =
+    (testHosts && testHosts.length > 0) ||
+    testPort !== undefined ||
+    testTimeout !== undefined;
+  const testerTransport = hasTestTransport
+    ? {
+        hosts: testHosts && testHosts.length ? testHosts : hosts,
+        port: testPort ?? port,
+        timeoutMs: testTimeout ?? timeoutMs
+      }
+    : undefined;
+
   const runnerId = merged.runner;
+  const testerRunnerId = merged.testerRunner;
   const runnerBase = runnerId ? configFile.runners?.[runnerId] : undefined;
+  const testerRunnerBase = testerRunnerId ? configFile.runners?.[testerRunnerId] : undefined;
   const runnerOverride: RunnerConfig = {
-    terminalPath: cli.mt5Path ?? env.CMDMT_MT5_PATH,
-    dataPath: cli.mt5Data ?? env.CMDMT_MT5_DATA
+    terminalPath: cli.mt5Path ?? envMerged.CMDMT_MT5_PATH,
+    dataPath: cli.mt5Data ?? envMerged.CMDMT_MT5_DATA
   };
   const runner = normalizeRunner({
     ...(runnerBase ?? {}),
@@ -404,6 +578,9 @@ export function resolveConfig(cli: CliOptions, env = process.env): ResolvedConfi
     workspacePath: runnerBase?.workspacePath,
     portable: runnerBase?.portable
   });
+  const testerRunner = normalizeRunner({
+    ...(testerRunnerBase ?? {})
+  });
 
   const context = normalizeContext(merged.context);
   const tester = normalizeTester(merged.tester);
@@ -412,6 +589,7 @@ export function resolveConfig(cli: CliOptions, env = process.env): ResolvedConfi
     configPath,
     profile,
     transport: { hosts, port, timeoutMs },
+    testerTransport,
     context,
     baseTpl: merged.baseTpl,
     compilePath: merged.compilePath,
@@ -419,6 +597,8 @@ export function resolveConfig(cli: CliOptions, env = process.env): ResolvedConfi
     repoAutoBuild: merged.repoAutoBuild,
     runnerId,
     runner,
+    testerRunnerId,
+    testerRunner,
     tester
   };
 }
@@ -432,20 +612,33 @@ export function requireTransport(config: ResolvedConfig): { hosts: string[]; por
   return config.transport;
 }
 
-export function requireRunner(config: ResolvedConfig): RunnerConfig {
-  const runner = config.runner;
+export function requireTestTransport(config: ResolvedConfig): { hosts: string[]; port: number; timeoutMs: number } {
+  if (config.testerTransport) return config.testerTransport;
+  return requireTransport(config);
+}
+
+function requireRunnerBase(runner: RunnerConfig | undefined, label: string): RunnerConfig {
   if (!runner) {
     throw new Error(
-      "runner nao configurado. Use --runner/CMDMT_RUNNER e defina runners.<id> no config."
+      `${label} nao configurado. Use --runner/CMDMT_RUNNER e defina runners.<id> no config.`
     );
   }
   const terminalPath = runner.terminalPath;
   const dataPath = resolveRunnerDataPath(runner);
   if (!terminalPath) {
-    throw new Error("runner sem terminalPath. Defina runners.<id>.terminalPath ou CMDMT_MT5_PATH.");
+    throw new Error(`${label} sem terminalPath. Defina runners.<id>.terminalPath ou CMDMT_MT5_PATH.`);
   }
   if (!dataPath) {
-    throw new Error("runner sem dataPath. Defina runners.<id>.dataPath ou CMDMT_MT5_DATA.");
+    throw new Error(`${label} sem dataPath. Defina runners.<id>.dataPath ou CMDMT_MT5_DATA.`);
   }
   return { ...runner, terminalPath, dataPath };
+}
+
+export function requireRunner(config: ResolvedConfig): RunnerConfig {
+  return requireRunnerBase(config.runner, "runner");
+}
+
+export function requireTestRunner(config: ResolvedConfig): RunnerConfig {
+  if (config.testerRunner) return requireRunnerBase(config.testerRunner, "runner de teste");
+  return requireRunnerBase(config.runner, "runner");
 }
