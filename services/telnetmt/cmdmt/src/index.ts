@@ -274,8 +274,7 @@ function resolveCompilePath(resolved: { compilePath?: string }): string | null {
   const candidates = [
     resolved.compilePath,
     env,
-    "/mnt/c/git/mt5ide/services/telnetmt/tools/mt5-compile.exe",
-    "/mnt/c/mql/mt5-shellscripts/CLI/mt5-compile.exe"
+    "/mnt/c/git/mt5ide/services/telnetmt/tools/mt5-compile.exe"
   ].filter(Boolean) as string[];
   for (const c of candidates) {
     if (existsPath(c)) return c;
