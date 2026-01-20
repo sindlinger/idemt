@@ -121,8 +121,16 @@ Se `envPath` estiver definido no config, esse arquivo `.env` eh carregado antes 
 ```bash
 cmdmt ping
 cmdmt help
+cmdmt watch
+cmdmt add
+cmdmt rm
+cmdmt inspect
+cmdmt log
 cmdmt compile
 ```
+Obs: `.cmd` nao eh suportado como compilePath. Use `MetaEditor64.exe`, `mt5-compile.exe` ou `.bat`.
+Quando usar `mt5-compile.exe`, o `cmdmt` tenta preencher `MT5_HOME` automaticamente a partir do runner (`metaeditorPath`/`terminalPath`) se a variavel nao estiver definida.
+Se voce informar apenas `CMDMT_MT5_PATH`, o `cmdmt` tenta inferir o `dataPath` lendo `origin.txt` em `AppData\\Roaming\\MetaQuotes\\Terminal`. Se falhar, informe `CMDMT_MT5_DATA` ou defina `runners.<id>.dataPath` no config.
 
 ### Install (sandbox)
 Atualiza `config/common.ini` e `config/terminal.ini` no MT5 data folder informado.
@@ -131,12 +139,12 @@ cmdmt install "C:\\Users\\pichau\\AppData\\Roaming\\MetaQuotes\\Terminal\\SEU_HA
 cmdmt install "C:\\Users\\pichau\\AppData\\Roaming\\MetaQuotes\\Terminal\\SEU_HASH" --mirror-from "C:\\Users\\pichau\\AppData\\Roaming\\MetaQuotes\\Terminal\\OUTRO_HASH"
 ```
 
-### Indicador
+### Indicador (add/rm)
 ```bash
-cmdmt indicator attach EURUSD H1 ZigZag
-cmdmt indicator attach EURUSD H1 "Bulls Power"
-cmdmt indicator attach EURUSD H1 ZigZag --buffers 10 --log 50 --shot
-cmdmt indicator detach EURUSD H1 ZigZag
+cmdmt add -i EURUSD H1 ZigZag
+cmdmt add -i EURUSD H1 "Bulls Power"
+cmdmt add -i EURUSD H1 ZigZag --buffers 10 --log 50 --shot
+cmdmt rm -i EURUSD H1 ZigZag
 ```
 
 ### Data import (CSV -> simbolo custom)
@@ -155,14 +163,37 @@ Obs: coloque as flags antes de `--params`.
 
 Exemplos:
 ```bash
-cmdmt indicator attach EURUSD H1 ZigZag --buffers 10 --log 50
-cmdmt indicator attach EURUSD H1 ZigZag --shot --shotname zigzag.png
-cmdmt indicator attach EURUSD H1 ZigZag --report --params depth=12 deviation=5 backstep=3
+cmdmt add -i EURUSD H1 ZigZag --buffers 10 --log 50
+cmdmt add -i EURUSD H1 ZigZag --shot --shotname zigzag.png
+cmdmt add -i EURUSD H1 ZigZag --report --params depth=12 deviation=5 backstep=3
 ```
 
-### Indicador completo (compatibilidade)
+### Indicador completo
 ```bash
-cmdmt indicator attach EURUSD M5 ZigZag sub=1 --params depth=12 deviation=5 backstep=3
+cmdmt add -i EURUSD M5 ZigZag sub=1 --params depth=12 deviation=5 backstep=3
+```
+
+### Watch (atalho de nome)
+```bash
+cmdmt watch -i ZigZag
+cmdmt add sub=1 --params depth=12 deviation=5 backstep=3
+cmdmt rm sub=1
+cmdmt watch clear
+```
+
+### Inspect (informacoes de indicador/expert)
+```bash
+cmdmt inspect -i total
+cmdmt inspect -i get ZigZag sub=1
+cmdmt inspect -e find MyEA
+```
+
+### Hotkeys
+```bash
+cmdmt hotkey list
+cmdmt hotkey set ALT+1=MEU_COMANDO
+cmdmt hotkey del ALT+1
+cmdmt hotkey clear
 ```
 
 

@@ -11,9 +11,9 @@ const ctx: Ctx = {
 };
 
 const cases = [
-  "indicador ZigZag --buffers 10 --log 50 --params depth=12 deviation=5 backstep=3",
-  "indicator attach EURUSD H1 ZigZag sub=1 --params depth=12 deviation=5 backstep=3",
-  "expert attach EURUSD H1 MyEA base.tpl --params lots=0.1"
+  "add -i ZigZag --buffers 10 --log 50 --params depth=12 deviation=5 backstep=3",
+  "add -i EURUSD H1 ZigZag sub=1 --params depth=12 deviation=5 backstep=3",
+  "add -e EURUSD H1 MyEA base.tpl --params lots=0.1"
 ];
 
 let failed = 0;

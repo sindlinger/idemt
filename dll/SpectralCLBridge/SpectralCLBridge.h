@@ -33,6 +33,10 @@ SCL_EXPORT int SCL_TryGetAtIndex(int64_t key,
 
 SCL_EXPORT int SCL_GetStats(int64_t key, double* out, int out_len);
 
+// Config via DLL (indicador -> service)
+SCL_EXPORT int SCL_SetChart(int64_t key, int64_t chart_id);
+SCL_EXPORT int SCL_TryGetChart(int64_t key, int64_t* chart_id, int64_t* seq);
+
 SCL_EXPORT int SCL_Shutdown();
 
 SCL_EXPORT int SCL_Periodogram(const double* x, int x_len, double fs, const char* window, int nfft,

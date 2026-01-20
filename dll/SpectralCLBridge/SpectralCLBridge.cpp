@@ -1,5 +1,12 @@
 #include "SpectralCLBridge.h"
 
+#if defined(_WIN32)
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+#include <windows.h>
+#endif
+
 #include <CL/cl.h>
 #include <vector>
 #include <deque>
@@ -16,8 +23,9 @@
 namespace {
 
 static const int kOutFields = 12;
-static const int kQueueMax = 4;
-static const int kRingMax = 256;
+// Fila maior para evitar perda quando o indicador demorar a consumir.
+static const int kQueueMax = 256;
+static const int kRingMax = 4096;
 static constexpr double kPi = 3.1415926535897932384626433832795;
 
 struct CDouble2 {
@@ -53,10 +61,16 @@ struct Context {
   double last_ms = 0.0;
 };
 
+struct Config {
+  int64_t chart_id = 0;
+  int64_t seq = 0;
+};
+
 static std::mutex g_mu;
 static std::condition_variable g_cv;
 static std::deque<Job> g_jobs;
 static std::unordered_map<int64_t, Context> g_ctx;
+static std::unordered_map<int64_t, Config> g_cfg;
 static std::thread g_worker;
 static bool g_worker_started = false;
 static bool g_stop = false;
@@ -1248,6 +1262,24 @@ int SCL_GetStats(int64_t key, double* out, int out_len) {
   out[1] = (double)it->second.jobs_drop;
   out[2] = it->second.last_ms;
   out[3] = (double)it->second.ring.size();
+  return 1;
+}
+
+int SCL_SetChart(int64_t key, int64_t chart_id) {
+  std::lock_guard<std::mutex> lk(g_mu);
+  Config &cfg = g_cfg[key];
+  cfg.chart_id = chart_id;
+  cfg.seq++;
+  return 1;
+}
+
+int SCL_TryGetChart(int64_t key, int64_t* chart_id, int64_t* seq) {
+  if (!chart_id || !seq) return 0;
+  std::lock_guard<std::mutex> lk(g_mu);
+  auto it = g_cfg.find(key);
+  if (it == g_cfg.end()) return 0;
+  *chart_id = it->second.chart_id;
+  *seq = it->second.seq;
   return 1;
 }
 

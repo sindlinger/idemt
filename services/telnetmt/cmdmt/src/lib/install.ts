@@ -1,7 +1,9 @@
 import fs from "node:fs";
 import path from "node:path";
+import os from "node:os";
 import { spawnSync } from "node:child_process";
 import { isWsl, toWslPath, toWindowsPath, isWindowsPath } from "./config.js";
+import { readTextWithEncoding, writeTextWithEncoding } from "./textfile.js";
 
 export type InstallSpec = {
   dataPath?: string;
@@ -20,7 +22,23 @@ export type InstallSpec = {
   dryRun: boolean;
 };
 
-type TextEncoding = "utf16le" | "utf8";
+type ConfigFile = {
+  envPath?: string;
+  transport?: { host?: string; hosts?: string[]; port?: number; timeoutMs?: number };
+  testerTransport?: { host?: string; hosts?: string[]; port?: number; timeoutMs?: number };
+  context?: { symbol?: string; tf?: string; sub?: number };
+  runner?: string;
+  testerRunner?: string;
+  baseTpl?: string;
+  compilePath?: string;
+  repoPath?: string;
+  repoAutoBuild?: boolean;
+  tester?: Record<string, unknown>;
+  defaults?: Record<string, unknown>;
+  profiles?: Record<string, unknown>;
+  runners?: Record<string, Record<string, unknown>>;
+  profile?: string;
+};
 
 function normalizeDataPath(raw?: string): string | null {
   if (!raw) return null;
@@ -49,24 +67,6 @@ function findTelnetMtRoot(start: string): string | null {
     dir = parent;
   }
   return null;
-}
-
-function readTextWithEncoding(filePath: string): { text: string; encoding: TextEncoding; bom: boolean } {
-  const buf = fs.readFileSync(filePath);
-  if (buf.length >= 2 && buf[0] === 0xff && buf[1] === 0xfe) {
-    return { text: buf.slice(2).toString("utf16le"), encoding: "utf16le", bom: true };
-  }
-  return { text: buf.toString("utf8"), encoding: "utf8", bom: false };
-}
-
-function writeTextWithEncoding(filePath: string, text: string, encoding: TextEncoding, bom: boolean) {
-  if (encoding === "utf16le") {
-    const prefix = bom ? Buffer.from([0xff, 0xfe]) : Buffer.alloc(0);
-    const body = Buffer.from(text, "utf16le");
-    fs.writeFileSync(filePath, Buffer.concat([prefix, body]));
-    return;
-  }
-  fs.writeFileSync(filePath, text, "utf8");
 }
 
 function updateIniValue(text: string, section: string, key: string, value: string | number | undefined): string {
@@ -165,6 +165,107 @@ function psEscape(value: string): string {
   return value.replace(/'/g, "''");
 }
 
+function readJsonFile(filePath: string): ConfigFile | null {
+  if (!fs.existsSync(filePath)) return null;
+  try {
+    const raw = fs.readFileSync(filePath, "utf8");
+    return JSON.parse(raw) as ConfigFile;
+  } catch {
+    return null;
+  }
+}
+
+function writeJsonFile(filePath: string, data: ConfigFile): void {
+  const dir = path.dirname(filePath);
+  fs.mkdirSync(dir, { recursive: true });
+  fs.writeFileSync(filePath, JSON.stringify(data, null, 2) + "\n", "utf8");
+}
+
+function deriveTerminalPaths(dataPathWsl: string): { terminalPath?: string; metaeditorPath?: string } {
+  const originPath = path.join(dataPathWsl, "origin.txt");
+  if (!fs.existsSync(originPath)) return {};
+  let origin = "";
+  try {
+    origin = readTextWithEncoding(originPath).text.trim();
+  } catch {
+    return {};
+  }
+  if (!origin) return {};
+  const winOrigin = isWindowsPath(origin) ? origin : toWindowsPath(origin);
+  let installDir = winOrigin;
+  if (/\.exe$/i.test(winOrigin)) installDir = path.win32.dirname(winOrigin);
+  const terminal64 = path.win32.join(installDir, "terminal64.exe");
+  const terminal32 = path.win32.join(installDir, "terminal.exe");
+  const terminalPath = fs.existsSync(toWslPath(terminal64))
+    ? terminal64
+    : fs.existsSync(toWslPath(terminal32))
+      ? terminal32
+      : undefined;
+  const meta64 = path.win32.join(installDir, "MetaEditor64.exe");
+  const meta32 = path.win32.join(installDir, "MetaEditor.exe");
+  const metaeditorPath = fs.existsSync(toWslPath(meta64))
+    ? meta64
+    : fs.existsSync(toWslPath(meta32))
+      ? meta32
+      : undefined;
+  return { terminalPath, metaeditorPath };
+}
+
+function mergeTransport(target: ConfigFile, source?: ConfigFile["transport"]): void {
+  if (!source) return;
+  if (!target.transport) {
+    target.transport = { ...source };
+    return;
+  }
+  if (!target.transport.hosts && source.hosts) target.transport.hosts = [...source.hosts];
+  if (!target.transport.host && source.host) target.transport.host = source.host;
+  if (!target.transport.port && source.port) target.transport.port = source.port;
+  if (!target.transport.timeoutMs && source.timeoutMs) target.transport.timeoutMs = source.timeoutMs;
+}
+
+function mergeRunner(target: ConfigFile, runnerId: string, runner: Record<string, unknown>): void {
+  if (!target.runners) target.runners = {};
+  const existing = target.runners[runnerId] ?? {};
+  target.runners[runnerId] = { ...existing, ...runner };
+}
+
+function updateConfigFromInstall(
+  configPath: string,
+  repoCfg: ConfigFile | null,
+  runnerId: string,
+  runnerData: { terminalPath?: string; dataPath?: string; metaeditorPath?: string },
+  repoPathForDelegate?: string
+): void {
+  const cfg = readJsonFile(configPath) ?? {};
+  if (!cfg.runner && repoCfg?.runner) cfg.runner = repoCfg.runner;
+  if (!cfg.runner) cfg.runner = runnerId;
+  if (!cfg.testerRunner && repoCfg?.testerRunner) cfg.testerRunner = repoCfg.testerRunner;
+  if (!cfg.envPath && repoCfg?.envPath) cfg.envPath = repoCfg.envPath;
+  if (!cfg.baseTpl && repoCfg?.baseTpl) cfg.baseTpl = repoCfg.baseTpl;
+  if (!cfg.compilePath && repoCfg?.compilePath) cfg.compilePath = repoCfg.compilePath;
+  if (!cfg.repoPath && repoPathForDelegate) cfg.repoPath = repoPathForDelegate;
+  if (cfg.repoAutoBuild === undefined && repoCfg?.repoAutoBuild !== undefined) {
+    cfg.repoAutoBuild = repoCfg.repoAutoBuild;
+  }
+  if (cfg.repoAutoBuild === undefined && repoPathForDelegate) cfg.repoAutoBuild = true;
+  mergeTransport(cfg, repoCfg?.transport);
+  if (repoCfg?.testerTransport && !cfg.testerTransport) cfg.testerTransport = repoCfg.testerTransport;
+  if (repoCfg?.runners) {
+    for (const [id, data] of Object.entries(repoCfg.runners)) {
+      if (!cfg.runners?.[id]) {
+        mergeRunner(cfg, id, data);
+      }
+    }
+  }
+  const runnerPayload: Record<string, unknown> = {
+    ...(runnerData.terminalPath ? { terminalPath: runnerData.terminalPath } : {}),
+    ...(runnerData.dataPath ? { dataPath: runnerData.dataPath } : {}),
+    ...(runnerData.metaeditorPath ? { metaeditorPath: runnerData.metaeditorPath } : {})
+  };
+  mergeRunner(cfg, runnerId, runnerPayload);
+  writeJsonFile(configPath, cfg);
+}
+
 function runPowerShell(script: string): { ok: boolean; out: string } {
   const direct = () => {
     const res = spawnSync(
@@ -187,6 +288,56 @@ function runPowerShell(script: string): { ok: boolean; out: string } {
   }
 
   return direct();
+}
+
+function statusLine(status: "OK" | "WARN" | "FAIL", message: string, log: string[]) {
+  log.push(`[${status}] ${message}`);
+}
+
+function formatBool(val: string | undefined): string {
+  if (val === undefined || val === "") return "?";
+  return val === "1" ? "1" : "0";
+}
+
+function getIniValue(text: string, section: string, key: string): string | undefined {
+  const escapedSection = section.replace(/[[\]{}()*+?.\\^$|]/g, "\\$&");
+  const sectionRe = new RegExp(`^\\[${escapedSection}\\]$`, "i");
+  const keyRe = new RegExp(`^${key}\\s*=\\s*(.*)$`, "i");
+  const lines = text.split(/\r?\n/);
+  let inSection = false;
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (!trimmed) continue;
+    if (trimmed.startsWith(";") || trimmed.startsWith("#")) continue;
+    if (sectionRe.test(trimmed)) {
+      inSection = true;
+      continue;
+    }
+    if (trimmed.startsWith("[") && trimmed.endsWith("]")) {
+      inSection = false;
+      continue;
+    }
+    if (!inSection) continue;
+    const m = trimmed.match(keyRe);
+    if (m) return m[1]?.trim();
+  }
+  return undefined;
+}
+
+function checkPathExists(pathWsl: string): boolean {
+  try {
+    return fs.existsSync(pathWsl);
+  } catch {
+    return false;
+  }
+}
+
+function isSymlink(pathWsl: string): boolean {
+  try {
+    return fs.lstatSync(pathWsl).isSymbolicLink();
+  } catch {
+    return false;
+  }
 }
 
 function ensureJunctions(
@@ -297,6 +448,147 @@ function ensureMql5Mirror(
   log.push(`mirror MQL5 criado (${dirs.length} dirs)`);
 }
 
+export function runDoctor(spec: InstallSpec, cwd = process.cwd()): string {
+  const log: string[] = [];
+  const dataPathRaw = normalizeDataPath(spec.dataPath);
+  if (!dataPathRaw) {
+    statusLine("FAIL", "MT5 dataPath nao informado.", log);
+    statusLine("FAIL", "Use: doctor <MT5_DATA> ou configure runner.dataPath.", log);
+    return log.join("\n");
+  }
+  const dataPathWsl = isWsl() && /^[A-Za-z]:/.test(dataPathRaw) ? toWslPath(dataPathRaw) : dataPathRaw;
+  const dataPathWin = toWinPath(dataPathWsl);
+  statusLine("OK", `dataPath=${dataPathWin}`, log);
+
+  const mql5Root = path.join(dataPathWsl, "MQL5");
+  statusLine(checkPathExists(mql5Root) ? "OK" : "FAIL", `MQL5=${toWinPath(mql5Root)}`, log);
+
+  const originPath = path.join(dataPathWsl, "origin.txt");
+  if (!checkPathExists(originPath)) {
+    statusLine("WARN", "origin.txt nao encontrado (nao foi possivel validar instalacao).", log);
+  } else {
+    const origin = readTextWithEncoding(originPath).text.trim();
+    statusLine("OK", `origin.txt=${origin || "(vazio)"}`, log);
+    const paths = deriveTerminalPaths(dataPathWsl);
+    if (paths.terminalPath) {
+      statusLine("OK", `terminalPath=${paths.terminalPath}`, log);
+    } else {
+      statusLine("FAIL", "terminalPath nao encontrado a partir do origin.txt.", log);
+    }
+    if (paths.metaeditorPath) {
+      statusLine("OK", `metaeditorPath=${paths.metaeditorPath}`, log);
+    } else {
+      statusLine("WARN", "MetaEditor nao encontrado a partir do origin.txt.", log);
+    }
+  }
+
+  const commonPath = path.join(dataPathWsl, "config", "common.ini");
+  if (checkPathExists(commonPath)) {
+    const { text } = readTextWithEncoding(commonPath);
+    const dllVal = getIniValue(text, "Experts", "AllowDllImport");
+    const liveVal = getIniValue(text, "Experts", "AllowLiveTrading");
+    statusLine("OK", `common.ini AllowDllImport=${formatBool(dllVal)} AllowLiveTrading=${formatBool(liveVal)}`, log);
+  } else {
+    statusLine("WARN", `common.ini nao encontrado: ${toWinPath(commonPath)}`, log);
+  }
+
+  const terminalIni = path.join(dataPathWsl, "config", "terminal.ini");
+  if (checkPathExists(terminalIni)) {
+    statusLine("OK", `terminal.ini=${toWinPath(terminalIni)}`, log);
+  } else {
+    statusLine("WARN", `terminal.ini nao encontrado: ${toWinPath(terminalIni)}`, log);
+  }
+
+  const repoInput = spec.repoPath
+    ? (isWindowsPath(spec.repoPath) ? toWslPath(spec.repoPath) : spec.repoPath)
+    : undefined;
+  let repoRoot = repoInput ? path.resolve(repoInput) : findTelnetMtRoot(cwd) ?? "";
+  if (repoRoot) {
+    const svcNested = path.join(repoRoot, "Services", "telnetmt", "Services");
+    const svcNestedLower = path.join(repoRoot, "services", "telnetmt", "Services");
+    if (fs.existsSync(svcNested)) {
+      repoRoot = path.join(repoRoot, "Services", "telnetmt");
+    } else if (fs.existsSync(svcNestedLower)) {
+      repoRoot = path.join(repoRoot, "services", "telnetmt");
+    } else if (!fs.existsSync(path.join(repoRoot, "Services"))) {
+      const nested = findTelnetMtRoot(repoRoot);
+      if (nested) repoRoot = nested;
+    }
+  }
+  if (!repoRoot) {
+    statusLine("WARN", "telnetmt repo nao encontrado (sem junctions).", log);
+  } else {
+    const telnetRootWin = toWinPath(repoRoot);
+    statusLine("OK", `telnetmt=${telnetRootWin}`, log);
+    const toolsPath = path.join(repoRoot, "tools", "mt5-compile.exe");
+    if (checkPathExists(toWslPath(toolsPath))) {
+      statusLine("OK", `compile tool=mt5-compile (${toWinPath(toolsPath)})`, log);
+    } else {
+      statusLine("WARN", "compile tool mt5-compile.exe nao encontrado no repo.", log);
+    }
+    const name = (spec.name || "").trim();
+    const prefixRaw = (spec.namePrefix ?? "").trim();
+    const defaultPrefix = "TelnetMT_";
+    const prefix = prefixRaw || defaultPrefix;
+    const names = name
+      ? { services: name, experts: name, scripts: name }
+      : { services: `${prefix}Services`, experts: `${prefix}Experts`, scripts: `${prefix}Scripts` };
+    const svcTarget = path.join(mql5Root, "Services", names.services);
+    const expTarget = path.join(mql5Root, "Experts", names.experts);
+    const scrTarget = path.join(mql5Root, "Scripts", names.scripts);
+    const checkTarget = (label: string, target: string) => {
+      if (!checkPathExists(target)) {
+        statusLine("FAIL", `${label} junction ausente: ${toWinPath(target)}`, log);
+        return;
+      }
+      if (isSymlink(target)) {
+        statusLine("OK", `${label} junction OK: ${toWinPath(target)}`, log);
+      } else {
+        statusLine("WARN", `${label} existe mas nao parece junction: ${toWinPath(target)}`, log);
+      }
+    };
+    checkTarget("Services", svcTarget);
+    checkTarget("Experts", expTarget);
+    checkTarget("Scripts", scrTarget);
+  }
+
+  if (spec.mirrorFrom) {
+    const mirrorFromRaw = normalizeDataPath(spec.mirrorFrom);
+    const mirrorFromWsl = mirrorFromRaw
+      ? isWsl() && /^[A-Za-z]:/.test(mirrorFromRaw)
+        ? toWslPath(mirrorFromRaw)
+        : mirrorFromRaw
+      : "";
+    const mirrorFromWin = mirrorFromWsl ? toWinPath(mirrorFromWsl) : "";
+    if (!mirrorFromWin) {
+      statusLine("WARN", "mirror-from invalido.", log);
+    } else {
+      statusLine("OK", `mirror-from=${mirrorFromWin}`, log);
+      const dirs = normalizeMirrorDirs(spec.mirrorDirs);
+      for (const dir of dirs) {
+        const target = path.join(mql5Root, dir);
+        if (!checkPathExists(target)) {
+          statusLine("FAIL", `mirror ${dir} ausente: ${toWinPath(target)}`, log);
+        } else if (isSymlink(target)) {
+          statusLine("OK", `mirror ${dir} junction OK`, log);
+        } else {
+          statusLine("WARN", `mirror ${dir} existe mas nao parece junction`, log);
+        }
+      }
+    }
+  }
+
+  const cmdmtRoot = repoRoot ? path.join(repoRoot, "cmdmt") : "";
+  if (cmdmtRoot) {
+    const repoCfgPath = path.join(cmdmtRoot, "cmdmt.config.json");
+    statusLine(checkPathExists(repoCfgPath) ? "OK" : "WARN", `repo config=${toWinPath(repoCfgPath)}`, log);
+  }
+  const globalCfgPath = path.join(os.homedir(), ".cmdmt", "config.json");
+  statusLine(checkPathExists(globalCfgPath) ? "OK" : "WARN", `global config=${globalCfgPath}`, log);
+
+  return log.join("\n");
+}
+
 export function runInstall(spec: InstallSpec, cwd = process.cwd()): string {
   const log: string[] = [];
   const dataPathRaw = normalizeDataPath(spec.dataPath);
@@ -324,6 +616,7 @@ export function runInstall(spec: InstallSpec, cwd = process.cwd()): string {
     throw new Error("nao encontrei services/telnetmt. Use --repo <path>.");
   }
   const telnetRootWin = toWinPath(repoRoot);
+  const cmdmtRoot = path.join(repoRoot, "cmdmt");
   const name = (spec.name || "").trim();
   const prefixRaw = (spec.namePrefix ?? "").trim();
   const defaultPrefix = "TelnetMT_";
@@ -356,6 +649,17 @@ export function runInstall(spec: InstallSpec, cwd = process.cwd()): string {
 
   if (spec.web.length) {
     log.push(`webrequest allowlist: ${spec.web.join(", ")}`);
+  }
+  if (!spec.dryRun) {
+    const runnerId = name || "default";
+    const runnerPaths = deriveTerminalPaths(dataPathWsl);
+    const repoCfgPath = path.join(cmdmtRoot, "cmdmt.config.json");
+    const repoCfg = readJsonFile(repoCfgPath);
+    const globalCfgPath = path.join(os.homedir(), ".cmdmt", "config.json");
+    updateConfigFromInstall(globalCfgPath, repoCfg, runnerId, { ...runnerPaths, dataPath: dataPathWin }, cmdmtRoot);
+    updateConfigFromInstall(repoCfgPath, repoCfg, runnerId, { ...runnerPaths, dataPath: dataPathWin }, cmdmtRoot);
+    log.push(`config atualizado: ${globalCfgPath}`);
+    log.push(`config atualizado: ${repoCfgPath}`);
   }
   if (spec.dryRun) log.push("dry-run: nenhuma alteracao aplicada");
   return log.join("\n");

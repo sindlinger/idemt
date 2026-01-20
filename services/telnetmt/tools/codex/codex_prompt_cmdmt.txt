@@ -6,7 +6,7 @@ INSTRUCOES DE EXECUCAO (OBRIGATORIAS):
 - Teste sempre: rode build/teste/smoke real, corrija erros e repita ate passar.
 - Consulte o servico e mantenha ele executando: verifique ping via cmdmt, tente iniciar o servico se necessario e confirme resposta.
 
-# AGENTS.md — Codex Instructions (cmdmt / indicador / expert / tester)
+# AGENTS.md — Codex Instructions (cmdmt / add-rm / expert / tester)
 
 ## Papel
 Voce e o Codex CLI agent no repositorio atual. Sua missao e profissionalizar o CLI `cmdmt` para que o usuario possa rodar comandos simples e deterministicos, com defaults claros e sem heuristica.
@@ -25,12 +25,11 @@ Deixar defaults obrigatorios prontos para o usuario. Ele so digita TF e nome do 
 - Se algum default obrigatorio estiver ausente, erro claro + instrucao de como configurar.
 
 2) UX minima para indicador e expert (defaults)
-- Novo comando `indicador` (alias de `indicator attach`).
-- Sintaxe minima: `indicador <TF> <NOME> [sub=N] [k=v ...]`
+- Comando curto para indicador: `add -i <TF> <NOME> [sub=N] [k=v ...]`
+- Remover aliases de `indicator/indicador` e `expert attach/detach`.
 - Novo comando para expert no grafico: `expert run <TF> <NOME> [k=v ...]`
 - Novo comando para tester do expert: `expert test <TF> <NOME> [k=v ...]`
 - Todos sem SYMBOL; SYMBOL/PROFILE devem vir dos defaults acima.
-- Manter compatibilidade com comandos existentes (`cmdmt indicator attach SYMBOL TF NAME ...`, `expert attach`, etc).
 
 3) Tester do expert (Strategy Tester)
 - Implementar o fluxo completo no CLI e no service, se necessario.
@@ -42,7 +41,7 @@ Deixar defaults obrigatorios prontos para o usuario. Ele so digita TF e nome do 
 - Se o MT especial falhar (download/instalacao), corrigir e registrar log claro.
 
 4) Execucao em qualquer diretorio (WSL ou Windows)
-- Garantir que `cmdmt` e `indicador` funcionem de qualquer lugar.
+- Garantir que `cmdmt` funcione de qualquer lugar.
 - Disponibilizar wrappers/shims:
   - WSL: symlink em `/usr/local/bin` ou similar.
 - Nada deve depender do cwd.
@@ -69,7 +68,7 @@ Deixar defaults obrigatorios prontos para o usuario. Ele so digita TF e nome do 
 - Se o servico nao responder, iniciar o bootstrap/servico indicado no repo e repetir a verificacao.
 
 ## Criterios de aceite
-- `indicador M5 ZigZag` funciona com defaults explicitos.
+- `add -i M5 ZigZag` funciona com defaults explicitos.
 - `expert run M5 MyEA` anexa e roda o EA no grafico.
 - `expert test M5 MyEA` inicia o Strategy Tester e gera log/resultado.
 - `cmdmt ping` responde.

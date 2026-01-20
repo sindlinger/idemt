@@ -4,6 +4,8 @@ export type Ctx = {
   sub?: number;
   baseTpl?: string;
   profile?: string;
+  watchKind?: "indicator" | "expert";
+  watchName?: string;
 };
 
 export function isTf(s?: string): boolean {

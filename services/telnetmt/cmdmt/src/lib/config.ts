@@ -3,6 +3,7 @@ import os from "node:os";
 import path from "node:path";
 import { execFileSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
+import { readTextWithEncoding } from "./textfile.js";
 
 export type TransportConfig = {
   host?: string;
@@ -417,12 +418,75 @@ function normalizeRunner(cfg?: RunnerConfig): RunnerConfig | undefined {
   };
 }
 
+function listWinTerminalRootsFromEnv(env: NodeJS.ProcessEnv): string[] {
+  const roots: string[] = [];
+  const appdata = env.APPDATA || env.AppData;
+  if (appdata) roots.push(path.win32.join(appdata, "MetaQuotes", "Terminal"));
+  const userProfile = env.USERPROFILE || env.UserProfile;
+  if (userProfile) roots.push(path.win32.join(userProfile, "AppData", "Roaming", "MetaQuotes", "Terminal"));
+  return roots;
+}
+
+function listWinTerminalRootsFallback(terminalPath: string): string[] {
+  if (!isWindowsPath(terminalPath) || !isWsl()) return [];
+  const drive = terminalPath.slice(0, 1).toLowerCase();
+  const usersRoot = `/mnt/${drive}/Users`;
+  if (!fs.existsSync(usersRoot)) return [];
+  const roots: string[] = [];
+  for (const entry of fs.readdirSync(usersRoot, { withFileTypes: true })) {
+    if (!entry.isDirectory()) continue;
+    const candidate = path.join(usersRoot, entry.name, "AppData", "Roaming", "MetaQuotes", "Terminal");
+    if (fs.existsSync(candidate)) {
+      roots.push(toWindowsPath(candidate));
+    }
+  }
+  return roots;
+}
+
+function resolveDataPathFromOrigin(terminalPath: string): string | undefined {
+  const winTerminal = isWindowsPath(terminalPath) ? terminalPath : toWindowsPath(terminalPath);
+  if (!isWindowsPath(winTerminal)) return undefined;
+  const installDir = path.win32.dirname(winTerminal).toLowerCase();
+  const roots = [
+    ...listWinTerminalRootsFromEnv(process.env),
+    ...listWinTerminalRootsFallback(winTerminal)
+  ];
+  for (const rootWin of roots) {
+    const root = toWslPath(rootWin);
+    if (!fs.existsSync(root)) continue;
+    let entries: fs.Dirent[];
+    try {
+      entries = fs.readdirSync(root, { withFileTypes: true });
+    } catch {
+      continue;
+    }
+    for (const entry of entries) {
+      if (!entry.isDirectory()) continue;
+      const origin = path.join(root, entry.name, "origin.txt");
+      if (!fs.existsSync(origin)) continue;
+      let content = "";
+      try {
+        content = readTextWithEncoding(origin).text.trim().toLowerCase();
+      } catch {
+        continue;
+      }
+      if (content && content.includes(installDir)) {
+        return toWindowsPath(path.join(root, entry.name));
+      }
+    }
+  }
+  return undefined;
+}
+
 function resolveRunnerDataPath(runner: RunnerConfig): string | undefined {
   if (runner.dataPath) return runner.dataPath;
-  if (!runner.portable || !runner.terminalPath) return undefined;
+  if (!runner.terminalPath) return undefined;
   const tp = runner.terminalPath;
-  if (isWindowsPath(tp)) return path.win32.dirname(tp);
-  return path.dirname(tp);
+  if (runner.portable) {
+    if (isWindowsPath(tp)) return path.win32.dirname(tp);
+    return path.dirname(tp);
+  }
+  return resolveDataPathFromOrigin(tp);
 }
 
 function loadConfigFile(filePath: string, required: boolean): ConfigFile {

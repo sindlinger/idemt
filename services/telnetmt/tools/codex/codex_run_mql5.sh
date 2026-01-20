@@ -37,7 +37,7 @@ INSTRUCOES DE EXECUCAO (OBRIGATORIAS):
 - Teste sempre: rode build/teste/smoke real, corrija erros e repita ate passar.
 - Consulte o servico e mantenha ele executando: verifique ping via cmdmt, tente iniciar o servico se necessario e confirme resposta.
 
-# AGENTS.md — Codex Instructions (cmdmt / indicador / expert / tester)
+# AGENTS.md — Codex Instructions (cmdmt / add/rm / expert / tester)
 
 ## Papel
 Voce e o Codex CLI agent no repositorio atual. Sua missao e profissionalizar o CLI `cmdmt` para que o usuario possa rodar comandos simples e deterministicos, com defaults claros e sem heuristica.
@@ -56,12 +56,11 @@ Deixar defaults obrigatorios prontos para o usuario. Ele so digita TF e nome do 
 - Se algum default obrigatorio estiver ausente, erro claro + instrucao de como configurar.
 
 2) UX minima para indicador e expert (defaults)
-- Novo comando `indicador` (alias de `indicator attach`).
-- Sintaxe minima: `indicador <TF> <NOME> [sub=N] [k=v ...]`
-- Novo comando para expert no grafico: `expert run <TF> <NOME> [k=v ...]`
-- Novo comando para tester do expert: `expert test <TF> <NOME> [k=v ...]`
+- Comando curto para indicador: `add -i <TF> <NOME> [sub=N] [k=v ...]`
+- Remover aliases de `indicator/indicador` e `expert attach/detach`.
+- Comando para expert no grafico: `expert run <TF> <NOME> [k=v ...]`
+- Comando para tester do expert: `expert test <TF> <NOME> [k=v ...]`
 - Todos sem SYMBOL; SYMBOL/PROFILE devem vir dos defaults acima.
-- Manter compatibilidade com comandos existentes (`cmdmt indicator attach SYMBOL TF NAME ...`, `expert attach`, etc).
 
 3) Tester do expert (Strategy Tester)
 - Implementar o fluxo completo no CLI e no service, se necessario.

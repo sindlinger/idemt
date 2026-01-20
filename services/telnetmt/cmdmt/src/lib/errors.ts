@@ -1,5 +1,18 @@
 export function handleError(err: unknown): never {
-  const message = err instanceof Error ? err.message : String(err);
-  process.stderr.write(`${message}\n`);
+  if (err instanceof Error) {
+    const msg = err.message || String(err);
+    if (
+      msg.startsWith("compile retornou") ||
+      msg.startsWith("compile nao configurado") ||
+      msg.startsWith("Uso: mt5-compile")
+    ) {
+      process.stderr.write(`${msg}\n`);
+    } else {
+      const stack = err.stack || msg;
+      process.stderr.write(`${stack}\n`);
+    }
+  } else {
+    process.stderr.write(`${String(err)}\n`);
+  }
   process.exit(1);
 }

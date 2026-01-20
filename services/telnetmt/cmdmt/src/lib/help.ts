@@ -82,11 +82,12 @@ const VERSION = resolveVersion();
 export type HelpSection = { title: string; items: string[] };
 
 const SECTIONS: HelpSection[] = [
-  { title: "basic", items: ["ping", "debug", "compile", "use", "ctx", "help", "install"] },
+  { title: "basic", items: ["ping", "add", "rm", "watch", "inspect", "debug", "log", "compile", "use", "ctx", "help", "install", "doctor"] },
   { title: "chart", items: ["open", "close", "list", "closeall", "redraw", "detachall", "find"] },
   { title: "template", items: ["apply", "save", "saveea", "savechart"] },
-  { title: "indicator", items: ["attach", "detach", "total", "name", "handle", "get", "release"] },
-  { title: "expert", items: ["attach", "detach", "find", "run", "test"] },
+  { title: "inspect", items: ["total", "name", "handle", "get", "release", "find"] },
+  { title: "expert", items: ["find", "run", "test", "oneshot"] },
+  { title: "hotkey", items: ["list", "set", "del", "clear"] },
   { title: "script", items: ["run"] },
   { title: "data", items: ["import"] },
   { title: "trade", items: ["buy", "sell", "list", "closeall"] },
@@ -195,11 +196,57 @@ type ExampleGroup = { title: string; lines: string[] };
 
 const EXAMPLES: Record<string, ExampleGroup[]> = {
   ping: [{ title: "ping", lines: ["ping"] }],
-  debug: [{ title: "debug", lines: ["debug hello world", "debug {\"msg\":\"ok\"}"] }],
+  debug: [{ title: "debug", lines: ["debug hello world", "debug -i ZigZag", "debug -e MyEA"] }],
   compile: [{ title: "compile", lines: ["compile", "compile C:\\\\caminho\\\\arquivo.mq5"] }],
   use: [{ title: "use", lines: ["use EURUSD M5", "use GBPUSD H1"] }],
   ctx: [{ title: "ctx", lines: ["ctx"] }],
   help: [{ title: "help", lines: ["help", "examples", "examples chart"] }],
+  doctor: [{ title: "doctor", lines: ["doctor", "doctor --apply", "doctor C:\\\\MT5_DATA --dry-run"] }],
+  watch: [
+    { title: "watch", lines: ["watch -i ZigZag", "watch -e MyEA", "watch clear", "watch"] }
+  ],
+  add: [
+    {
+      title: "add",
+      lines: [
+        "add -i ZigZag sub=1 --params depth=12 deviation=5 backstep=3",
+        "add -i EURUSD H1 \"Bulls Power\"",
+        "add -e MyEA base.tpl --params lots=0.1",
+        "watch -i ZigZag",
+        "add sub=1 --params depth=12 deviation=5 backstep=3"
+      ]
+    }
+  ],
+  rm: [
+    {
+      title: "rm",
+      lines: [
+        "rm -i ZigZag sub=1",
+        "rm -i EURUSD H1 0",
+        "rm -e EURUSD H1",
+        "watch -i ZigZag",
+        "rm sub=1"
+      ]
+    }
+  ],
+  inspect: [
+    {
+      title: "indicator",
+      lines: [
+        "inspect -i total",
+        "inspect -i name 0",
+        "inspect -i handle ZigZag sub=1",
+        "inspect -i get ZigZag sub=1",
+        "inspect -i release 123456",
+        "watch -i ZigZag",
+        "inspect get"
+      ]
+    },
+    {
+      title: "expert",
+      lines: ["inspect -e find MyEA", "inspect -e MyEA"]
+    }
+  ],
   install: [
     {
       title: "install",
@@ -213,22 +260,14 @@ const EXAMPLES: Record<string, ExampleGroup[]> = {
       ]
     }
   ],
-  indicator: [
-    {
-      title: "attach",
-      lines: [
-        "indicator attach ZigZag sub=1 --params depth=12 deviation=5 backstep=3",
-        "indicator attach EURUSD H1 ZigZag sub=1 --params depth=12 deviation=5 backstep=3",
-        "indicator attach EURUSD H1 \"Bulls Power\"",
-        "indicator attach EURUSD H1 ZigZag --buffers 10 --log 50 --shot"
-      ]
-    },
-    { title: "detach", lines: ["indicator detach ZigZag sub=1", "indicator detach EURUSD H1 ZigZag sub=1"] },
-    { title: "total", lines: ["indicator total", "indicator total EURUSD H1"] },
-    { title: "name", lines: ["indicator name 0", "indicator name EURUSD H1 0"] },
-    { title: "handle", lines: ["indicator handle ZigZag sub=1", "indicator handle EURUSD H1 ZigZag sub=1"] },
-    { title: "get", lines: ["indicator get ZigZag sub=1", "indicator get EURUSD H1 ZigZag sub=1"] },
-    { title: "release", lines: ["indicator release 123456"] }
+  log: [
+    { title: "log", lines: ["log", "log 300", "log --tail 1000"] }
+  ],
+  hotkey: [
+    { title: "list", lines: ["hotkey list"] },
+    { title: "set", lines: ["hotkey set ALT+1=INDICATOR", "hotkey set ALT+2 command"] },
+    { title: "del", lines: ["hotkey del ALT+1"] },
+    { title: "clear", lines: ["hotkey clear"] }
   ],
   chart: [
     { title: "open", lines: ["chart open", "chart open EURUSD H1"] },
@@ -246,18 +285,10 @@ const EXAMPLES: Record<string, ExampleGroup[]> = {
     { title: "savechart", lines: ["template savechart 123456 snap.tpl"] }
   ],
   expert: [
-    {
-      title: "attach",
-      lines: [
-        "expert attach MyEA base.tpl --params lots=0.1",
-        "expert attach EURUSD H1 MyEA base.tpl --params lots=0.1",
-        "expert attach EURUSD H1 MyEA --buffers 5 --log 50"
-      ]
-    },
-    { title: "detach", lines: ["expert detach", "expert detach EURUSD H1"] },
     { title: "find", lines: ["expert find MyEA"] },
     { title: "run", lines: ["expert run MyEA --params lots=0.1", "expert run M5 MyEA base.tpl --params lots=0.1"] },
-    { title: "test", lines: ["expert test MyEA --params lots=0.1", "expert test M5 MyEA --params lots=0.1"] }
+    { title: "test", lines: ["expert test MyEA --params lots=0.1", "expert test M5 MyEA --params lots=0.1"] },
+    { title: "oneshot", lines: ["expert oneshot M5 MyEA base.tpl --params lots=0.1"] }
   ],
   script: [{ title: "run", lines: ["script run MeuScript.tpl", "script run EURUSD H1 MeuScript.tpl"] }],
   data: [
@@ -315,13 +346,18 @@ function renderIndex(): string {
   const items = [
     "examples ping",
     "examples debug",
+    "examples watch",
+    "examples add",
+    "examples rm",
+    "examples inspect",
+    "examples log",
+    "examples hotkey",
     "examples compile",
     "examples use",
     "examples ctx",
     "examples help",
     "examples chart",
     "examples template",
-    "examples indicator",
     "examples expert",
     "examples script",
     "examples trade",

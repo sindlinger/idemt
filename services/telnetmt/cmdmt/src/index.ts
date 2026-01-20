@@ -25,10 +25,11 @@ import {
 import { runTester } from "./lib/tester.js";
 import { createExpertTemplate } from "./lib/template.js";
 import { buildAttachReport, formatAttachReport, DEFAULT_ATTACH_META, findLatestLogFile } from "./lib/attach_report.js";
-import { runInstall } from "./lib/install.js";
+import { runDoctor, runInstall } from "./lib/install.js";
 import { resolveExpertFromRunner } from "./lib/expert_resolve.js";
 import { ensureExpertInRunner } from "./lib/expert_sync.js";
 import { performDataImport } from "./lib/data_import.js";
+import { readTextWithEncoding, writeTextWithEncoding } from "./lib/textfile.js";
 
 type AttachReport = Awaited<ReturnType<typeof buildAttachReport>>;
 
@@ -282,10 +283,83 @@ function resolveCompilePath(resolved: { compilePath?: string }): string | null {
   return null;
 }
 
+function deriveMt5Home(resolved: {
+  runner?: { terminalPath?: string; metaeditorPath?: string };
+}): string | null {
+  const candidate =
+    resolved.runner?.metaeditorPath ??
+    resolved.runner?.terminalPath ??
+    process.env.CMDMT_MT5_PATH;
+  if (!candidate) return null;
+  const winPath = isWindowsPath(candidate) ? candidate : isWsl() ? toWindowsPath(candidate) : candidate;
+  if (isWindowsPath(winPath)) return path.win32.dirname(winPath);
+  return path.dirname(winPath);
+}
+
+function deriveMt5HomeFromDataPath(dataPath?: string): string | null {
+  if (!dataPath) return null;
+  const dataWsl = isWindowsPath(dataPath) && isWsl() ? toWslPath(dataPath) : dataPath;
+  const originPath = path.join(dataWsl, "origin.txt");
+  if (!fs.existsSync(originPath)) return null;
+  try {
+    const originRaw = readTextWithEncoding(originPath).text.trim();
+    if (!originRaw) return null;
+    const winPath = isWindowsPath(originRaw) ? originRaw : isWsl() ? toWindowsPath(originRaw) : originRaw;
+    if (!winPath) return null;
+    if (/\.exe$/i.test(winPath)) return path.win32.dirname(winPath);
+    return winPath;
+  } catch {
+    return null;
+  }
+}
+
+function buildCompileEnv(
+  resolved: { runner?: { terminalPath?: string; metaeditorPath?: string; dataPath?: string } },
+  compilePath: string
+): NodeJS.ProcessEnv {
+  const env = { ...process.env };
+  if (!env.MT5_HOME) {
+    const home = deriveMt5Home(resolved) ?? deriveMt5HomeFromDataPath(resolved.runner?.dataPath);
+    if (home) env.MT5_HOME = home;
+  }
+  return env;
+}
+
+function inferDataPathFromSource(src: string): string | null {
+  if (!src) return null;
+  const raw = isWindowsPath(src) ? src.replace(/\\/g, "/") : src;
+  const lower = raw.toLowerCase();
+  const idx = lower.lastIndexOf("/mql5/");
+  if (idx === -1) return null;
+  const base = raw.slice(0, idx);
+  if (!base) return null;
+  return isWindowsPath(src) ? base.replace(/\//g, "\\") : base;
+}
+
+function deriveMetaEditorFromEnv(): string | null {
+  const mt5Path = process.env.CMDMT_MT5_PATH;
+  if (!mt5Path) return null;
+  const winPath = isWindowsPath(mt5Path) ? mt5Path : isWsl() ? toWindowsPath(mt5Path) : mt5Path;
+  if (!winPath) return null;
+  const meta = path.win32.join(path.win32.dirname(winPath), "MetaEditor64.exe");
+  if (existsPath(meta)) return meta;
+  return null;
+}
+
 function isPlainFileName(p?: string): boolean {
   if (!p) return false;
   if (p.includes("/") || p.includes("\\")) return false;
   return true;
+}
+
+function collapseWinPath(p: string): string {
+  return p.replace(/[\\/]/g, "").toLowerCase();
+}
+
+function looksLikeCollapsedWinPath(p: string): boolean {
+  if (!/^[A-Za-z]:/i.test(p)) return false;
+  if (/[\\/]/.test(p)) return false;
+  return /\.mq[45]$/i.test(p);
 }
 
 function findFileRecursive(root: string, fileName: string, maxDepth = 6): string | null {
@@ -313,6 +387,41 @@ function findFileRecursive(root: string, fileName: string, maxDepth = 6): string
       }
       if (isFile && entry.name.toLowerCase() === fileName.toLowerCase()) {
         return full;
+      }
+      if (isDir && depth < maxDepth) {
+        queue.push({ dir: full, depth: depth + 1 });
+      }
+    }
+  }
+  return null;
+}
+
+function findFileByCollapsedPath(root: string, collapsedTarget: string, maxDepth = 10): string | null {
+  const queue: Array<{ dir: string; depth: number }> = [{ dir: root, depth: 0 }];
+  while (queue.length) {
+    const { dir, depth } = queue.shift()!;
+    let entries: fs.Dirent[];
+    try {
+      entries = fs.readdirSync(dir, { withFileTypes: true });
+    } catch {
+      continue;
+    }
+    for (const entry of entries) {
+      const full = path.join(dir, entry.name);
+      let isFile = entry.isFile();
+      let isDir = entry.isDirectory();
+      if (entry.isSymbolicLink()) {
+        try {
+          const stat = fs.statSync(full);
+          if (stat.isFile()) isFile = true;
+          if (stat.isDirectory()) isDir = true;
+        } catch {
+          // ignore broken symlink
+        }
+      }
+      if (isFile) {
+        const winFull = toWindowsPath(full);
+        if (collapseWinPath(winFull) === collapsedTarget) return full;
       }
       if (isDir && depth < maxDepth) {
         queue.push({ dir: full, depth: depth + 1 });
@@ -473,6 +582,12 @@ function resolveIndicatorFromRunner(name: string, dataPath?: string): string | n
 function resolveMqSourceFromRunner(input: string, dataPath?: string): string | null {
   if (!dataPath || !input) return null;
   const base = path.join(toWslPath(dataPath), "MQL5");
+  const trimmed = input.trim().replace(/^"+|"+$/g, "");
+  if (looksLikeCollapsedWinPath(trimmed)) {
+    const collapsed = collapseWinPath(trimmed);
+    const found = findFileByCollapsedPath(base, collapsed);
+    if (found) return found;
+  }
   const hasExt = /\.(mq4|mq5)$/i.test(input);
   const candidates = hasExt ? [input] : [`${input}.mq5`, `${input}.mq4`];
   const hasSeparators = input.includes("/") || input.includes("\\");
@@ -489,10 +604,99 @@ function resolveMqSourceFromRunner(input: string, dataPath?: string): string | n
   return null;
 }
 
+function tailLines(text: string, count: number): string {
+  const lines = text.split(/\r?\n/);
+  if (count <= 0) return "";
+  const start = Math.max(0, lines.length - count);
+  return lines.slice(start).join("\n");
+}
+
+function resolveIndicatorFiles(name: string, dataPath?: string): { rel?: string; mq5?: string; ex5?: string } {
+  if (!dataPath || !name) return {};
+  const base = path.join(toWslPath(dataPath), "MQL5", "Indicators");
+  const trimmed = name.trim().replace(/^"+|"+$/g, "");
+  if (!trimmed) return {};
+  const resolvedRel = resolveIndicatorFromRunner(trimmed, dataPath);
+  if (resolvedRel) {
+    const relFs = resolvedRel.replace(/\\/g, path.sep);
+    return {
+      rel: resolvedRel,
+      mq5: path.join(base, `${relFs}.mq5`),
+      ex5: path.join(base, `${relFs}.ex5`)
+    };
+  }
+  const hasExt = /\.(mq5|ex5)$/i.test(trimmed);
+  if (isWindowsPath(trimmed)) {
+    const abs = toWslPath(trimmed);
+    return hasExt
+      ? { mq5: trimmed.toLowerCase().endsWith(".mq5") ? abs : undefined, ex5: trimmed.toLowerCase().endsWith(".ex5") ? abs : undefined }
+      : { mq5: `${abs}.mq5`, ex5: `${abs}.ex5` };
+  }
+  if (path.isAbsolute(trimmed)) {
+    return hasExt
+      ? { mq5: trimmed.toLowerCase().endsWith(".mq5") ? trimmed : undefined, ex5: trimmed.toLowerCase().endsWith(".ex5") ? trimmed : undefined }
+      : { mq5: `${trimmed}.mq5`, ex5: `${trimmed}.ex5` };
+  }
+  const relRaw = trimmed.replace(/^mql5[\\/]/i, "").replace(/^indicators[\\/]/i, "");
+  const relFs = relRaw.replace(/\\/g, path.sep);
+  return {
+    rel: normalizeIndicatorRel(relRaw),
+    mq5: path.join(base, `${relFs}.mq5`),
+    ex5: path.join(base, `${relFs}.ex5`)
+  };
+}
+
+function resolveExpertFiles(name: string, dataPath?: string): { rel?: string; mq5?: string; ex5?: string } {
+  if (!dataPath || !name) return {};
+  const resolved = resolveExpertFromRunner(name, dataPath);
+  if (!resolved) return {};
+  return {
+    rel: resolved.name,
+    mq5: resolved.mq5,
+    ex5: resolved.ex5
+  };
+}
+
+function updateHotkeyText(text: string, action: "set" | "del" | "clear", key?: string, value?: string): string {
+  const newline = text.includes("\r\n") ? "\r\n" : "\n";
+  const sectionRe = /(^\[Hotkeys\][\s\S]*?)(?=^\[|\Z)/im;
+  const match = text.match(sectionRe);
+  const header = "[Hotkeys]";
+  const safeKey = key?.trim() ?? "";
+  if (!match) {
+    if (action === "set" && safeKey && value) {
+      return (text ? text + newline : "") + `${header}${newline}${safeKey}=${value}${newline}`;
+    }
+    if (action === "clear") return "";
+    return text;
+  }
+  const block = match[1];
+  const lines = block.split(/\r?\n/);
+  const next: string[] = [lines[0] || header];
+  for (let i = 1; i < lines.length; i++) {
+    const line = lines[i];
+    if (!line.trim()) continue;
+    if (safeKey && line.startsWith(`${safeKey}=`)) continue;
+    next.push(line);
+  }
+  if (action === "set" && safeKey && value) {
+    next.push(`${safeKey}=${value}`);
+  }
+  if (action === "clear") {
+    return text.replace(block, `${header}${newline}`);
+  }
+  const updated = next.join(newline) + newline;
+  return text.replace(block, updated);
+}
+
 function toWindowsArgsIfNeeded(args: string[], compilePath: string): string[] {
   if (!isWsl()) return args;
   const lower = compilePath.toLowerCase();
-  const isWinTarget = isWindowsPath(compilePath) || lower.endsWith(".cmd") || lower.endsWith(".bat");
+  const isWinTarget =
+    isWindowsPath(compilePath) ||
+    lower.endsWith(".cmd") ||
+    lower.endsWith(".bat") ||
+    (lower.endsWith(".exe") && isWsl());
   if (!isWinTarget) return args;
   return args.map((arg) => {
     if (!arg) return arg;
@@ -525,7 +729,10 @@ function buildMetaEditorArgs(src: string, args: string[]): string[] {
   return [`/compile:${srcWin}`, `/log:${logPath}`];
 }
 
-async function compileMqSource(src: string, resolved: { compilePath?: string }): Promise<void> {
+async function compileMqSource(
+  src: string,
+  resolved: { compilePath?: string; runner?: { terminalPath?: string; metaeditorPath?: string } }
+): Promise<void> {
   let compilePath = resolveCompilePath(resolved);
   if (!compilePath) {
     throw new Error(
@@ -533,21 +740,91 @@ async function compileMqSource(src: string, resolved: { compilePath?: string }):
     );
   }
   const args = isMetaEditorPath(compilePath) ? buildMetaEditorArgs(src, []) : [src];
-  await runCompile(compilePath, toWindowsArgsIfNeeded(args, compilePath));
+  const env = buildCompileEnv(resolved, compilePath);
+  if (!env.MT5_HOME) {
+    const dataPath = inferDataPathFromSource(src);
+    const inferred = deriveMt5HomeFromDataPath(dataPath ?? undefined);
+    if (inferred) env.MT5_HOME = inferred;
+  }
+  await runCompile(compilePath, toWindowsArgsIfNeeded(args, compilePath), env);
 }
 
-async function runCompile(pathOrCmd: string, args: string[]): Promise<void> {
+async function runCompile(pathOrCmd: string, args: string[], env?: NodeJS.ProcessEnv): Promise<void> {
   return new Promise((resolve, reject) => {
-    if (pathOrCmd.toLowerCase().endsWith(".cmd") || pathOrCmd.toLowerCase().endsWith(".bat")) {
-      reject(new Error("compile nao suporta .cmd/.bat (CMD desabilitado). Use metaeditor.exe ou mt5-compile.exe."));
+    const lower = pathOrCmd.toLowerCase();
+    if (lower.endsWith(".cmd")) {
+      reject(new Error("compile nao suporta .cmd. Use metaeditor.exe, mt5-compile.exe ou .bat."));
       return;
     }
+    const envMerged: NodeJS.ProcessEnv = { ...process.env, ...(env ?? {}) };
+    if (isWsl() && envMerged.MT5_HOME) {
+      const wslEnv = envMerged.WSLENV ? envMerged.WSLENV.split(":").filter(Boolean) : [];
+      const hasWin = isWindowsPath(envMerged.MT5_HOME);
+      if (hasWin) {
+        // Remove path-translation for MT5_HOME when already in Windows format.
+        const filtered = wslEnv.filter((v) => v !== "MT5_HOME/p");
+        if (!filtered.includes("MT5_HOME")) filtered.push("MT5_HOME");
+        envMerged.WSLENV = filtered.join(":");
+      } else {
+        if (!wslEnv.includes("MT5_HOME/p")) wslEnv.push("MT5_HOME/p");
+        envMerged.WSLENV = wslEnv.join(":");
+      }
+    }
+    const quoteWin = (value: string): string => {
+      if (!/[\\s"]/g.test(value)) return value;
+      return `"${value.replace(/\"/g, '""')}"`;
+    };
+    const isBat = lower.endsWith(".bat");
+    const winPath = isWindowsPath(pathOrCmd) ? pathOrCmd : isWsl() ? toWindowsPath(pathOrCmd) : pathOrCmd;
+    const useCmd = isBat;
     const execPath = isWsl() && isWindowsPath(pathOrCmd) ? toWslPath(pathOrCmd) : pathOrCmd;
-    const child = spawn(execPath, args, { stdio: "inherit" });
+    const winArgs = toWindowsArgsIfNeeded(args, winPath);
+    const cmdLine = [quoteWin(winPath), ...winArgs.map(quoteWin)].join(" ");
+    const cmdArg = cmdLine.startsWith("\"") ? `"${cmdLine}"` : cmdLine;
+    const child = useCmd
+      ? spawn("cmd.exe", ["/c", cmdArg], {
+          stdio: "inherit",
+          env: envMerged
+        })
+      : spawn(execPath, args, { stdio: "inherit", env: envMerged });
     child.on("error", reject);
-    child.on("exit", (code: number | null) =>
-      code && code !== 0 ? reject(new Error(`compile retornou ${code}`)) : resolve()
-    );
+    child.on("exit", (code: number | null) => {
+      let metaErrors: number | null = null;
+      const isMeta = isMetaEditorPath(pathOrCmd);
+      if (isMeta) {
+        const logArg = args.find((a) => a.toLowerCase().startsWith("/log:"));
+        if (logArg) {
+          const logPath = logArg.slice(5);
+          const local = isWindowsPath(logPath) ? toWslPath(logPath) : logPath;
+          try {
+            if (fs.existsSync(local)) {
+              const raw = readTextWithEncoding(local).text;
+              const text = raw.replace(/\0/g, "");
+              const tail = tailLines(text, 80);
+              if (tail.trim()) process.stdout.write(tail + "\n");
+              const match = text.match(/result:\s*(\d+)\s+errors/i);
+              if (match) metaErrors = Number(match[1]);
+            }
+          } catch {
+            // ignore log read errors
+          }
+        }
+      }
+
+      if (!code || code === 0) {
+        if (metaErrors !== null && metaErrors > 0) {
+          reject(new Error(`compile retornou ${metaErrors} errors`));
+          return;
+        }
+        resolve();
+        return;
+      }
+      if (isMeta && metaErrors === 0) {
+        resolve();
+        return;
+      }
+      reject(new Error(`compile retornou ${code}`));
+    });
   });
 }
 
@@ -709,6 +986,7 @@ async function main() {
       return acc;
     }, [] as string[])
     .option("--dry-run", "nao altera arquivos (apenas mostra plano)", false)
+    .option("--apply", "aplica mudancas (doctor)", false)
     .allowUnknownOption(true)
     .configureOutput({
       writeErr: (str) => process.stderr.write(str),
@@ -820,7 +1098,15 @@ async function main() {
   }
 
   if (tokens[0]?.toLowerCase() === "compile") {
-    const compileArgs = tokens.slice(1);
+    let compileArgs = tokens.slice(1);
+    if (!compileArgs.length && ctx.watchName) {
+      compileArgs = [ctx.watchName];
+    }
+    if (!compileArgs.length) {
+      process.stderr.write("uso: compile <arquivo.mq5|diretorio> (ou defina watch)\n");
+      process.exitCode = 1;
+      return;
+    }
     const envCompile = process.env.CMDMT_COMPILE?.trim();
     const userSpecified = Boolean(resolved.compilePath || envCompile);
     let compilePath = resolveCompilePath(resolved);
@@ -835,20 +1121,18 @@ async function main() {
         compileArgs[0] = resolvedSrc;
       }
     }
-    if (compileArgs.length && looksLikeMqSource(compileArgs[0]) && !userSpecified) {
-      try {
-        const runner = requireRunner(resolved);
-        if (runner.metaeditorPath && existsPath(runner.metaeditorPath)) {
-          compilePath = runner.metaeditorPath;
-        }
-      } catch {
-        // ignore, use compilePath resolved
-      }
-    }
+    // Mantem o compilador configurado (mt5-compile.exe por padrao).
+    // MetaEditor so e usado se for explicitamente configurado como compilePath.
     const finalArgs = isMetaEditorPath(compilePath) && compileArgs.length
       ? buildMetaEditorArgs(compileArgs[0], compileArgs)
       : compileArgs;
-    await runCompile(compilePath, toWindowsArgsIfNeeded(finalArgs, compilePath));
+    const env = buildCompileEnv(resolved, compilePath);
+    if (!env.MT5_HOME && compileArgs.length) {
+      const dataPath = inferDataPathFromSource(compileArgs[0]);
+      const inferred = deriveMt5HomeFromDataPath(dataPath ?? undefined);
+      if (inferred) env.MT5_HOME = inferred;
+    }
+    await runCompile(compilePath, toWindowsArgsIfNeeded(finalArgs, compilePath), env);
     return;
   }
   const res = dispatch(tokens, ctx);
@@ -914,6 +1198,76 @@ async function main() {
       process.stdout.write(JSON.stringify({ kind: "install", output }) + "\n");
     } else {
       process.stdout.write(output + "\n");
+    }
+    return;
+  }
+  if (res.kind === "doctor") {
+    const dataPath = res.dataPath ?? resolved.runner?.dataPath;
+    if (!dataPath) {
+      process.stderr.write("doctor precisa de MT5_DATA ou runner.dataPath configurado.\n");
+      process.exitCode = 1;
+      return;
+    }
+    const allowDll = res.allowDll ?? opts.allowDll;
+    const allowLive = res.allowLive ?? opts.allowLive;
+    const login = resolved.tester.login;
+    const password = resolved.tester.password;
+    const server = resolved.tester.server;
+    const syncCommon =
+      res.syncCommon ?? opts.syncCommon ?? (resolved.tester.syncCommon ?? (login || password || server ? true : undefined));
+    const web = res.web ?? (Array.isArray(opts.web) ? opts.web : []);
+    const dryRun = res.apply ? false : true;
+    const repoPath = res.repoPath ?? opts.repo;
+    const name = res.name;
+    const namePrefix = res.namePrefix;
+    const mirrorFrom = res.mirrorFrom ?? opts.mirrorFrom;
+    const mirrorDirs =
+      res.mirrorDirs ??
+      (typeof opts.mirrorDirs === "string" ? opts.mirrorDirs.split(",").map((v: string) => v.trim()).filter(Boolean) : undefined);
+    const output = res.apply
+      ? runInstall(
+          {
+            dataPath,
+            allowDll,
+            allowLive,
+            syncCommon,
+            login,
+            password,
+            server,
+            web,
+            dryRun: false,
+            repoPath,
+            name,
+            namePrefix,
+            mirrorFrom,
+            mirrorDirs
+          },
+          process.cwd()
+        )
+      : runDoctor(
+        {
+          dataPath,
+          allowDll,
+          allowLive,
+          syncCommon,
+          login,
+          password,
+          server,
+          web,
+          dryRun: true,
+          repoPath,
+          name,
+          namePrefix,
+          mirrorFrom,
+          mirrorDirs
+        },
+        process.cwd()
+      );
+    if (opts.json) {
+      process.stdout.write(JSON.stringify({ kind: "doctor", output, dryRun }) + "\n");
+    } else {
+      process.stdout.write(output + "\n");
+      if (dryRun) process.stdout.write("doctor: dry-run (use --apply para consertar)\n");
     }
     return;
   }
@@ -984,6 +1338,81 @@ async function main() {
       process.exitCode = 1;
       return;
     }
+    return;
+  }
+  if (res.kind === "diag") {
+    const runner = requireRunner(resolved);
+    const dataPath = runner.dataPath ?? "";
+    const base = path.join(toWslPath(dataPath), "MQL5");
+    let lines: string[] = [];
+    if (res.target === "indicator") {
+      const info = resolveIndicatorFiles(res.name, dataPath);
+      lines.push(`indicator: ${res.name}`);
+      if (info.rel) lines.push(`resolved: ${info.rel}`);
+      if (info.mq5) lines.push(`mq5: ${info.mq5} ${fs.existsSync(info.mq5) ? "(ok)" : "(missing)"}`);
+      if (info.ex5) lines.push(`ex5: ${info.ex5} ${fs.existsSync(info.ex5) ? "(ok)" : "(missing)"}`);
+      if (!info.rel && !info.mq5 && !info.ex5) lines.push(`not found under ${path.join(base, "Indicators")}`);
+      lines.push("note: iCustom usa caminho relativo em MQL5/Indicators (sem extensao).");
+    } else {
+      const info = resolveExpertFiles(res.name, dataPath);
+      lines.push(`expert: ${res.name}`);
+      if (info.rel) lines.push(`resolved: ${info.rel}`);
+      if (info.mq5) lines.push(`mq5: ${info.mq5} ${fs.existsSync(info.mq5) ? "(ok)" : "(missing)"}`);
+      if (info.ex5) lines.push(`ex5: ${info.ex5} ${fs.existsSync(info.ex5) ? "(ok)" : "(missing)"}`);
+      if (!info.rel && !info.mq5 && !info.ex5) lines.push(`not found under ${path.join(base, "Experts")}`);
+    }
+    const output = lines.join("\n");
+    if (opts.json) {
+      process.stdout.write(JSON.stringify({ kind: "diag", output }) + "\n");
+    } else {
+      process.stdout.write(output + "\n");
+    }
+    if (lines.some((l) => l.includes("(missing)") || l.includes("not found"))) {
+      process.exitCode = 1;
+    }
+    return;
+  }
+  if (res.kind === "log") {
+    const runner = requireRunner(resolved);
+    const logFile = findLatestLogFile(runner.dataPath);
+    if (!logFile || !fs.existsSync(logFile)) {
+      process.stderr.write("log nao encontrado\n");
+      process.exitCode = 1;
+      return;
+    }
+    const text = fs.readFileSync(logFile, "utf8");
+    const output = tailLines(text, res.tail || 200);
+    if (opts.json) {
+      process.stdout.write(JSON.stringify({ kind: "log", file: logFile, output }) + "\n");
+    } else {
+      process.stdout.write(output + "\n");
+    }
+    return;
+  }
+  if (res.kind === "hotkey") {
+    const runner = requireRunner(resolved);
+    const filePath = path.join(toWslPath(runner.dataPath ?? ""), "config", "hotkeys.ini");
+    const exists = fs.existsSync(filePath);
+    const action = res.action;
+    if (!exists && action === "list") {
+      process.stdout.write("(empty)\n");
+      return;
+    }
+    if (!exists && action !== "set") {
+      process.stderr.write("hotkeys.ini nao encontrado\n");
+      process.exitCode = 1;
+      return;
+    }
+    let current = exists ? readTextWithEncoding(filePath) : { text: "", encoding: "utf16le" as const, bom: true };
+    if (action === "list") {
+      const text = current.text.trim();
+      process.stdout.write(text ? text + "\n" : "(empty)\n");
+      return;
+    }
+    const updated = updateHotkeyText(current.text, action === "del" ? "del" : action, res.key, res.value);
+    fs.mkdirSync(path.dirname(filePath), { recursive: true });
+    writeTextWithEncoding(filePath, updated, current.encoding, current.bom);
+    process.stdout.write("ok\n");
     return;
   }
 

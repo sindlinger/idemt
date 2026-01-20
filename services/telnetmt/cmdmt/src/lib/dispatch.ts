@@ -25,7 +25,24 @@ export type DispatchResult =
   | { kind: "error"; message: string }
   | { kind: "multi"; steps: SendAction[]; attach?: AttachInfo; meta?: AttachMeta }
   | { kind: "ind_detach_index"; sym: string; tf: string; sub: string; index: number }
+  | { kind: "diag"; target: "indicator" | "expert"; name: string }
+  | { kind: "log"; tail: number }
+  | { kind: "hotkey"; action: "list" | "set" | "del" | "clear"; key?: string; value?: string }
   | { kind: "test"; spec: TestSpec }
+  | {
+      kind: "doctor";
+      dataPath?: string;
+      apply?: boolean;
+      allowDll?: boolean;
+      allowLive?: boolean;
+      syncCommon?: boolean;
+      web?: string[];
+      repoPath?: string;
+      name?: string;
+      namePrefix?: string;
+      mirrorFrom?: string;
+      mirrorDirs?: string[];
+    }
   | { kind: "install"; dataPath: string; allowDll?: boolean; allowLive?: boolean; syncCommon?: boolean; web?: string[]; dryRun?: boolean; repoPath?: string; name?: string; namePrefix?: string; mirrorFrom?: string; mirrorDirs?: string[] }
   | {
       kind: "data_import";
@@ -50,6 +67,24 @@ function err(msg: string): DispatchResult {
 const PARAMS_HINT = "params devem ser passados com --params k=v ... (ex: --params depth=12 deviation=5)";
 const DEFAULT_SYMBOL = "EURUSD";
 const DEFAULT_TF = "M5";
+
+function parseKindFlags(args: string[]): { kind?: "indicator" | "expert"; rest: string[] } {
+  let kind: "indicator" | "expert" | undefined;
+  const rest: string[] = [];
+  for (const tok of args) {
+    const low = tok.toLowerCase();
+    if (low === "--ind" || low === "-i") {
+      kind = "indicator";
+      continue;
+    }
+    if (low === "--exp" || low === "-e") {
+      kind = "expert";
+      continue;
+    }
+    rest.push(tok);
+  }
+  return { kind, rest };
+}
 
 function parseSymTfDefault(args: string[], ctx: Ctx): { sym: string; tf: string; rest: string[] } {
   const a = [...args];
@@ -383,6 +418,117 @@ function parseInstallArgs(tokens: string[]): { dataPath: string; allowDll?: bool
   return { dataPath, allowDll, allowLive, syncCommon, web, dryRun, repoPath, name, namePrefix, mirrorFrom, mirrorDirs };
 }
 
+function parseDoctorArgs(tokens: string[]): { dataPath?: string; apply?: boolean; allowDll?: boolean; allowLive?: boolean; syncCommon?: boolean; web?: string[]; repoPath?: string; name?: string; namePrefix?: string; mirrorFrom?: string; mirrorDirs?: string[] } | null {
+  let allowDll: boolean | undefined = undefined;
+  let allowLive: boolean | undefined = undefined;
+  let syncCommon: boolean | undefined = undefined;
+  let apply: boolean | undefined = undefined;
+  let repoPath: string | undefined = undefined;
+  let name: string | undefined = undefined;
+  let namePrefix: string | undefined = undefined;
+  let mirrorFrom: string | undefined = undefined;
+  let mirrorDirs: string[] | undefined = undefined;
+  const web: string[] = [];
+  const rest: string[] = [];
+
+  for (let i = 0; i < tokens.length; i++) {
+    const tok = tokens[i];
+    const lower = tok.toLowerCase();
+    if (lower === "--allow-dll") {
+      allowDll = true;
+      continue;
+    }
+    if (lower === "--no-allow-dll") {
+      allowDll = false;
+      continue;
+    }
+    if (lower === "--allow-live") {
+      allowLive = true;
+      continue;
+    }
+    if (lower === "--no-allow-live") {
+      allowLive = false;
+      continue;
+    }
+    if (lower === "--sync-common") {
+      syncCommon = true;
+      continue;
+    }
+    if (lower === "--no-sync-common") {
+      syncCommon = false;
+      continue;
+    }
+    if (lower === "--apply") {
+      apply = true;
+      continue;
+    }
+    if (lower === "--dry-run") {
+      apply = false;
+      continue;
+    }
+    if (lower === "--web" || lower.startsWith("--web=")) {
+      let val = lower.includes("=") ? tok.slice(tok.indexOf("=") + 1) : "";
+      if (!val && i + 1 < tokens.length && !tokens[i + 1].startsWith("--")) {
+        val = tokens[i + 1];
+        i += 1;
+      }
+      if (val) web.push(val);
+      continue;
+    }
+    if (lower === "--repo" || lower.startsWith("--repo=")) {
+      let val = lower.includes("=") ? tok.slice(tok.indexOf("=") + 1) : "";
+      if (!val && i + 1 < tokens.length && !tokens[i + 1].startsWith("--")) {
+        val = tokens[i + 1];
+        i += 1;
+      }
+      if (val) repoPath = val;
+      continue;
+    }
+    if (lower === "--name" || lower.startsWith("--name=")) {
+      let val = lower.includes("=") ? tok.slice(tok.indexOf("=") + 1) : "";
+      if (!val && i + 1 < tokens.length && !tokens[i + 1].startsWith("--")) {
+        val = tokens[i + 1];
+        i += 1;
+      }
+      if (val) name = val;
+      continue;
+    }
+    if (lower === "--name-prefix" || lower.startsWith("--name-prefix=")) {
+      let val = lower.includes("=") ? tok.slice(tok.indexOf("=") + 1) : "";
+      if (!val && i + 1 < tokens.length && !tokens[i + 1].startsWith("--")) {
+        val = tokens[i + 1];
+        i += 1;
+      }
+      if (val) namePrefix = val;
+      continue;
+    }
+    if (lower === "--mirror-from" || lower.startsWith("--mirror-from=")) {
+      let val = lower.includes("=") ? tok.slice(tok.indexOf("=") + 1) : "";
+      if (!val && i + 1 < tokens.length && !tokens[i + 1].startsWith("--")) {
+        val = tokens[i + 1];
+        i += 1;
+      }
+      if (val) mirrorFrom = val;
+      continue;
+    }
+    if (lower === "--mirror-dirs" || lower.startsWith("--mirror-dirs=")) {
+      let val = lower.includes("=") ? tok.slice(tok.indexOf("=") + 1) : "";
+      if (!val && i + 1 < tokens.length && !tokens[i + 1].startsWith("--")) {
+        val = tokens[i + 1];
+        i += 1;
+      }
+      if (val) {
+        mirrorDirs = val.split(",").map((v) => v.trim()).filter(Boolean);
+      }
+      continue;
+    }
+    rest.push(tok);
+  }
+
+  const dataPath = rest.length ? rest.join(" ") : undefined;
+  return { dataPath, apply, allowDll, allowLive, syncCommon, web, repoPath, name, namePrefix, mirrorFrom, mirrorDirs };
+}
+
 export function dispatch(tokens: string[], ctx: Ctx): DispatchResult {
   if (tokens.length === 0) return { kind: "local", output: renderHelp().join("\n") };
   const cmd = tokens[0].toLowerCase();
@@ -395,6 +541,188 @@ export function dispatch(tokens: string[], ctx: Ctx): DispatchResult {
     const key = rest.join(" ").trim();
     return { kind: "local", output: renderExamples(key) };
   }
+  if (cmd === "watch") {
+    if (!rest.length) {
+      if (ctx.watchKind && ctx.watchName) {
+        return { kind: "local", output: `watching: ${ctx.watchKind} ${ctx.watchName}` };
+      }
+      return { kind: "local", output: "watching: (none)" };
+    }
+    const { kind, rest: r2 } = parseKindFlags(rest);
+    if (r2.length && r2[0].toLowerCase() === "clear") {
+      ctx.watchKind = undefined;
+      ctx.watchName = undefined;
+      return { kind: "local", output: "watching: (none)" };
+    }
+    if (!kind) return err("uso: watch -i NOME | watch -e NOME | watch clear");
+    const name = r2.join(" ").trim();
+    if (!name) return err("uso: watch -i NOME | watch -e NOME | watch clear");
+    ctx.watchKind = kind;
+    ctx.watchName = name;
+    return { kind: "local", output: `watching: ${kind} ${name}` };
+  }
+  if (cmd === "add") {
+    const { kind: kindFlag, rest: restArgs } = parseKindFlags(rest);
+    const kind = kindFlag ?? ctx.watchKind;
+    if (!kind) return err("uso: add -i NOME | add -e NOME");
+    if (kind === "indicator") {
+      const r = parseSymTfDefault(restArgs, ctx);
+      const { params, rest: rest2, meta } = parseParamsAndMeta(r.rest);
+      const { sub: subw, rest: rest3 } = parseSub(rest2, ctx);
+      if (!params && hasImplicitParams(rest3)) {
+        return err(PARAMS_HINT);
+      }
+      let name = rest3.join(" ").trim();
+      if (!name && ctx.watchKind === "indicator") name = ctx.watchName ?? "";
+      if (!name) return err("uso: add -i NOME [SYMBOL TF] [sub=N] [--params k=v ...]");
+      name = maybeResolveLocalPath(name);
+      const payload = [r.sym, r.tf, name, subw];
+      if (params) payload.push(params);
+      return {
+        kind: "send",
+        type: "ATTACH_IND_FULL",
+        params: payload,
+        attach: { kind: "indicator", name, symbol: r.sym, tf: r.tf, sub: Number(subw) },
+        meta
+      };
+    }
+    const r = parseSymTfDefault(restArgs, ctx);
+    const { params, rest: rest2, meta } = parseParamsAndMeta(r.rest);
+    let name = rest2.join(" ").trim();
+    if (!name && ctx.watchKind === "expert") name = ctx.watchName ?? "";
+    if (!name) return err("uso: add -e NOME [SYMBOL TF] [BASE_TPL] [--params k=v ...]");
+    let baseTpl = "";
+    const tplIdx = rest2.findIndex((t) => t.toLowerCase().endsWith(".tpl"));
+    if (tplIdx >= 0) baseTpl = rest2[tplIdx];
+    if (!baseTpl && ctx.baseTpl) baseTpl = ctx.baseTpl;
+    if (!baseTpl) return err("base template nao definido. Use --base-tpl ou baseTpl no config.");
+    const hash = stableHash(`${name}|${r.sym}|${r.tf}|${params}`);
+    const outTpl = `cmdmt_ea_${hash}.tpl`;
+    const saveParams = [name, outTpl, baseTpl];
+    if (params) saveParams.push(params);
+    const steps: SendAction[] = [
+      { type: "SAVE_TPL_EA", params: saveParams },
+      { type: "APPLY_TPL", params: [r.sym, r.tf, outTpl] }
+    ];
+    return {
+      kind: "multi",
+      steps,
+      attach: { kind: "expert", name, symbol: r.sym, tf: r.tf },
+      meta
+    };
+  }
+  if (cmd === "rm") {
+    const { kind: kindFlag, rest: restArgs } = parseKindFlags(rest);
+    const kind = kindFlag ?? ctx.watchKind;
+    if (!kind) return err("uso: rm -i NOME|INDEX | rm -e [SYMBOL TF]");
+    if (kind === "indicator") {
+      const r = parseSymTfDefault(restArgs, ctx);
+      const hasExplicitSub = r.rest.some((t) => {
+        const low = t.toLowerCase();
+        if (low.startsWith("sub=")) return true;
+        if ((t.startsWith("#") || t.startsWith("@")) && /^\d+$/.test(t.slice(1))) return true;
+        return false;
+      });
+      const subParsed = hasExplicitSub ? parseSub(r.rest, ctx) : { sub: String(ctx.sub ?? 1), rest: r.rest };
+      const { sub: subw, rest: rest2 } = subParsed;
+      let name = rest2.join(" ").trim();
+      if (!name && ctx.watchKind === "indicator") name = ctx.watchName ?? "";
+      if (!name) return err("uso: rm -i NOME|INDEX [SYMBOL TF] [sub=N]");
+      if (/^\d+$/.test(name)) {
+        return { kind: "ind_detach_index", sym: r.sym, tf: r.tf, sub: subw, index: parseInt(name, 10) };
+      }
+      return { kind: "send", type: "DETACH_IND_FULL", params: [r.sym, r.tf, name, subw] };
+    }
+    const r = resolveSymTf(restArgs, ctx, false);
+    if (!r || !r.sym || !r.tf) return err("uso: rm -e [SYMBOL TF]");
+    return { kind: "send", type: "DETACH_EA_FULL", params: [r.sym, r.tf] };
+  }
+  if (cmd === "inspect") {
+    const { kind: kindFlag, rest: restArgs } = parseKindFlags(rest);
+    const kind = kindFlag ?? ctx.watchKind;
+    if (!kind) return err("uso: inspect -i <total|name|handle|get|release> ... | inspect -e [find] NOME");
+    if (kind === "expert") {
+      const sub = restArgs[0]?.toLowerCase() ?? "";
+      const name = (sub === "find" ? restArgs.slice(1) : restArgs).join(" ").trim() || (ctx.watchKind === "expert" ? ctx.watchName ?? "" : "");
+      if (!name) return err("uso: inspect -e [find] NOME");
+      return { kind: "send", type: "FIND_EA", params: [name] };
+    }
+    const subRaw = restArgs[0]?.toLowerCase() ?? "";
+    const known = ["total", "name", "handle", "get", "release"];
+    const sub = known.includes(subRaw) ? subRaw : "get";
+    const args = known.includes(subRaw) ? restArgs.slice(1) : restArgs;
+    if (sub === "release") {
+      if (!args.length) return err("uso: inspect -i release HANDLE");
+      return { kind: "send", type: "IND_RELEASE", params: [args[0]] };
+    }
+    if (sub === "total") {
+      const r = parseSymTfDefault(args, ctx);
+      const { sub: subw, rest: rest2 } = parseSub(r.rest, ctx);
+      if (rest2.length) {
+        return { kind: "send", type: "IND_TOTAL", params: [r.sym, r.tf, rest2[0]] };
+      }
+      return { kind: "send", type: "IND_TOTAL", params: [r.sym, r.tf, subw] };
+    }
+    const r = parseSymTfDefault(args, ctx);
+    const { sub: subw, rest: rest2 } = parseSub(r.rest, ctx);
+    let name = rest2.join(" ").trim();
+    if (!name && ctx.watchKind === "indicator") name = ctx.watchName ?? "";
+    if (!name) return err(`uso: inspect -i ${sub} [SYMBOL TF] NAME|INDEX [sub=N]`);
+    const type = sub === "name" ? "IND_NAME" : sub === "handle" ? "IND_HANDLE" : "IND_GET";
+    return { kind: "send", type, params: [r.sym, r.tf, subw, name] };
+  }
+  if (cmd === "debug") {
+    const { kind, rest: restArgs } = parseKindFlags(rest);
+    if (kind) {
+      let name = restArgs.join(" ").trim();
+      if (!name && ctx.watchKind === kind) name = ctx.watchName ?? "";
+      if (!name) return err("uso: debug -i NOME | debug -e NOME");
+      return { kind: "diag", target: kind, name };
+    }
+    if (!rest.length) return err("uso: debug MSG | debug -i NOME | debug -e NOME");
+    return { kind: "send", type: "DEBUG_MSG", params: [rest.join(" ")] };
+  }
+  if (cmd === "log") {
+    let tail = 200;
+    const idx = rest.findIndex((t) => t.startsWith("--tail"));
+    if (idx >= 0) {
+      const tok = rest[idx];
+      const val = tok.includes("=") ? tok.split("=")[1] : rest[idx + 1];
+      const num = parseInt(val ?? "", 10);
+      if (Number.isFinite(num)) tail = num;
+    } else if (rest.length && /^\d+$/.test(rest[0])) {
+      tail = parseInt(rest[0], 10);
+    }
+    return { kind: "log", tail };
+  }
+  if (cmd === "hotkey") {
+    const sub = rest[0]?.toLowerCase() ?? "list";
+    if (sub === "list") return { kind: "hotkey", action: "list" };
+    if (sub === "clear") return { kind: "hotkey", action: "clear" };
+    if (sub === "set") {
+      const args = rest.slice(1);
+      if (!args.length) return err("uso: hotkey set TECLA COMANDO");
+      let key = "";
+      let value = "";
+      if (args[0].includes("=")) {
+        const idx = args[0].indexOf("=");
+        key = args[0].slice(0, idx);
+        value = args[0].slice(idx + 1);
+        if (!value && args.length > 1) value = args.slice(1).join(" ");
+      } else {
+        key = args[0];
+        value = args.slice(1).join(" ");
+      }
+      if (!key || !value) return err("uso: hotkey set TECLA COMANDO");
+      return { kind: "hotkey", action: "set", key, value };
+    }
+    if (sub === "del") {
+      const key = rest.slice(1).join(" ").trim();
+      if (!key) return err("uso: hotkey del TECLA");
+      return { kind: "hotkey", action: "del", key };
+    }
+    return err("uso: hotkey <list|set|del|clear>");
+  }
   if (cmd === "quit") {
     return { kind: "exit" };
   }
@@ -404,6 +732,13 @@ export function dispatch(tokens: string[], ctx: Ctx): DispatchResult {
     return err("uso: install <MT5_DATA> [--name NOME] [--name-prefix PREFIX] [--allow-dll|--no-allow-dll] [--allow-live|--no-allow-live] [--sync-common|--no-sync-common] [--web URL] [--dry-run] [--repo PATH] [--mirror-from PATH] [--mirror-dirs a,b,c]");
   }
     return { kind: "install", ...parsed };
+  }
+  if (cmd === "doctor") {
+    const parsed = parseDoctorArgs(rest);
+    if (!parsed) {
+      return err("uso: doctor [MT5_DATA] [--apply|--dry-run] [--name NOME] [--name-prefix PREFIX] [--allow-dll|--no-allow-dll] [--allow-live|--no-allow-live] [--sync-common|--no-sync-common] [--web URL] [--repo PATH] [--mirror-from PATH] [--mirror-dirs a,b,c]");
+    }
+    return { kind: "doctor", ...parsed };
   }
   if (cmd === "use") {
     if (rest.length < 2 || !isTf(rest[1])) return err("uso: use SYMBOL TF");
@@ -418,10 +753,6 @@ export function dispatch(tokens: string[], ctx: Ctx): DispatchResult {
     };
   }
   if (cmd === "ping") return { kind: "send", type: "PING", params: [] };
-  if (cmd === "debug") {
-    if (!rest.length) return err("uso: debug MSG");
-    return { kind: "send", type: "DEBUG_MSG", params: [rest.join(" ")] };
-  }
   if (cmd === "open") {
     const r = parseSymTfDefault(rest, ctx);
     return { kind: "send", type: "OPEN_CHART", params: [r.sym, r.tf] };
@@ -488,65 +819,8 @@ export function dispatch(tokens: string[], ctx: Ctx): DispatchResult {
     }
   }
 
-  if (cmd === "indicator") {
-    if (rest.length === 0) return err("uso: indicator <attach|detach|total|name|handle|get|release>");
-    const sub = rest[0].toLowerCase();
-    const args = rest.slice(1);
-
-    if (sub === "attach") {
-      const r = parseSymTfDefault(args, ctx);
-      if (r.rest.length < 1)
-        return err("uso: indicator attach [SYMBOL TF] NAME [SUB|sub=N] [--params k=v ...]");
-      const { params, rest: rest2, meta } = parseParamsAndMeta(r.rest);
-      const { sub: subw, rest: rest3 } = parseSub(rest2, ctx);
-      if (!params && hasImplicitParams(rest3)) {
-        return err(PARAMS_HINT);
-      }
-      let name = rest3.join(" ");
-      name = maybeResolveLocalPath(name);
-      const payload = [r.sym, r.tf, name, subw];
-      if (params) payload.push(params);
-      return {
-        kind: "send",
-        type: "ATTACH_IND_FULL",
-        params: payload,
-        attach: { kind: "indicator", name, symbol: r.sym, tf: r.tf, sub: Number(subw) },
-        meta
-      };
-    }
-    if (sub === "detach") {
-      const r = parseSymTfDefault(args, ctx);
-      if (r.rest.length < 1) return err("uso: indicator detach [SYMBOL TF] NAME [SUB|sub=N]");
-      const { sub: subw, rest: rest2 } = parseSub(r.rest, ctx);
-      const name = rest2.join(" ");
-      return { kind: "send", type: "DETACH_IND_FULL", params: [r.sym, r.tf, name, subw] };
-    }
-    if (sub === "total") {
-      const r = parseSymTfDefault(args, ctx);
-      const { sub: subw, rest: rest2 } = parseSub(r.rest, ctx);
-      if (rest2.length) {
-        // allow explicit sub as arg
-        return { kind: "send", type: "IND_TOTAL", params: [r.sym, r.tf, rest2[0]] };
-      }
-      return { kind: "send", type: "IND_TOTAL", params: [r.sym, r.tf, subw] };
-    }
-    if (sub === "name" || sub === "handle" || sub === "get") {
-      const r = parseSymTfDefault(args, ctx);
-      if (r.rest.length < 1) return err(`uso: indicator ${sub} [SYMBOL TF] NAME|INDEX [SUB]`);
-      const { sub: subw, rest: rest2 } = parseSub(r.rest, ctx);
-      const type = sub === "name" ? "IND_NAME" : sub === "handle" ? "IND_HANDLE" : "IND_GET";
-      const params = [r.sym, r.tf, subw];
-      params.push(rest2.join(" "));
-      return { kind: "send", type, params };
-    }
-    if (sub === "release") {
-      if (args.length < 1) return err("uso: indicator release HANDLE");
-      return { kind: "send", type: "IND_RELEASE", params: [args[0]] };
-    }
-  }
-
   if (cmd === "expert") {
-    if (rest.length === 0) return err("uso: expert <attach|detach|find|run|test|oneshot>");
+    if (rest.length === 0) return err("uso: expert <find|run|test|oneshot>");
     const sub = rest[0].toLowerCase();
     const args = rest.slice(1);
     if (sub === "find") {
@@ -640,48 +914,7 @@ export function dispatch(tokens: string[], ctx: Ctx): DispatchResult {
       const spec: TestSpec = { expert: name, symbol, tf, params, oneShot: true, baseTpl, csv };
       return { kind: "test", spec };
     }
-    if (sub === "attach") {
-      const r = parseSymTfDefault(args, ctx);
-      if (r.rest.length < 1) return err("uso: expert attach [SYMBOL TF] NAME [BASE_TPL] [--params k=v ...]");
-      const { params, rest: rest2, meta } = parseParamsAndMeta(r.rest);
-      if (rest2.length === 1 && rest2[0].toLowerCase().endsWith(".tpl") && !params) {
-        return { kind: "send", type: "APPLY_TPL", params: [r.sym, r.tf, rest2[0]] };
-      }
-      let baseTpl = "";
-      const tplIdx = rest2.findIndex((t) => t.toLowerCase().endsWith(".tpl"));
-      if (tplIdx >= 0) {
-        baseTpl = rest2[tplIdx];
-        rest2.splice(tplIdx, 1);
-      }
-      if (!baseTpl && ctx.baseTpl) {
-        baseTpl = ctx.baseTpl;
-      }
-      if (!params && hasImplicitParams(rest2)) {
-        return err(PARAMS_HINT);
-      }
-      const name = rest2.join(" ");
-      if (!name) return err("uso: expert attach [SYMBOL TF] NAME [BASE_TPL] [--params k=v ...]");
-      const hash = stableHash(`${name}|${r.sym}|${r.tf}|${params}`);
-      const outTpl = `cmdmt_ea_${hash}.tpl`;
-      const saveParams = [name, outTpl];
-      if (baseTpl) saveParams.push(baseTpl);
-      if (params) saveParams.push(params);
-      const steps: SendAction[] = [
-        { type: "SAVE_TPL_EA", params: saveParams },
-        { type: "APPLY_TPL", params: [r.sym, r.tf, outTpl] }
-      ];
-      return {
-        kind: "multi",
-        steps,
-        attach: { kind: "expert", name, symbol: r.sym, tf: r.tf },
-        meta
-      };
-    }
-    if (sub === "detach") {
-      const r = resolveSymTf(args, ctx, false);
-      if (!r || !r.sym || !r.tf) return err("uso: expert detach [SYMBOL TF]");
-      return { kind: "send", type: "DETACH_EA_FULL", params: [r.sym, r.tf] };
-    }
+    return err("uso: expert <find|run|test|oneshot>");
   }
 
   if (cmd === "script") {
