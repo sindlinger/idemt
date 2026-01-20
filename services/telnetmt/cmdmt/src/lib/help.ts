@@ -89,7 +89,7 @@ const SECTIONS: HelpSection[] = [
   { title: "inspect", items: ["total", "name", "handle", "get", "release", "find"] },
   { title: "expert", items: ["find", "run", "test", "oneshot"] },
   { title: "hotkey", items: ["list", "set", "del", "clear"] },
-  { title: "auto", items: ["ls", "add", "rm", "show"] },
+  { title: "auto", items: ["ls", "add", "rm", "show", "run"] },
   { title: "script", items: ["run"] },
   { title: "data", items: ["import"] },
   { title: "trade", items: ["buy", "sell", "list", "closeall"] },
@@ -275,7 +275,8 @@ const EXAMPLES: Record<string, ExampleGroup[]> = {
     { title: "ls", lines: ["auto ls", "auto --code M1,M2", "auto M1 M2"] },
     { title: "add", lines: ["auto add --code M1,M2 --name @new_order"] },
     { title: "rm", lines: ["auto rm --name @new_order"] },
-    { title: "show", lines: ["auto show @new_order", "auto @new_order"] }
+    { title: "show", lines: ["auto show @new_order", "auto @new_order"] },
+    { title: "run", lines: ["auto run --keys \"ALT+6,ENTER\"", "auto run @new_order"] }
   ],
   chart: [
     { title: "open", lines: ["chart open", "chart open EURUSD H1"] },

@@ -30,6 +30,7 @@ import { resolveExpertFromRunner } from "./lib/expert_resolve.js";
 import { ensureExpertInRunner } from "./lib/expert_sync.js";
 import { performDataImport } from "./lib/data_import.js";
 import { readTextWithEncoding, writeTextWithEncoding } from "./lib/textfile.js";
+import { toSendKeysTokens } from "./lib/keys.js";
 
 type AttachReport = Awaited<ReturnType<typeof buildAttachReport>>;
 
@@ -162,6 +163,41 @@ function parseChartList(resp: string): ChartInfo[] {
 function normalizeTf(tf: string): string {
   const t = tf.toUpperCase();
   return t.startsWith("PERIOD_") ? t : `PERIOD_${t}`;
+}
+
+function buildPowerShellSendKeysScript(winPath: string, keys: string[], delayMs: number): string {
+  const payload = JSON.stringify({ path: winPath, keys, delay: delayMs });
+  return [
+    `$payload = @'`,
+    payload,
+    `'@`,
+    `$data = $payload | ConvertFrom-Json`,
+    `$target = $data.path`,
+    `$keys = $data.keys`,
+    `$delay = [int]$data.delay`,
+    `$proc = Get-CimInstance Win32_Process | Where-Object { $_.ExecutablePath -eq $target } | Select-Object -First 1`,
+    `if (-not $proc) { Write-Error "process not found for $target"; exit 2 }`,
+    `$p = Get-Process -Id $proc.ProcessId -ErrorAction Stop`,
+    `$h = $p.MainWindowHandle`,
+    `if ($h -eq 0) { Write-Error "window handle not found for $target"; exit 3 }`,
+    `Add-Type @"
+using System;
+using System.Runtime.InteropServices;
+public class Win32 {
+  [DllImport("user32.dll")] public static extern bool SetForegroundWindow(IntPtr hWnd);
+  [DllImport("user32.dll")] public static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
+}
+"@`,
+    `[Win32]::ShowWindow([IntPtr]$h, 5) | Out-Null`,
+    `[Win32]::SetForegroundWindow([IntPtr]$h) | Out-Null`,
+    `Add-Type -AssemblyName System.Windows.Forms`,
+    `foreach ($k in $keys) {`,
+    `  if ($null -ne $k -and $k -ne "") {`,
+    `    [System.Windows.Forms.SendKeys]::SendWait($k)`,
+    `    if ($delay -gt 0) { Start-Sleep -Milliseconds $delay }`,
+    `  }`,
+    `}`
+  ].join("\n");
 }
 
 async function ensureChartOpen(sym: string, tf: string, transport: { hosts: string[]; port: number; timeoutMs: number }) {
@@ -1386,6 +1422,37 @@ async function main() {
     } else {
       process.stdout.write(output + "\n");
     }
+    return;
+  }
+  if (res.kind === "auto_run") {
+    const runner = res.target === "test" ? requireTestRunner(resolved) : requireRunner(resolved);
+    const termPath = runner.terminalPath;
+    if (!termPath) {
+      process.stderr.write("auto: runner sem terminalPath configurado\n");
+      process.exitCode = 1;
+      return;
+    }
+    if (res.unknown?.length) {
+      process.stderr.write(`auto: ignorando codigos desconhecidos: ${res.unknown.join(", ")}\n`);
+    }
+    const winPath = isWindowsPath(termPath) ? termPath : toWindowsPath(termPath);
+    const tokens = toSendKeysTokens(res.keys);
+    if (!tokens.length) {
+      process.stderr.write("auto: nenhuma tecla valida para enviar\n");
+      process.exitCode = 1;
+      return;
+    }
+    const script = buildPowerShellSendKeysScript(winPath, tokens, 80);
+    const result = spawnSync("powershell.exe", ["-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", script], {
+      encoding: "utf8"
+    });
+    const stderr = typeof result.stderr === "string" ? result.stderr.trim() : "";
+    if (stderr) process.stderr.write(stderr + "\n");
+    if (result.status !== 0) {
+      process.exitCode = result.status ?? 1;
+      return;
+    }
+    process.stdout.write("ok\n");
     return;
   }
   if (res.kind === "hotkey") {

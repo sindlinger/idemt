@@ -2,7 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { Ctx, isTf, parseSub, resolveSymTf } from "./args.js";
 import { renderHelp, renderExamples } from "./help.js";
-import { formatAutoList, parseAutoCodes, normalizeAutoMacroName, resolveAutoCodes } from "./auto.js";
+import { formatAutoList, parseAutoCodes, normalizeAutoMacroName, resolveAutoCodes, codesToHotkeys } from "./auto.js";
 import { safeFileBase, stableHash } from "./naming.js";
 import type { TestSpec } from "./tester.js";
 import type { AttachMeta } from "./attach_report.js";
@@ -29,6 +29,7 @@ export type DispatchResult =
   | { kind: "diag"; target: "indicator" | "expert"; name: string }
   | { kind: "log"; tail: number }
   | { kind: "hotkey"; action: "list" | "set" | "del" | "clear"; key?: string; value?: string }
+  | { kind: "auto_run"; target: "runner" | "test"; keys: string[]; unknown?: string[] }
   | { kind: "test"; spec: TestSpec }
   | {
       kind: "doctor";
@@ -627,6 +628,45 @@ export function dispatch(tokens: string[], ctx: Ctx): DispatchResult {
       macros[name] = resolved.codes;
       const suffix = resolved.unknown.length ? ` (ignored: ${resolved.unknown.join(", ")})` : "";
       return { kind: "local", output: `ok ${name} = ${macros[name].join(",")}${suffix}` };
+    }
+    if (sub === "run" || sub === "send") {
+      const args = rest.slice(1);
+      const sandbox = args.some((t) => t.toLowerCase() === "--sandbox" || t.toLowerCase() === "--test");
+      const argsNoTarget = args.filter((t) => {
+        const low = t.toLowerCase();
+        return low !== "--sandbox" && low !== "--test";
+      });
+      const { value: codeVal, rest: afterCode } = extractFlagValue(argsNoTarget, "code");
+      const { value: keysVal, rest: afterKeys } = extractFlagValue(afterCode, "keys");
+      const codeTokens: string[] = [];
+      const keyTokens: string[] = [];
+      const codePattern = /^[a-zA-Z]\d+$/;
+      const sectionPattern = /^[a-zA-Z]$/;
+      const sectionWildcard = /^[a-zA-Z]\*$/;
+      const pushToken = (tok: string) => {
+        if (!tok) return;
+        if (tok.startsWith("@") || codePattern.test(tok) || sectionPattern.test(tok) || sectionWildcard.test(tok)) {
+          codeTokens.push(tok);
+        } else {
+          keyTokens.push(tok);
+        }
+      };
+      parseAutoCodes(codeVal).forEach((t) => codeTokens.push(t));
+      parseAutoCodes(keysVal).forEach((t) => keyTokens.push(t));
+      afterKeys.forEach((t) => pushToken(t));
+
+      const resolved = resolveAutoCodes(codeTokens, macros);
+      const hotkeys = codesToHotkeys(resolved.codes);
+      const combined = [...hotkeys, ...keyTokens];
+      if (!combined.length) {
+        return err("uso: auto run --code M1,M2 | auto run --keys \"ALT+6,ENTER\"");
+      }
+      return {
+        kind: "auto_run",
+        target: sandbox ? "test" : "runner",
+        keys: combined,
+        unknown: resolved.unknown.length ? resolved.unknown : undefined
+      };
     }
     if (sub === "rm" || sub === "remove" || sub === "rl" || sub === "del") {
       const args = rest.slice(1);

@@ -160,6 +160,11 @@ export function buildAutoEntries(): { entries: AutoEntry[]; index: Map<string, A
   return { entries, index };
 }
 
+export function codesToHotkeys(codes: string[]): string[] {
+  const { index } = buildAutoEntries();
+  return codes.map((code) => index.get(code)?.hotkey).filter(Boolean) as string[];
+}
+
 export function resolveAutoCodes(
   rawCodes: string[],
   macros?: Record<string, string[]>
