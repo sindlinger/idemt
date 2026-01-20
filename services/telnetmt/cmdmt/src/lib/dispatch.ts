@@ -590,8 +590,7 @@ export function dispatch(tokens: string[], ctx: Ctx): DispatchResult {
   }
   if (cmd === "auto") {
     const macros = ctx.autoMacros ?? (ctx.autoMacros = {});
-    const rawSub = rest[0]?.toLowerCase();
-    const sub = rawSub === "list" ? "ls" : rawSub;
+    const sub = rest[0]?.toLowerCase();
 
     const listCodes = (tokens: string[]) => {
       const { value: codeVal, rest: afterCode } = extractFlagValue(tokens, "code");
@@ -624,7 +623,7 @@ export function dispatch(tokens: string[], ctx: Ctx): DispatchResult {
       const suffix = resolved.unknown.length ? ` (ignored: ${resolved.unknown.join(", ")})` : "";
       return { kind: "local", output: `ok ${name} = ${macros[name].join(",")}${suffix}` };
     }
-    if (sub === "rm" || sub === "del") {
+    if (sub === "rm") {
       const args = rest.slice(1);
       const { value: nameVal, rest: afterName } = extractFlagValue(args, "name");
       const name = normalizeAutoMacroName(nameVal ?? afterName.join(" "));
