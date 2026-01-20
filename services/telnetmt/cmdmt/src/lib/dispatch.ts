@@ -558,6 +558,12 @@ function parseDoctorArgs(tokens: string[]): { dataPath?: string; apply?: boolean
 
 export function dispatch(tokens: string[], ctx: Ctx): DispatchResult {
   if (tokens.length === 0) return { kind: "local", output: renderHelp().join("\n") };
+  const macros = ctx.autoMacros ?? (ctx.autoMacros = {});
+  const firstRaw = tokens[0];
+  if (firstRaw && firstRaw.startsWith("@")) {
+    const output = formatAutoList(tokens, macros);
+    return { kind: "local", output };
+  }
   const cmd = tokens[0].toLowerCase();
   const rest = tokens.slice(1);
 
@@ -589,7 +595,6 @@ export function dispatch(tokens: string[], ctx: Ctx): DispatchResult {
     return { kind: "local", output: `watching: ${kind} ${name}` };
   }
   if (cmd === "auto") {
-    const macros = ctx.autoMacros ?? (ctx.autoMacros = {});
     const sub = rest[0]?.toLowerCase();
 
     const listCodes = (tokens: string[]) => {
@@ -623,7 +628,7 @@ export function dispatch(tokens: string[], ctx: Ctx): DispatchResult {
       const suffix = resolved.unknown.length ? ` (ignored: ${resolved.unknown.join(", ")})` : "";
       return { kind: "local", output: `ok ${name} = ${macros[name].join(",")}${suffix}` };
     }
-    if (sub === "rm") {
+    if (sub === "rm" || sub === "remove" || sub === "rl" || sub === "del") {
       const args = rest.slice(1);
       const { value: nameVal, rest: afterName } = extractFlagValue(args, "name");
       const name = normalizeAutoMacroName(nameVal ?? afterName.join(" "));
