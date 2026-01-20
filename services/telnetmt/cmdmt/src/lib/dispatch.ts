@@ -2,6 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { Ctx, isTf, parseSub, resolveSymTf } from "./args.js";
 import { renderHelp, renderExamples } from "./help.js";
+import { formatAutoList, parseAutoCodes, normalizeAutoMacroName, resolveAutoCodes } from "./auto.js";
 import { safeFileBase, stableHash } from "./naming.js";
 import type { TestSpec } from "./tester.js";
 import type { AttachMeta } from "./attach_report.js";
@@ -216,6 +217,32 @@ function parseCsvFlags(tokens: string[]): { csv?: CsvImportSpec; rest: string[] 
     rest.push(tok);
   }
   return { csv, rest };
+}
+
+function extractFlagValue(tokens: string[], name: string): { value?: string; rest: string[] } {
+  const rest: string[] = [];
+  let value: string | undefined;
+  const flag = `--${name}`;
+  for (let i = 0; i < tokens.length; i++) {
+    const tok = tokens[i];
+    const low = tok.toLowerCase();
+    if (low === flag) {
+      const next = tokens[i + 1];
+      if (next && !next.startsWith("--")) {
+        value = next;
+        i += 1;
+      } else {
+        value = "";
+      }
+      continue;
+    }
+    if (low.startsWith(`${flag}=`)) {
+      value = tok.slice(flag.length + 1);
+      continue;
+    }
+    rest.push(tok);
+  }
+  return { value, rest };
 }
 
 function parseParamsAndMeta(tokens: string[]): { params: string; rest: string[]; meta: AttachMeta } {
@@ -560,6 +587,59 @@ export function dispatch(tokens: string[], ctx: Ctx): DispatchResult {
     ctx.watchKind = kind;
     ctx.watchName = name;
     return { kind: "local", output: `watching: ${kind} ${name}` };
+  }
+  if (cmd === "auto") {
+    const macros = ctx.autoMacros ?? (ctx.autoMacros = {});
+    const rawSub = rest[0]?.toLowerCase();
+    const sub = rawSub === "list" ? "ls" : rawSub;
+
+    const listCodes = (tokens: string[]) => {
+      const { value: codeVal, rest: afterCode } = extractFlagValue(tokens, "code");
+      const tailCodes = afterCode.filter((t) => !t.startsWith("--"));
+      const codes = [
+        ...parseAutoCodes(codeVal),
+        ...tailCodes.flatMap((t) => parseAutoCodes(t))
+      ];
+      const output = formatAutoList(codes.length ? codes : undefined, macros);
+      return { kind: "local", output } as DispatchResult;
+    };
+
+    if (!sub || sub === "ls" || sub.startsWith("--")) {
+      const args = sub === "ls" ? rest.slice(1) : rest;
+      return listCodes(args);
+    }
+    if (sub === "add") {
+      const args = rest.slice(1);
+      const { value: nameVal, rest: afterName } = extractFlagValue(args, "name");
+      const { value: codeVal, rest: afterCode } = extractFlagValue(afterName, "code");
+      const name = normalizeAutoMacroName(nameVal ?? "");
+      const codesRaw = codeVal ? parseAutoCodes(codeVal) : afterCode.flatMap((t) => parseAutoCodes(t));
+      if (!name) return err("uso: auto add --code C1,C2 --name @macro");
+      if (!codesRaw.length) return err("uso: auto add --code C1,C2 --name @macro");
+      const resolved = resolveAutoCodes(codesRaw, macros);
+      if (!resolved.codes.length) {
+        return err(`auto: nenhum codigo valido (${resolved.unknown.join(", ")})`);
+      }
+      macros[name] = resolved.codes;
+      const suffix = resolved.unknown.length ? ` (ignored: ${resolved.unknown.join(", ")})` : "";
+      return { kind: "local", output: `ok ${name} = ${macros[name].join(",")}${suffix}` };
+    }
+    if (sub === "rm" || sub === "del") {
+      const args = rest.slice(1);
+      const { value: nameVal, rest: afterName } = extractFlagValue(args, "name");
+      const name = normalizeAutoMacroName(nameVal ?? afterName.join(" "));
+      if (!name) return err("uso: auto rm --name @macro");
+      if (!macros[name]) return err(`auto: macro nao encontrada: ${name}`);
+      delete macros[name];
+      return { kind: "local", output: `ok removed ${name}` };
+    }
+    if (sub === "show" || sub.startsWith("@")) {
+      const name = normalizeAutoMacroName(sub === "show" ? rest[1] ?? "" : rest[0] ?? "");
+      if (!name) return err("uso: auto show @macro");
+      if (!macros[name]) return err(`auto: macro nao encontrada: ${name}`);
+      return { kind: "local", output: formatAutoList([name], macros) };
+    }
+    return listCodes(rest);
   }
   if (cmd === "add") {
     const { kind: kindFlag, rest: restArgs } = parseKindFlags(rest);

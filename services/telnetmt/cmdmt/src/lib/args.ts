@@ -6,6 +6,7 @@ export type Ctx = {
   profile?: string;
   watchKind?: "indicator" | "expert";
   watchName?: string;
+  autoMacros?: Record<string, string[]>;
 };
 
 export function isTf(s?: string): boolean {

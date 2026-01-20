@@ -82,12 +82,14 @@ const VERSION = resolveVersion();
 export type HelpSection = { title: string; items: string[] };
 
 const SECTIONS: HelpSection[] = [
-  { title: "basic", items: ["ping", "add", "rm", "watch", "inspect", "debug", "log", "compile", "use", "ctx", "help", "install", "doctor"] },
+  { title: "destaque", items: ["compile", "add", "rm", "run", "watch", "auto", "inspect", "debug", "log"] },
+  { title: "basic", items: ["ping", "add", "rm", "watch", "auto", "inspect", "debug", "log", "compile", "use", "ctx", "help", "install", "doctor"] },
   { title: "chart", items: ["open", "close", "list", "closeall", "redraw", "detachall", "find"] },
   { title: "template", items: ["apply", "save", "saveea", "savechart"] },
   { title: "inspect", items: ["total", "name", "handle", "get", "release", "find"] },
   { title: "expert", items: ["find", "run", "test", "oneshot"] },
   { title: "hotkey", items: ["list", "set", "del", "clear"] },
+  { title: "auto", items: ["ls", "add", "rm", "show"] },
   { title: "script", items: ["run"] },
   { title: "data", items: ["import"] },
   { title: "trade", items: ["buy", "sell", "list", "closeall"] },
@@ -269,6 +271,12 @@ const EXAMPLES: Record<string, ExampleGroup[]> = {
     { title: "del", lines: ["hotkey del ALT+1"] },
     { title: "clear", lines: ["hotkey clear"] }
   ],
+  auto: [
+    { title: "ls", lines: ["auto ls", "auto --code M1,M2", "auto M1 M2"] },
+    { title: "add", lines: ["auto add --code M1,M2 --name @new_order"] },
+    { title: "rm", lines: ["auto rm --name @new_order"] },
+    { title: "show", lines: ["auto show @new_order", "auto @new_order"] }
+  ],
   chart: [
     { title: "open", lines: ["chart open", "chart open EURUSD H1"] },
     { title: "close", lines: ["chart close", "chart close EURUSD H1"] },
@@ -352,6 +360,7 @@ function renderIndex(): string {
     "examples inspect",
     "examples log",
     "examples hotkey",
+    "examples auto",
     "examples compile",
     "examples use",
     "examples ctx",
